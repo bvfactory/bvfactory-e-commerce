@@ -17,6 +17,7 @@ export function Footer() {
                     </div>
                     <div className="flex items-center gap-8 text-xs font-mono text-slate-500 uppercase tracking-wider">
                         <Link href="/plugins" className="hover:text-teal-400 transition-colors">Store</Link>
+                        <Link href="/about" className="hover:text-teal-400 transition-colors">About</Link>
                         <Link href="/activation" className="hover:text-teal-400 transition-colors">Activation</Link>
                         <Link href="/contact" className="hover:text-teal-400 transition-colors">Contact</Link>
                     </div>

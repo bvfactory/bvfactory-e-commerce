@@ -30,6 +30,7 @@ export function Navbar() {
 
     const navLinks = [
         { href: "/plugins", label: "Store" },
+        { href: "/about", label: "About" },
         { href: "/activation", label: "Activation" },
         { href: "/contact", label: "Contact" },
     ];
