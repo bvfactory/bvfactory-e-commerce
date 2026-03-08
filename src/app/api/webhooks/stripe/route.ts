@@ -111,7 +111,7 @@ export async function POST(req: Request) {
                 const activationLink = `${baseUrl}/activation?code=${activationCode}`;
 
                 await resend.emails.send({
-                    from: "BVFactory <licences@bvfactory.app>", // Make sure to use verified domain
+                    from: "BVFactory <licences@bvfactory.dev>",
                     to: order.customer_email,
                     subject: "Your Q-SYS Plugins are Ready - BVFactory",
                     html: `
@@ -132,7 +132,7 @@ export async function POST(req: Request) {
                             <br/>
                             <p style="font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 20px;">
                                 SYS.DEV: BVFactory Show Control Division<br/>
-                                <a href="https://bvfactory.app" style="color: #666;">bvfactory.app</a>
+                                <a href="https://bvfactory.dev" style="color: #666;">bvfactory.dev</a>
                             </p>
                         </div>
                     `

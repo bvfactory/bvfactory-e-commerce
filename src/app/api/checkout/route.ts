@@ -193,7 +193,7 @@ async function handleFreeOrder(supabase: any, order: any, items: FreeOrderItem[]
         const activationLink = `${baseUrl}/activation?code=${activationCode}`;
 
         await resend.emails.send({
-            from: "BVFactory <licences@bvfactory.app>",
+            from: "BVFactory <licences@bvfactory.dev>",
             to: email,
             subject: "Your Free Q-SYS Plugin License - BVFactory",
             html: `
@@ -214,7 +214,7 @@ async function handleFreeOrder(supabase: any, order: any, items: FreeOrderItem[]
                     <br/>
                     <p style="font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 20px;">
                         SYS.DEV: BVFactory Show Control Division<br/>
-                        <a href="https://bvfactory.app" style="color: #666;">bvfactory.app</a>
+                        <a href="https://bvfactory.dev" style="color: #666;">bvfactory.dev</a>
                     </p>
                 </div>
             `,

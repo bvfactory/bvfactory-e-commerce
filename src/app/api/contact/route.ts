@@ -18,10 +18,10 @@ export async function POST(req: Request) {
         if (process.env.RESEND_API_KEY) {
             const { Resend } = await import("resend");
             const resend = new Resend(process.env.RESEND_API_KEY);
-            const contactEmail = process.env.CONTACT_EMAIL || "contact@bvfactory.app";
+            const contactEmail = process.env.CONTACT_EMAIL || "contact@bvfactory.dev";
 
             await resend.emails.send({
-                from: "BVFactory Contact <noreply@bvfactory.app>",
+                from: "BVFactory Contact <noreply@bvfactory.dev>",
                 to: contactEmail,
                 replyTo: email,
                 subject: `[Contact Form] ${subject} — from ${name}`,
