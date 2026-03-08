@@ -75,10 +75,33 @@ export default function Home() {
         {/* Noise */}
         <div className="noise-overlay absolute inset-0" />
 
-        {/* Scanline (subtle) */}
-        <div className="absolute inset-0 overflow-hidden opacity-[0.02]">
-          <div className="absolute w-full h-[2px] bg-teal-400" style={{ animation: 'scanline 8s linear infinite' }} />
+        {/* Scanlines */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Primary scanline — bright, slow */}
+          <div className="absolute w-full h-[1px] bg-gradient-to-r from-transparent via-teal-400 to-transparent opacity-[0.07]" style={{ animation: 'scanline 6s linear infinite' }} />
+          {/* Secondary scanline — dimmer, offset */}
+          <div className="absolute w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-300 to-transparent opacity-[0.04]" style={{ animation: 'scanline 9s linear infinite', animationDelay: '3s' }} />
+          {/* Wide glow band that follows the primary line */}
+          <div className="absolute w-full h-[60px] bg-gradient-to-r from-transparent via-teal-500/[0.03] to-transparent blur-sm" style={{ animation: 'scanline 6s linear infinite' }} />
         </div>
+
+        {/* Horizontal accent lines (static, architectural) */}
+        <div className="absolute top-[20%] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
+        <div className="absolute top-[55%] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-teal-400/[0.04] to-transparent" />
+        <div className="absolute top-[85%] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/[0.02] to-transparent" />
+
+        {/* Corner accents */}
+        <div className="absolute top-6 left-6 w-16 h-16 border-l border-t border-teal-500/10" />
+        <div className="absolute top-6 right-6 w-16 h-16 border-r border-t border-teal-500/10" />
+        <div className="absolute bottom-6 left-6 w-16 h-16 border-l border-b border-teal-500/10" />
+        <div className="absolute bottom-6 right-6 w-16 h-16 border-r border-b border-teal-500/10" />
+
+        {/* Floating particles */}
+        <div className="absolute w-1 h-1 rounded-full bg-teal-400/30 top-[15%] left-[10%] animate-float" />
+        <div className="absolute w-1 h-1 rounded-full bg-cyan-400/20 top-[40%] right-[15%] animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute w-0.5 h-0.5 rounded-full bg-teal-300/25 top-[70%] left-[75%] animate-float" style={{ animationDelay: '4s' }} />
+        <div className="absolute w-1 h-1 rounded-full bg-blue-400/20 top-[60%] left-[25%] animate-float" style={{ animationDelay: '1s' }} />
+        <div className="absolute w-0.5 h-0.5 rounded-full bg-teal-400/20 top-[25%] right-[30%] animate-float" style={{ animationDelay: '3s' }} />
       </div>
 
       <Navbar />

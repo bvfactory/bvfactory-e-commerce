@@ -122,8 +122,16 @@
 
 /* Scanline overlay effect */
 @keyframes scanline {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
+  0% { transform: translateY(-10vh); }
+  100% { transform: translateY(110vh); }
+}
+
+/* Slow float for particles */
+@keyframes particle-drift {
+  0%, 100% { transform: translate(0, 0); opacity: 0.2; }
+  25% { transform: translate(5px, -8px); opacity: 0.4; }
+  50% { transform: translate(-3px, -15px); opacity: 0.3; }
+  75% { transform: translate(8px, -5px); opacity: 0.5; }
 }
 
 /* Glow pulse for CTAs */
