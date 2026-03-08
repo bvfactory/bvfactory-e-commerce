@@ -19,7 +19,7 @@ export interface ProductType {
     longDescription: string;
     price_cents: number;
     iconName: "Flame" | "Clapperboard" | "Monitor" | "Globe" | "Tv" | "Thermometer" | "Layers" | "Film" | "Music" | "Lightbulb";
-    category: "lighting" | "routing" | "show-control" | "control";
+    category: "lighting" | "routing" | "show-control" | "control" | "audio" | "video" | "uci";
     features: string[];
     specs: Record<string, string>;
     compatibility: {
@@ -36,10 +36,13 @@ export interface ProductType {
 
 export const PRODUCT_CATEGORIES = [
     { id: "all", label: "All Modules" },
+    { id: "audio", label: "Audio" },
+    { id: "video", label: "Video" },
     { id: "lighting", label: "Lighting & DMX" },
     { id: "routing", label: "Routing & Network" },
     { id: "show-control", label: "Show Control" },
     { id: "control", label: "AV Control" },
+    { id: "uci", label: "UCI / Dashboard" },
 ] as const;
 
 export const MOCK_PRODUCTS: ProductType[] = [
@@ -299,7 +302,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
         longDescription: "WebBridge is a fully self-contained Q-SYS plugin that turns your Core into a lightweight web server. Open http://<core-ip>:8234 from any device on the network and get instant access to your Named Controls through a clean, responsive interface.\n\nDrop the plugin into your design, deploy, and open the URL. The embedded web app connects automatically over WebSocket for real-time, bidirectional sync. Faders, buttons, text fields — everything updates live across all connected clients. No app to install, no external server to run.\n\nHTML, CSS, and JavaScript are embedded directly in the plugin — zero external dependencies. The BV Factory dark UI includes search, grouping, and grid/list views for quick navigation across large control sets. A read-only prefix lets you expose monitoring controls without risk of accidental changes.",
         price_cents: 5000,
         iconName: "Globe",
-        category: "control",
+        category: "uci",
         features: [
             "Zero Dependencies — HTML, CSS, and JS are embedded directly in the plugin. No external server, no app to install, no configuration files.",
             "Real-Time WebSocket — Bidirectional sync on a single port. Every fader move, button press, and text change updates live across all connected clients.",
@@ -376,7 +379,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
         longDescription: "AVAccessBridge connects to AV Access 4KIP200E encoders and 4KIP200D decoders over Telnet and lets you route any source to any display — all from a single Q-SYS plugin. No external control software needed.\n\nThe plugin features automatic device discovery via UDP broadcast. Plug in your devices and they appear automatically — encoder and decoder slots fill in as units come online. Matrix routing gives you one-click source selection per decoder with instant visual feedback, so you see at a glance which encoder feeds which decoder.\n\nBeyond routing, AVAccessBridge handles display power via CEC or RS232, video wall configuration with per-decoder positioning and rotation, OSD text overlays, RS232 pass-through in ASCII or hex mode, and full per-device management including HDCP, resolution, color space, firmware readback, reboot, and factory reset. Every control is exposed as a UserPin for integration with Q-SYS UCI, GPIO, scripting, and BV Factory's ShowMind. The Telnet engine features IAC negotiation stripping, a login state machine, command queuing with timeout protection, automatic reconnection, and shell injection prevention — designed to run unattended 24/7.",
         price_cents: 1000,
         iconName: "Tv",
-        category: "routing",
+        category: "video",
         features: [
             "Matrix Routing — One-click source selection per decoder with instant visual feedback. See at a glance which encoder feeds which decoder.",
             "Auto-Discovery — UDP broadcast discovery on ports 3335/3336. Plug in devices and they appear automatically in encoder/decoder slots.",
@@ -530,7 +533,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
         longDescription: "MadBridge talks to MadMapper over the network using OSC (UDP). You get hands-on control of surface visibility, opacity, and media selection. Trigger scenes and cues from a grid, navigate columns, and manage master intensity, fade to black, and BPM — without leaving Q-SYS Designer or your UCI.\n\nUp to 32 surfaces are available, each with opacity, visibility, media number, and solo controls. The scene and cue grid supports up to 32 columns and 16 rows. Logical cues let you name a cue, assign it a column/row, and fire it with a single GO.\n\nPreset store/recall snapshots and restores your entire state. Bidirectional feedback from MadMapper keeps Q-SYS controls in sync at all times. The plugin supports up to 4 independent MadMapper instances, so you can control multiple projection mapping rigs from one Core. All controls are exposed as UserPins for integration with ShowMind, UCI, GPIO, or any Q-SYS control workflow.",
         price_cents: 1500,
         iconName: "Layers",
-        category: "show-control",
+        category: "video",
         features: [
             "32 Surfaces — Opacity, visibility, media number, and solo per surface. Full control over your MadMapper surface stack.",
             "Scene & Cue Grid — Up to 32 columns and 16 rows. Navigate, trigger, and sequence scenes from Q-SYS.",
@@ -607,7 +610,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
         longDescription: "ResolumeBridge polls your Arena instance over its built-in REST API and maps the composition state to Q-SYS controls in real time. Trigger clips, manage layers, adjust opacity and volume, fire columns — all from native Q-SYS controls that integrate seamlessly with your show control workflow.\n\nLayer controls include opacity, volume, solo, bypass, clear, and blend mode readback. Clip triggering includes connection state feedback (Empty, Disconnected, Connected, Previewing). Column triggers enable scene-based workflows. Thumbnail URLs are exposed per clip for external display.\n\nComposition-level controls cover master fader, speed, and crossfader, plus undo/redo. Logical cues simplify show programming, and preset store/recall lets you snapshot and restore state. The plugin supports up to 4 Arena servers with auto-reconnect watchdog, latency tracking, and error monitoring.\n\nUses Resolume Arena's REST API (port 8080 by default). Requires Arena 7.x or later. Audio volume is normalized from Resolume's native dB scale to a 0–1 knob range. Configurable polling rate (100–5000 ms). No additional software or network configuration needed beyond IP connectivity.",
         price_cents: 1500,
         iconName: "Film",
-        category: "show-control",
+        category: "video",
         features: [
             "Layer Control — Opacity, volume, solo, bypass, clear, and blend mode readback per layer. Full hands-on layer management.",
             "Clip Triggering — Trigger clips with connection state feedback: Empty, Disconnected, Connected, Previewing. Thumbnail URLs per clip.",
@@ -684,7 +687,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
         longDescription: "SoundForge is a powerful multitrack audio playback plugin for Q-SYS Designer. Built for themed entertainment, immersive experiences, and live shows, it gives you up to 64 independent audio tracks with full transport control, scene management, and adaptive playback — all inside a single plugin block.\n\nEach track gets Play, Stop, Pause, Loop, Volume, Mute, and Solo. Attack and release fades provide automatic fade-in on Play and fade-out on Stop/Pause (0–60s per track). Per-track ducking with independent attack/release and trim level lets background audio step aside when foreground audio plays. Loop gap adds a configurable delay before loop restart — up to 24 hours.\n\nThe condition engine triggers playback based on variables, time of day, or track states with AND/OR/NOT logic. Crossfades smooth transitions between tracks or scenes with 6 fade curves: Linear, −3dB, −6dB, Log, S-Curve, and Equal Power. The scene system stores and recalls up to 64 snapshots with crossfade transitions.\n\nSoundForge is the audio pillar of the BV Factory ecosystem. It connects natively to ShowMind (variable sync) and LightForge (transport sync). A TCP API on port 9910 provides full remote control via simple text commands. JSON show file save/load, paginated UI, track grouping, and pin-level access to every control round out the feature set.",
         price_cents: 5000,
         iconName: "Music",
-        category: "show-control",
+        category: "audio",
         features: [
             "64 Tracks — Per-track Play, Stop, Pause, Loop, Volume, Mute & Solo. Configurable audio outputs (1–64 channels per track), fully routable in Q-SYS.",
             "Scene System — Store & recall up to 64 snapshots with crossfade transitions. JSON show file save/load for portable scene management.",
