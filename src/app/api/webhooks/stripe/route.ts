@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateLicenseKey, generateActivationCode } from "@/lib/license";
-import { Resend } from "resend";
+import { sendOrderConfirmation } from "@/lib/email";
 
 interface WebhookCartItem {
     id: string;
@@ -104,40 +104,20 @@ export async function POST(req: Request) {
                 })
                 .eq("id", order.id);
 
-            // Send Email Delivery
-            if (process.env.RESEND_API_KEY) {
-                const resend = new Resend(process.env.RESEND_API_KEY);
-                const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-                const activationLink = `${baseUrl}/activation?code=${activationCode}`;
-
-                await resend.emails.send({
-                    from: "BVFactory <licences@bvfactory.dev>",
-                    to: order.customer_email,
-                    subject: "Your Q-SYS Plugins are Ready - BVFactory",
-                    html: `
-                        <div style="font-family: 'Courier New', monospace; max-width: 600px; margin: 0 auto; color: #111; background-color: #fafafa; padding: 20px;">
-                            <h2 style="text-transform: uppercase; border-bottom: 2px solid #333; padding-bottom: 10px;">Licenses Compiled successfully</h2>
-                            <p>Your transaction has been verified. Your requested Q-SYS plugin hardware licenses have been successfully compiled for your custom Core IDs and are now securely stored.</p>
-                            
-                            <div style="background-color: #000; text-align: center; padding: 40px 20px; border-radius: 4px; margin: 30px 0; border: 1px solid #333;">
-                                <p style="color: #0f0; margin: 0 0 20px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Ready for uplink</p>
-                                <a href="${activationLink}" style="display: inline-block; background-color: #0f4a42; color: #fff; text-decoration: none; font-family: sans-serif; font-weight: bold; font-size: 16px; padding: 15px 30px; border-radius: 4px; border: 1px solid #14b8a6; text-transform: uppercase; letter-spacing: 1px;">
-                                    Access Activation Portal
-                                </a>
-                            </div>
-
-                            <p style="font-size: 14px; line-height: 1.6;">Your unique Activation Code is:</p>
-                            <p style="font-family: monospace; background: #eee; padding: 10px; text-align: center; font-weight: bold; font-size: 20px; color: #0f4a42;">${activationCode}</p>
-                            
-                            <br/>
-                            <p style="font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 20px;">
-                                SYS.DEV: BVFactory Show Control Division<br/>
-                                <a href="https://bvfactory.dev" style="color: #666;">bvfactory.dev</a>
-                            </p>
-                        </div>
-                    `
-                });
-            }
+            // Send confirmation email with invoice
+            await sendOrderConfirmation({
+                to: order.customer_email,
+                orderId: order.id,
+                activationCode,
+                items: itemsWithLicenses.map((i) => ({
+                    productName: i.product.name,
+                    coreId: i.coreId,
+                    priceCents: i.product.price_cents,
+                })),
+                currency: "EUR",
+                discountCode: order.discount_code,
+                discountPercent: order.discount_percent,
+            });
 
             return NextResponse.json({ success: true, licensedItemsCount: itemsWithLicenses.length });
         }
