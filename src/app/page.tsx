@@ -5,14 +5,39 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import Link from "next/link";
-import { motion, Variants } from "framer-motion";
-import { ArrowRight, Cpu, Shield, Zap, Globe } from "lucide-react";
-import { BVFactoryLogo } from "@/components/BVFactoryLogo";
+import { motion, AnimatePresence, Variants } from "framer-motion";
+import { ArrowRight, Cpu, Shield, Zap, Globe, ChevronDown, HelpCircle } from "lucide-react";
+import { useState } from "react";
+import { Footer } from "@/components/Footer";
 
 import { MOCK_PRODUCTS, getProductIcon } from "@/data/products";
 
+const HOMEPAGE_FAQ = [
+  {
+    question: "How does licensing work?",
+    answer: "Each license is node-locked to your Q-SYS Core hardware ID. After purchase, you receive a unique activation code via email. Enter this code in our Activation Portal to retrieve your license keys. Licenses are perpetual — no subscriptions."
+  },
+  {
+    question: "Can I evaluate a plugin before purchasing?",
+    answer: "Yes. All plugins can be loaded in Q-SYS Designer in offline/emulation mode for evaluation. A license key is only required for deployment to a live Core."
+  },
+  {
+    question: "How quickly will I receive my license after payment?",
+    answer: "Instantly. License keys are generated automatically upon successful payment verification via Stripe. You'll receive an email with your activation code within seconds."
+  },
+  {
+    question: "Can I transfer a license to a different Core?",
+    answer: "Licenses are bound to a specific Core ID at the time of purchase. If you need to transfer a license, contact our support team and we'll assist you with the migration process."
+  },
+  {
+    question: "What Q-SYS versions are supported?",
+    answer: "Each plugin has specific Q-SYS version requirements listed on its product page. Generally, our plugins support Q-SYS 8.0 and above. Cores running Q-SYS 9.0+ may require updated plugin versions."
+  },
+];
+
 export default function Home() {
   const { formatPrice, isLoading } = useCurrency();
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   const container: Variants = {
     hidden: { opacity: 0 },
@@ -104,7 +129,7 @@ export default function Home() {
             transition={{ delay: 0.45 }}
             className="flex flex-col sm:flex-row gap-4 items-center justify-center mb-16"
           >
-            <Link href="#plugins">
+            <Link href="/plugins">
               <Button className="h-14 px-8 cta-gradient text-white font-bold tracking-widest uppercase text-sm border-0 animate-glow-pulse group">
                 <span className="flex items-center gap-2">
                   Explore Modules
@@ -162,7 +187,7 @@ export default function Home() {
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, margin: "-100px" }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {MOCK_PRODUCTS.map((product) => (
               <motion.div key={product.id} variants={item}>
@@ -204,10 +229,10 @@ export default function Home() {
                       {/* Footer */}
                       <div className="flex items-center justify-between pt-6 border-t border-white/5">
                         <div>
-                          <p className="text-2xl font-bold font-mono text-white">
+                          <p className={`text-2xl font-bold font-mono ${product.price_cents === 0 ? 'text-teal-400' : 'text-white'}`}>
                             {isLoading ? "..." : formatPrice(product.price_cents)}
                           </p>
-                          <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Lifetime License</p>
+                          <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">{product.price_cents === 0 ? "Free License" : "Lifetime License"}</p>
                         </div>
                         <div className="flex items-center gap-1.5 text-teal-500 text-xs font-mono uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
                           View <ArrowRight className="w-3 h-3" />
@@ -219,6 +244,18 @@ export default function Home() {
               </motion.div>
             ))}
           </motion.div>
+        </div>
+      </section>
+
+      {/* === VIEW ALL CTA === */}
+      <section className="relative z-10 px-6 pb-8">
+        <div className="max-w-6xl mx-auto text-center">
+          <Link href="/plugins">
+            <Button variant="outline" className="h-12 px-8 bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white font-mono text-xs uppercase tracking-widest group">
+              View All Modules
+              <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
         </div>
       </section>
 
@@ -258,29 +295,65 @@ export default function Home() {
         </div>
       </section>
 
-      {/* === FOOTER === */}
-      <footer className="relative z-10 border-t border-white/5 mt-auto">
-        <div className="max-w-6xl mx-auto px-6 py-12">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <BVFactoryLogo className="h-10 w-10" />
-              <div>
-                <span className="text-sm font-bold tracking-[0.15em] uppercase font-mono text-white">BVFactory</span>
-                <span className="text-[9px] text-slate-500 uppercase font-mono tracking-widest block">Show Control Division</span>
+      {/* === FAQ SECTION === */}
+      <section className="relative z-10 py-20 px-6">
+        <div className="max-w-3xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex p-3 rounded-2xl bg-teal-500/10 border border-teal-500/20 mb-6">
+              <HelpCircle className="w-6 h-6 text-teal-400" />
+            </div>
+            <h3 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+              Frequently Asked Questions
+            </h3>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="space-y-3"
+          >
+            {HOMEPAGE_FAQ.map((faq, i) => (
+              <div key={i} className="glass-panel rounded-xl overflow-hidden">
+                <button
+                  onClick={() => setOpenFaqIndex(openFaqIndex === i ? null : i)}
+                  className="w-full flex items-center justify-between p-5 text-left hover:bg-white/[0.02] transition-colors"
+                >
+                  <span className="text-sm font-medium text-slate-200 pr-4">{faq.question}</span>
+                  <motion.div
+                    animate={{ rotate: openFaqIndex === i ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown className="w-4 h-4 text-teal-500 flex-shrink-0" />
+                  </motion.div>
+                </button>
+                <AnimatePresence>
+                  {openFaqIndex === i && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <p className="px-5 pb-5 text-sm text-slate-400 leading-relaxed">
+                        {faq.answer}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-            </div>
-            <div className="flex items-center gap-8 text-xs font-mono text-slate-500 uppercase tracking-wider">
-              <Link href="/#plugins" className="hover:text-teal-400 transition-colors">Plugins</Link>
-              <Link href="/activation" className="hover:text-teal-400 transition-colors">Activation</Link>
-              <Link href="/contact" className="hover:text-teal-400 transition-colors">Contact</Link>
-              <a href="https://bvfactory.app" target="_blank" className="hover:text-teal-400 transition-colors">bvfactory.app</a>
-            </div>
-            <p className="text-[10px] font-mono text-slate-600 tracking-wider">
-              © {new Date().getFullYear()} BVFactory. All rights reserved.
-            </p>
-          </div>
+            ))}
+          </motion.div>
         </div>
-      </footer>
+      </section>
+
+      <Footer />
     </div>
   );
 }

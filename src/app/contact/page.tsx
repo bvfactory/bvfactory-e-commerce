@@ -6,7 +6,7 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Loader2, CheckCircle2, Mail, User, MessageSquare } from "lucide-react";
-import { BVFactoryLogo } from "@/components/BVFactoryLogo";
+import { Footer } from "@/components/Footer";
 import Link from "next/link";
 
 const SUBJECTS = [
@@ -222,29 +222,7 @@ export default function ContactPage() {
                 </div>
             </main>
 
-            {/* === FOOTER === */}
-            <footer className="relative z-10 border-t border-white/5 mt-auto">
-                <div className="max-w-6xl mx-auto px-6 py-12">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                        <div className="flex items-center gap-3">
-                            <BVFactoryLogo className="h-10 w-10" />
-                            <div>
-                                <span className="text-sm font-bold tracking-[0.15em] uppercase font-mono text-white">BVFactory</span>
-                                <span className="text-[9px] text-slate-500 uppercase font-mono tracking-widest block">Show Control Division</span>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-8 text-xs font-mono text-slate-500 uppercase tracking-wider">
-                            <Link href="/#plugins" className="hover:text-teal-400 transition-colors">Plugins</Link>
-                            <Link href="/activation" className="hover:text-teal-400 transition-colors">Activation</Link>
-                            <Link href="/contact" className="hover:text-teal-400 transition-colors">Contact</Link>
-                            <a href="https://bvfactory.app" target="_blank" className="hover:text-teal-400 transition-colors">bvfactory.app</a>
-                        </div>
-                        <p className="text-[10px] font-mono text-slate-600 tracking-wider">
-                            © {new Date().getFullYear()} BVFactory. All rights reserved.
-                        </p>
-                    </div>
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 }

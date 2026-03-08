@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 
 interface LicenseItem {
     id: string;
@@ -75,7 +78,7 @@ function ActivationPortalInner() {
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
-        // We could use toast here, but relying on visual feedback is lighter
+        toast.success("License key copied to clipboard");
     };
 
     return (
@@ -261,19 +264,23 @@ function ActivationPortalInner() {
 
 export default function ActivationPage() {
     return (
-        <main className="min-h-screen bg-[#050d1a] pt-24 pb-12 px-4 md:px-8 relative overflow-hidden">
-            <div className="absolute inset-0 z-0 pointer-events-none">
-                {/* Background lighting */}
-                <div className="absolute top-[20%] right-[10%] w-[500px] h-[500px] rounded-full bg-teal-500/5 blur-[120px]"></div>
-                <div className="absolute bottom-[10%] left-[10%] w-[600px] h-[600px] rounded-full bg-blue-900/10 blur-[150px]"></div>
-                <div className="noise-overlay absolute inset-0"></div>
+        <div className="flex min-h-screen flex-col font-sans selection:bg-teal-500/30 overflow-x-hidden bg-[#050d1a]">
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <div className="absolute top-[20%] right-[10%] w-[500px] h-[500px] rounded-full bg-teal-500/5 blur-[120px]" />
+                <div className="absolute bottom-[10%] left-[10%] w-[600px] h-[600px] rounded-full bg-blue-900/10 blur-[150px]" />
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:48px_48px]" />
+                <div className="noise-overlay absolute inset-0" />
             </div>
 
-            <div className="relative z-10">
+            <Navbar />
+
+            <main className="relative z-10 flex-1 pt-20 pb-12 px-4 md:px-8">
                 <Suspense fallback={<div className="flex justify-center items-center py-32"><Loader2 className="w-12 h-12 text-teal-500 animate-spin" /></div>}>
                     <ActivationPortalInner />
                 </Suspense>
-            </div>
-        </main>
+            </main>
+
+            <Footer />
+        </div>
     );
 }

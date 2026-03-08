@@ -1,14 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { generateLicenseKey, generateActivationCode } from "@/lib/license";
 import { Resend } from "resend";
-
-function generateQSysLicense(coreId: string, productId: string) {
-    return `QSYS-${productId.toUpperCase()}-${coreId.toUpperCase()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-}
-
-function generateActivationCode() {
-    return `BVFA-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-}
 
 interface WebhookCartItem {
     id: string;
@@ -73,15 +66,32 @@ export async function POST(req: Request) {
                 return NextResponse.json({ message: "Order already paid" }, { status: 200 });
             }
 
-            // Generate Licenses for each item in the cart
-            const itemsWithLicenses: WebhookCartItem[] = (order.items || []).map((item: WebhookCartItem) => {
-                return {
-                    ...item,
-                    licenseKey: generateQSysLicense(item.coreId || "UNKNOWN", item.product?.id || "UNKNOWN")
-                };
-            });
+            // Generate secure licenses for each item
+            const itemsWithLicenses: WebhookCartItem[] = [];
 
-            // Update Order with new items payload, generate activation code, and mark as paid
+            for (const item of (order.items || []) as WebhookCartItem[]) {
+                const coreId = item.coreId || "UNKNOWN";
+                const productId = item.product?.id || "UNKNOWN";
+
+                const { licenseKey, salt, keyHash } = generateLicenseKey(productId, coreId);
+
+                itemsWithLicenses.push({
+                    ...item,
+                    licenseKey,
+                });
+
+                // Insert into licenses table
+                await supabase.from("licenses").insert({
+                    order_id: order.id,
+                    product_id: productId,
+                    core_id: coreId.toUpperCase(),
+                    license_key: licenseKey,
+                    key_hash: keyHash,
+                    salt: salt,
+                    status: "active",
+                });
+            }
+
             const activationCode = generateActivationCode();
 
             await supabase

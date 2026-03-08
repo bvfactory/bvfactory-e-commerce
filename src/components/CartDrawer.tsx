@@ -73,7 +73,17 @@ export function CartDrawer() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     email,
-                    items: items.map(i => ({ productId: i.product.id, coreId: i.coreId, name: i.product.name })),
+                    items: items.map(i => ({
+                        id: i.id,
+                        coreId: i.coreId,
+                        product: {
+                            id: i.product.id,
+                            name: i.product.name,
+                            description: i.product.description,
+                            price_cents: i.product.price_cents,
+                            iconName: i.product.iconName,
+                        }
+                    })),
                     currency,
                     rate,
                     discountCode: appliedDiscount ? appliedDiscount.label : undefined,

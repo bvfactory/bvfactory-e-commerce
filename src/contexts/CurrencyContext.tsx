@@ -47,6 +47,8 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     const symbol = CURRENCY_SYMBOLS[currency] || "€";
 
     const formatPrice = (cents: number) => {
+        if (cents === 0) return "Free";
+
         const converted = (cents / 100) * rate;
 
         return new Intl.NumberFormat(undefined, {

@@ -6,10 +6,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Shield, Key, Mail, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSearchParams } from "next/navigation";
+import { useCart } from "@/contexts/CartContext";
 
 function SuccessSequence() {
     const searchParams = useSearchParams();
     const orderId = searchParams.get("order_id");
+    const { clearCart } = useCart();
 
     const [step, setStep] = useState<"generating" | "delivered">("generating");
     const [activationCode, setActivationCode] = useState<string | null>(null);
@@ -17,6 +19,11 @@ function SuccessSequence() {
     const [hashMask] = useState<string>(() =>
         Array.from({ length: 400 }).map(() => Math.random().toString(36).substring(2, 3)).join('')
     );
+
+    // Clear cart on successful checkout
+    useEffect(() => {
+        clearCart();
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         if (!orderId) return;

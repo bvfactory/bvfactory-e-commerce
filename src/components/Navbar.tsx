@@ -1,18 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Menu, X } from "lucide-react";
 import { BVFactoryLogo } from "@/components/BVFactoryLogo";
 import { useCart } from "@/contexts/CartContext";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 
 export function Navbar() {
     const { items, setIsCartOpen } = useCart();
     const pathname = usePathname();
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // Close mobile menu on route change
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [pathname]);
+
+    // Prevent body scroll when mobile menu is open
+    useEffect(() => {
+        if (isMobileMenuOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
+        }
+        return () => { document.body.style.overflow = ""; };
+    }, [isMobileMenuOpen]);
 
     const navLinks = [
-        { href: "/#plugins", label: "Q-SYS Plugins" },
+        { href: "/plugins", label: "Store" },
         { href: "/activation", label: "Activation" },
         { href: "/contact", label: "Contact" },
     ];
@@ -37,8 +54,8 @@ export function Navbar() {
                         </div>
                     </Link>
 
-                    {/* Navigation */}
-                    <nav className="flex items-center gap-1">
+                    {/* Desktop Navigation */}
+                    <nav className="hidden md:flex items-center gap-1">
                         {navLinks.map((link) => {
                             const isActive = pathname === link.href || (link.href.includes('#') && pathname === '/');
                             return (
@@ -72,7 +89,7 @@ export function Navbar() {
                         >
                             <ShoppingCart className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
                             <span className="text-[11px] font-mono uppercase tracking-wider">
-                                Panier
+                                Cart
                             </span>
                             {items.length > 0 && (
                                 <motion.span
@@ -88,8 +105,94 @@ export function Navbar() {
                             )}
                         </button>
                     </nav>
+
+                    {/* Mobile: Cart + Hamburger */}
+                    <div className="flex md:hidden items-center gap-3">
+                        <button
+                            onClick={() => setIsCartOpen(true)}
+                            className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-400"
+                        >
+                            <ShoppingCart className="w-4 h-4" />
+                            {items.length > 0 && (
+                                <motion.span
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="absolute -top-1.5 -right-1.5 flex items-center justify-center w-5 h-5 text-[10px] font-bold bg-teal-500 text-slate-900 rounded-full"
+                                >
+                                    {items.length}
+                                </motion.span>
+                            )}
+                        </button>
+                        <button
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+                        >
+                            <AnimatePresence mode="wait">
+                                {isMobileMenuOpen ? (
+                                    <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                                        <X className="w-5 h-5" />
+                                    </motion.div>
+                                ) : (
+                                    <motion.div key="menu" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                                        <Menu className="w-5 h-5" />
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            {/* Mobile Menu Overlay */}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <>
+                        <motion.div
+                            key="mobile-backdrop"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+                        />
+                        <motion.div
+                            key="mobile-menu"
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            className="absolute top-full left-0 right-0 z-50 md:hidden"
+                        >
+                            <div className="glass-panel-light border-b border-white/5 mx-4 mt-2 rounded-2xl overflow-hidden shadow-2xl">
+                                <nav className="flex flex-col p-4 gap-1">
+                                    {navLinks.map((link, i) => {
+                                        const isActive = pathname === link.href || (link.href.includes('#') && pathname === '/');
+                                        return (
+                                            <motion.div
+                                                key={link.href}
+                                                initial={{ opacity: 0, x: -20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: i * 0.05 }}
+                                            >
+                                                <Link
+                                                    href={link.href}
+                                                    onClick={() => setIsMobileMenuOpen(false)}
+                                                    className={`block px-4 py-3 rounded-xl text-sm font-mono uppercase tracking-wider transition-all ${isActive
+                                                        ? 'text-teal-400 bg-teal-500/10 border border-teal-500/20'
+                                                        : 'text-slate-300 hover:text-white hover:bg-white/5'
+                                                        }`}
+                                                >
+                                                    {link.label}
+                                                </Link>
+                                            </motion.div>
+                                        );
+                                    })}
+                                </nav>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </header>
     );
 }

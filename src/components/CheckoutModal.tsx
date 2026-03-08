@@ -88,7 +88,7 @@ export function AddToCartModal({ product, isOpen, onClose }: AddToCartModalProps
 
                 <div className="pt-6 relative">
                     <Button type="submit" className="w-full h-14 bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 text-white font-bold tracking-widest uppercase text-sm shadow-[0_10px_30px_rgba(20,184,166,0.5)] transition-all hover:shadow-[0_10px_40px_rgba(20,184,166,0.7)] border border-white/20">
-                        Queue License Generation
+                        {product.price_cents === 0 ? "Get Free License" : "Queue License Generation"}
                     </Button>
                 </div>
             </form>
