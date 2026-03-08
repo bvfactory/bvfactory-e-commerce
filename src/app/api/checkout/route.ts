@@ -62,10 +62,17 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Erreur lors de la création de la commande" }, { status: 500 });
         }
 
-        // 2. Check if all items are free — skip Stripe entirely
+        // 2. Check if all items are free (base price = 0 OR 100% discount) — skip Stripe entirely
         const allFree = items.every((item: { product: { price_cents: number } }) => item.product.price_cents === 0);
+        const effectivelyFree = allFree || appliedDiscountPercent === 100;
 
-        if (allFree) {
+        if (effectivelyFree) {
+            // Increment discount usage if applicable
+            if (appliedDiscountPercent > 0 && discountCode) {
+                await supabase.rpc('increment_discount_usage', {
+                    d_code: discountCode.toUpperCase().trim()
+                });
+            }
             return await handleFreeOrder(supabase, order, items, email);
         }
 
@@ -130,8 +137,9 @@ export async function POST(req: Request) {
         return NextResponse.json({ url: session.url });
 
     } catch (error) {
-        console.error("Checkout error:", error);
-        return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("Checkout error:", message, error);
+        return NextResponse.json({ error: "Erreur interne du serveur", detail: message }, { status: 500 });
     }
 }
 
