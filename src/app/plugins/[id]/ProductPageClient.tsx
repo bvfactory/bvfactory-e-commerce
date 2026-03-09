@@ -133,15 +133,16 @@ export default function ProductPageClient() {
                             {product.compatibleBrands.map((brand) => (
                                 <div
                                     key={brand.name}
-                                    className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10"
+                                    className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10"
                                 >
                                     <Image
                                         src={brand.logo}
                                         alt={brand.name}
-                                        width={80}
-                                        height={24}
-                                        className="h-5 w-auto opacity-70"
+                                        width={20}
+                                        height={20}
+                                        className="h-4 w-4 opacity-80"
                                     />
+                                    <span className="text-[11px] font-medium text-slate-300 tracking-wide">{brand.name}</span>
                                 </div>
                             ))}
                         </div>
