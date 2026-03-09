@@ -65,7 +65,7 @@ export default function AboutPage() {
                             <span className="text-[11px] font-mono uppercase tracking-widest text-teal-400">About Us</span>
                         </div>
 
-                        <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-white leading-[0.95] mb-6">
+                        <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-white leading-[1.05] mb-6">
                             We build tools we{" "}
                             <span className="bg-gradient-to-r from-teal-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
                                 always wished existed.
