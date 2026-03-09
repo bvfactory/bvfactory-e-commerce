@@ -119,6 +119,34 @@ export default function ProductPageClient() {
                     <Cpu className="w-3.5 h-3.5 text-teal-500/60" />
                     Requires Q-SYS {product.compatibility.minQsysVersion}+ &middot; {product.compatibility.supportedCores.join(", ")}
                 </motion.div>
+
+                {/* Compatible Brands */}
+                {product.compatibleBrands && product.compatibleBrands.length > 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6 }}
+                        className="mt-6 flex items-center gap-4"
+                    >
+                        <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500">Works with</span>
+                        <div className="flex items-center gap-3">
+                            {product.compatibleBrands.map((brand) => (
+                                <div
+                                    key={brand.name}
+                                    className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10"
+                                >
+                                    <Image
+                                        src={brand.logo}
+                                        alt={brand.name}
+                                        width={80}
+                                        height={24}
+                                        className="h-5 w-auto opacity-70"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
             </motion.section>
 
             {/* Main Content Area */}

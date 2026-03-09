@@ -11,6 +11,11 @@ export interface FaqItem {
     answer: string;
 }
 
+export interface CompatibleBrand {
+    name: string;
+    logo: string; // path relative to /public/brands/
+}
+
 export interface ProductType {
     id: string;
     name: string;
@@ -20,6 +25,7 @@ export interface ProductType {
     price_cents: number;
     iconName: "Flame" | "Clapperboard" | "Monitor" | "Globe" | "Tv" | "Thermometer" | "Layers" | "Film" | "Music" | "Lightbulb";
     category: "lighting" | "routing" | "show-control" | "control" | "audio" | "video" | "uci";
+    compatibleBrands?: CompatibleBrand[];
     features: string[];
     specs: Record<string, string>;
     compatibility: {
@@ -231,6 +237,9 @@ export const MOCK_PRODUCTS: ProductType[] = [
         price_cents: 0,
         iconName: "Monitor",
         category: "control",
+        compatibleBrands: [
+            { name: "iiyama", logo: "/brands/iiyama.svg" },
+        ],
         features: [
             "Wake-on-LAN — Multi-packet WOL bursts to reliably wake displays from standby, even across VLANs with directed broadcast.",
             "Power Control — Power on and off via SICP commands. Status feedback confirms actual power state.",
@@ -380,6 +389,9 @@ export const MOCK_PRODUCTS: ProductType[] = [
         price_cents: 1000,
         iconName: "Tv",
         category: "video",
+        compatibleBrands: [
+            { name: "AV Access", logo: "/brands/avaccess.svg" },
+        ],
         features: [
             "Matrix Routing — One-click source selection per decoder with instant visual feedback. See at a glance which encoder feeds which decoder.",
             "Auto-Discovery — UDP broadcast discovery on ports 3335/3336. Plug in devices and they appear automatically in encoder/decoder slots.",
@@ -457,6 +469,9 @@ export const MOCK_PRODUCTS: ProductType[] = [
         price_cents: 3000,
         iconName: "Thermometer",
         category: "control",
+        compatibleBrands: [
+            { name: "Mitsubishi Electric", logo: "/brands/mitsubishi.svg" },
+        ],
         features: [
             "64-Unit Capacity — Up to 64 units across 8 paginated pages, with automatic device discovery from your MELCloud account.",
             "Full Per-Unit Control — Power on/off, operation mode (heat, cool, dry, fan, auto), target temperature (16–31°C), fan speed (auto + 5 levels), vane direction.",
@@ -534,6 +549,9 @@ export const MOCK_PRODUCTS: ProductType[] = [
         price_cents: 1500,
         iconName: "Layers",
         category: "video",
+        compatibleBrands: [
+            { name: "MadMapper", logo: "/brands/madmapper.svg" },
+        ],
         features: [
             "32 Surfaces — Opacity, visibility, media number, and solo per surface. Full control over your MadMapper surface stack.",
             "Scene & Cue Grid — Up to 32 columns and 16 rows. Navigate, trigger, and sequence scenes from Q-SYS.",
@@ -611,6 +629,9 @@ export const MOCK_PRODUCTS: ProductType[] = [
         price_cents: 1500,
         iconName: "Film",
         category: "video",
+        compatibleBrands: [
+            { name: "Resolume Arena", logo: "/brands/resolume.svg" },
+        ],
         features: [
             "Layer Control — Opacity, volume, solo, bypass, clear, and blend mode readback per layer. Full hands-on layer management.",
             "Clip Triggering — Trigger clips with connection state feedback: Empty, Disconnected, Connected, Previewing. Thumbnail URLs per clip.",
@@ -772,6 +793,9 @@ export const MOCK_PRODUCTS: ProductType[] = [
         price_cents: 1000,
         iconName: "Lightbulb",
         category: "lighting",
+        compatibleBrands: [
+            { name: "Philips Hue", logo: "/brands/philips.svg" },
+        ],
         features: [
             "Per-Light Control — On/off toggle and brightness fader per light. Direct control over every Hue fixture from Q-SYS.",
             "Scene Recall — Trigger any Hue scene with adjustable intensity at recall time. Smooth scene transitions.",
