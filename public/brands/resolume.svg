@@ -1,5 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" fill="none">
-  <!-- Resolume text logo -->
-  <text x="120" y="36" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="white" letter-spacing="3">RESOLUME</text>
-  <text x="120" y="52" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="400" fill="white" letter-spacing="5" opacity="0.7">ARENA</text>
+  <!-- Resolume Arena A icon -->
+  <g transform="translate(6, 3)">
+    <path d="M22 54L0 0L44 30Z" fill="white" opacity="0.85"/>
+    <path d="M22 54L44 30L22 0Z" fill="white" opacity="0.6"/>
+    <path d="M22 0L0 0L22 54Z" fill="white" opacity="0.4"/>
+  </g>
+  <text x="150" y="30" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="white" letter-spacing="4">RESOLUME</text>
+  <text x="150" y="50" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="500" fill="white" letter-spacing="6" opacity="0.7">ARENA</text>
 </svg>

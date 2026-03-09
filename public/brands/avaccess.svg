@@ -1,3 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" fill="none">
-  <text x="100" y="40" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" fill="white" letter-spacing="2">AV Access</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 60" fill="none">
+  <!-- Circle with V -->
+  <circle cx="24" cy="30" r="18" fill="white" opacity="0.9"/>
+  <path d="M16 22L24 40L32 22" stroke="#0a1628" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="130" y="38" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" fill="white" letter-spacing="1">AV Access</text>
 </svg>
