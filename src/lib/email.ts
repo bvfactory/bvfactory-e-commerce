@@ -149,6 +149,17 @@ function buildEmailHtml(params: OrderEmailParams): string {
             <p style="font-size: 13px; line-height: 1.6;">Your Activation Code:</p>
             <p style="font-family: monospace; background: #eee; padding: 10px; text-align: center; font-weight: bold; font-size: 20px; color: #0f4a42; border-radius: 4px;">${activationCode}</p>
 
+            <!-- Plugin Download -->
+            <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 4px; padding: 16px; margin: 20px 0;">
+                <p style="margin: 0 0 8px; font-size: 13px; font-weight: bold; color: #0f4a42; text-transform: uppercase; letter-spacing: 1px;">&#x2193; Download Your Plugins</p>
+                <p style="margin: 0 0 12px; font-size: 12px; color: #555; line-height: 1.5;">
+                    Access the Activation Portal to download your .qplugx plugin files and retrieve your license keys at any time.
+                </p>
+                <a href="${activationLink}" style="display: inline-block; background-color: #0f4a42; color: #fff; text-decoration: none; font-family: sans-serif; font-weight: bold; font-size: 12px; padding: 10px 20px; border-radius: 4px; text-transform: uppercase; letter-spacing: 1px;">
+                    Download Plugins
+                </a>
+            </div>
+
             <!-- Footer -->
             <p style="font-size: 11px; color: #888; border-top: 1px solid #ddd; padding-top: 16px; margin-top: 24px; line-height: 1.6;">
                 BVFactory &mdash; Show Control Division<br/>

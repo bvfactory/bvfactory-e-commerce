@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Key, ShieldCheck, Search, Loader2, Cpu, CheckCircle2 } from "lucide-react";
+import { Key, ShieldCheck, Search, Loader2, Cpu, CheckCircle2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSearchParams } from "next/navigation";
@@ -79,6 +79,34 @@ function ActivationPortalInner() {
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
         toast.success("License key copied to clipboard");
+    };
+
+    const [downloading, setDownloading] = useState<string | null>(null);
+
+    const handleDownload = async (productId: string) => {
+        if (!codeInput && !initialCode) return;
+        setDownloading(productId);
+        try {
+            const res = await fetch("/api/download", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    activationCode: (initialCode || codeInput).toUpperCase().trim(),
+                    productId,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                toast.error(data.error || "Download failed");
+                return;
+            }
+            // Trigger browser download
+            window.open(data.url, "_blank");
+        } catch {
+            toast.error("Download failed");
+        } finally {
+            setDownloading(null);
+        }
     };
 
     return (
@@ -243,13 +271,29 @@ function ActivationPortalInner() {
                                         </div>
 
                                         {/* Deployment Instructions Strip */}
-                                        <div className="bg-slate-900 px-6 py-4 flex items-center justify-between border-t border-white/5">
-                                            <p className="text-xs text-slate-400">
-                                                Deploy this via <span className="text-white font-mono">Q-SYS Designer {'>'} Plugin Properties</span>
+                                        <div className="bg-slate-900 px-6 py-4 flex items-center justify-between border-t border-white/5 gap-2">
+                                            <p className="text-xs text-slate-400 hidden sm:block">
+                                                Deploy via <span className="text-white font-mono">Q-SYS Designer {'>'} Plugin Properties</span>
                                             </p>
-                                            <Button variant="outline" size="sm" className="bg-transparent border-white/10 text-white font-mono text-[10px] uppercase tracking-wider hover:bg-white/5 hover:text-white" onClick={() => license.licenseKey && copyToClipboard(license.licenseKey)}>
-                                                Copy Key
-                                            </Button>
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="bg-teal-600/20 border-teal-500/30 text-teal-400 font-mono text-[10px] uppercase tracking-wider hover:bg-teal-600/30 hover:text-teal-300"
+                                                    onClick={() => handleDownload(license.product.id)}
+                                                    disabled={downloading === license.product.id}
+                                                >
+                                                    {downloading === license.product.id ? (
+                                                        <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
+                                                    ) : (
+                                                        <Download className="w-3 h-3 mr-1.5" />
+                                                    )}
+                                                    Download Plugin
+                                                </Button>
+                                                <Button variant="outline" size="sm" className="bg-transparent border-white/10 text-white font-mono text-[10px] uppercase tracking-wider hover:bg-white/5 hover:text-white" onClick={() => license.licenseKey && copyToClipboard(license.licenseKey)}>
+                                                    Copy Key
+                                                </Button>
+                                            </div>
                                         </div>
                                     </motion.div>
                                 ))}

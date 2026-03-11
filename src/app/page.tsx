@@ -7,10 +7,12 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import Link from "next/link";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { ArrowRight, Cpu, Shield, Zap, Globe, ChevronDown, HelpCircle } from "lucide-react";
+import { BVFactoryLogo } from "@/components/BVFactoryLogo";
 import { useState } from "react";
 import { Footer } from "@/components/Footer";
 
 import { MOCK_PRODUCTS, getProductIcon } from "@/data/products";
+import { VideoShowcase } from "@/components/VideoShowcase";
 
 const HOMEPAGE_FAQ = [
   {
@@ -110,11 +112,22 @@ export default function Home() {
       <section className="relative z-10 pt-20 pb-16 md:pt-32 md:pb-24 px-6">
         <div className="max-w-6xl mx-auto text-center">
 
+          {/* Logo */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.05, type: "spring", stiffness: 100 }}
+            className="relative inline-block mb-8"
+          >
+            <div className="absolute inset-0 bg-teal-500/20 blur-[60px] rounded-full scale-150" />
+            <BVFactoryLogo className="h-24 w-24 md:h-32 md:w-32 relative drop-shadow-[0_0_30px_rgba(20,184,166,0.3)]" />
+          </motion.div>
+
           {/* Status badge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.15 }}
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 mb-8"
           >
             <span className="w-2 h-2 rounded-full bg-teal-400 animate-status-blink" />
@@ -125,7 +138,7 @@ export default function Home() {
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 80 }}
+            transition={{ delay: 0.25, type: "spring", stiffness: 80 }}
             className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white leading-[1.05] mb-6"
           >
             <span className="block">Professional</span>
@@ -138,7 +151,7 @@ export default function Home() {
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
+            transition={{ delay: 0.4 }}
             className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-light leading-relaxed mb-12"
           >
             Enterprise-grade audio processing, intelligent routing, and show automation
@@ -149,7 +162,7 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
+            transition={{ delay: 0.5 }}
             className="flex flex-col sm:flex-row gap-4 items-center justify-center mb-16"
           >
             <Link href="/plugins">
@@ -171,7 +184,7 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.55 }}
+            transition={{ delay: 0.6 }}
             className="flex flex-wrap items-center justify-center gap-8 md:gap-12"
           >
             {stats.map((stat, i) => (
@@ -186,6 +199,9 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+
+      {/* === VIDEO SHOWCASE === */}
+      <VideoShowcase />
 
       {/* === PLUGINS GRID === */}
       <section id="plugins" className="relative z-10 py-20 px-6">

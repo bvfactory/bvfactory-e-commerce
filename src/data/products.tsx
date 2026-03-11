@@ -34,6 +34,7 @@ export interface ProductType {
         os?: string;
     };
     versionHistory: VersionHistory[];
+    pluginFileName?: string;
     manualUrl?: string;
     videoUrl?: string;
     screenshots?: string[];
@@ -54,6 +55,7 @@ export const PRODUCT_CATEGORIES = [
 export const MOCK_PRODUCTS: ProductType[] = [
     {
         id: "lightforge",
+        pluginFileName: "lightforge.qplugx",
         name: "LIGHTFORGE",
         tagline: "Forge your light, master every universe.",
         description: "Record and play back up to 32 universes of DMX — Art-Net and sACN — directly inside Q-SYS. One plugin, instant save, instant load.",
@@ -128,6 +130,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
     },
     {
         id: "showmind",
+        pluginFileName: "showmind.qplugx",
         name: "SHOWMIND",
         tagline: "Professional show control engine for Q-SYS.",
         description: "Cue-based automation, multi-protocol actions, timecode sync, and a built-in web dashboard — all inside a single plugin.",
@@ -230,6 +233,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
     },
     {
         id: "iiyamabridge",
+        pluginFileName: "iiyamabridge.qplugx",
         name: "IIYAMABRIDGE",
         tagline: "Iiyama IP control for Q-SYS — simple, reliable, free.",
         description: "Control Iiyama ProLite displays directly from Q-SYS over TCP/SICP. Power, input selection, volume, and status polling — no extra hardware, no extra software.",
@@ -305,6 +309,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
     },
     {
         id: "webbridge",
+        pluginFileName: "webbridge.qplugx",
         name: "WEBBRIDGE",
         tagline: "Control your Q-SYS Named Controls from any browser.",
         description: "Turn your Q-SYS Core into a lightweight web server. Open a URL from any device on the network and get instant access to your Named Controls — faders, buttons, text fields — all synced in real time.",
@@ -382,6 +387,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
     },
     {
         id: "avaccessbridge",
+        pluginFileName: "avaccessbridge.qplugx",
         name: "AVACCESSBRIDGE",
         tagline: "AV-over-IP matrix control for Q-SYS — route, discover, display.",
         description: "Take full control of your AV Access 4KIP200 encoder/decoder system directly from Q-SYS. Matrix routing, auto-discovery, display control, video walls, and OSD overlays — all from a single plugin.",
@@ -462,6 +468,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
     },
     {
         id: "melcloudbridge",
+        pluginFileName: "melcloudbridge.qplugx",
         name: "MELCLOUDBRIDGE",
         tagline: "Mitsubishi HVAC control for Q-SYS — cloud-connected, zero hardware.",
         description: "Control up to 64 Mitsubishi Electric air conditioning units directly from Q-SYS via the MELCloud platform. Power, mode, temperature, fan speed, vane position — all per unit, all as Control Pins.",
@@ -542,6 +549,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
     },
     {
         id: "madbridge",
+        pluginFileName: "madbridge.qplugx",
         name: "MADBRIDGE",
         tagline: "MadMapper control for Q-SYS — surfaces, scenes, cues, all via OSC.",
         description: "Control MadMapper directly from Q-SYS over OSC. Surfaces, scenes, cues, master controls, and preset store/recall — up to 4 instances from a single plugin.",
@@ -622,6 +630,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
     },
     {
         id: "resolumebridge",
+        pluginFileName: "resolumebridge.qplugx",
         name: "RESOLUMEBRIDGE",
         tagline: "Resolume Arena control for Q-SYS — clean REST API, no middleware.",
         description: "Control Resolume Arena directly from Q-SYS over its built-in REST API. Layers, clips, columns, composition master — real-time bidirectional sync with auto-reconnect.",
@@ -702,6 +711,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
     },
     {
         id: "soundforge",
+        pluginFileName: "soundforge.qplugx",
         name: "SOUNDFORGE",
         tagline: "64-track audio playback engine for Q-SYS — shows, themes, immersion.",
         description: "Multitrack audio playback with scene management, crossfades, ducking, condition engine, and timecode sync. Built for themed entertainment, immersive experiences, and live shows.",
@@ -786,6 +796,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
     },
     {
         id: "huebridge",
+        pluginFileName: "huebridge.qplugx",
         name: "HUEBRIDGE",
         tagline: "Philips Hue control for Q-SYS — local, reliable, simple.",
         description: "Control your Philips Hue lights and scenes straight from Q-SYS. Per-light brightness, scene recall, master controls, and auto-discovery — all via the local Hue Bridge API.",
