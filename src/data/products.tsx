@@ -60,7 +60,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
         tagline: "Forge your light, master every universe.",
         description: "Record and play back up to 32 universes of DMX — Art-Net and sACN — directly inside Q-SYS. One plugin, instant save, instant load.",
         longDescription: "LightForge captures live DMX data from your lighting console or any Art-Net/sACN source, and plays it back on demand. Up to 32 independent tracks, each with its own universe, protocol, and destination. Record a full show once, replay it forever.\n\nTraditional DMX recording solutions cost thousands and require dedicated hardware. LightForge runs natively on your Q-SYS Core — the same platform already handling your audio, video, and control. Add an Art-Net or sACN node to convert to physical DMX, and you're done. No dedicated PC, no rack-mount recorder, no additional maintenance contract.\n\nPair it with any affordable Art-Net/sACN node and you have the most cost-effective DMX recording solution on the market. And it lives where your show control already does.",
-        price_cents: 49900,
+        price_cents: 35000,
         iconName: "Flame",
         category: "lighting",
         features: [
@@ -135,7 +135,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
         tagline: "Professional show control engine for Q-SYS.",
         description: "Cue-based automation, multi-protocol actions, timecode sync, and a built-in web dashboard — all inside a single plugin.",
         longDescription: "ShowMind turns your Q-SYS Core into a full show control system. Build cue sequences with up to 8 actions per cue — each targeting a different protocol, device, or internal function. Fire cues manually, chase them against timecode, schedule them by time of day, or trigger them from incoming OSC, UDP, MIDI, RS-232, or webhooks.\n\nEvery device connection is managed through a resilient Device Abstraction Layer with automatic failover, heartbeat monitoring, and latency tracking. If a primary link goes down, ShowMind switches to the backup path and retries — no operator intervention needed.\n\nThe plugin ships with a built-in web dashboard accessible from any browser on the network. Full transport control, cue editing, device status, variable monitoring, and live timecode display — all rendered in a responsive dark interface with real-time SSE updates. No external software required.",
-        price_cents: 79900,
+        price_cents: 45000,
         iconName: "Clapperboard",
         category: "show-control",
         features: [
