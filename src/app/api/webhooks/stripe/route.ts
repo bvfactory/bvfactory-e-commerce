@@ -73,7 +73,7 @@ export async function POST(req: Request) {
                 const coreId = item.coreId || "UNKNOWN";
                 const productId = item.product?.id || "UNKNOWN";
 
-                const { licenseKey, salt, keyHash } = generateLicenseKey(productId, coreId);
+                const { licenseKey, salt, keyHash, algorithmVersion } = generateLicenseKey(productId, coreId);
 
                 itemsWithLicenses.push({
                     ...item,
@@ -88,6 +88,7 @@ export async function POST(req: Request) {
                     license_key: licenseKey,
                     key_hash: keyHash,
                     salt: salt,
+                    algorithm_version: algorithmVersion,
                     status: "active",
                 });
             }

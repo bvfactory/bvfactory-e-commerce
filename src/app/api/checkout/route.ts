@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateLicenseKey, generateActivationCode } from "@/lib/license";
 import { sendOrderConfirmation } from "@/lib/email";
+import { getEffectivePrice } from "@/lib/product-settings";
 import Stripe from "stripe";
 
 export async function POST(req: Request) {
@@ -62,8 +63,19 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Erreur lors de la création de la commande" }, { status: 500 });
         }
 
-        // 2. Check if all items are free (base price = 0 OR 100% discount) — skip Stripe entirely
-        const allFree = items.every((item: { product: { price_cents: number } }) => item.product.price_cents === 0);
+        // 2. Server-side price verification — never trust client-sent prices
+        const verifiedItems = await Promise.all(
+            items.map(async (item: { product: { id: string; name: string; description: string; price_cents: number; iconName: string }; coreId: string }) => {
+                const serverPrice = await getEffectivePrice(item.product.id);
+                return {
+                    ...item,
+                    product: { ...item.product, price_cents: serverPrice },
+                };
+            })
+        );
+
+        // Replace items with verified prices for all downstream logic
+        const allFree = verifiedItems.every((item) => item.product.price_cents === 0);
         const effectivelyFree = allFree || appliedDiscountPercent === 100;
 
         if (effectivelyFree) {
@@ -73,7 +85,7 @@ export async function POST(req: Request) {
                     d_code: discountCode.toUpperCase().trim()
                 });
             }
-            return await handleFreeOrder(supabase, order, items, email);
+            return await handleFreeOrder(supabase, order, verifiedItems, email);
         }
 
         // 3. Call Stripe API to create Checkout Session for paid items
@@ -88,9 +100,9 @@ export async function POST(req: Request) {
             apiVersion: '2026-02-25.clover'
         });
 
-        const lineItems = items
-            .filter((item: { product: { price_cents: number } }) => item.product.price_cents > 0)
-            .map((item: { product: { name: string; description: string; price_cents: number; }; coreId: string; }) => ({
+        const lineItems = verifiedItems
+            .filter((item) => item.product.price_cents > 0)
+            .map((item) => ({
                 price_data: {
                     currency: finalCurrency.toLowerCase(),
                     product_data: {
@@ -160,7 +172,7 @@ async function handleFreeOrder(supabase: any, order: any, items: FreeOrderItem[]
 
     // Insert individual license records
     for (const item of itemsWithLicenses) {
-        const { licenseKey, salt, keyHash } = generateLicenseKey(item.product.id, item.coreId);
+        const { licenseKey, salt, keyHash, algorithmVersion } = generateLicenseKey(item.product.id, item.coreId);
         // Use the freshly generated key (not the one from map above) so salt/hash are consistent
         item.licenseKey = licenseKey;
 
@@ -171,6 +183,7 @@ async function handleFreeOrder(supabase: any, order: any, items: FreeOrderItem[]
             license_key: licenseKey,
             key_hash: keyHash,
             salt: salt,
+            algorithm_version: algorithmVersion,
             status: "active",
         });
     }
