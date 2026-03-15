@@ -17,6 +17,11 @@ import {
   ChevronDown,
   Cpu,
   DollarSign,
+  Download,
+  ExternalLink,
+  FileText,
+  HardDrive,
+  ImagePlus,
   List,
   Loader2,
   Plus,
@@ -26,7 +31,9 @@ import {
   Check,
   Trash2,
   Type,
+  Upload,
   Users,
+  X,
 } from "lucide-react";
 
 interface ProductSettings {
@@ -48,6 +55,11 @@ export default function ProductDetailPage() {
   const [settings, setSettings] = useState<ProductSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [pluginInfo, setPluginInfo] = useState<{
+    uploaded: boolean;
+    fileSize: number | null;
+    updatedAt: string | null;
+  } | null>(null);
   const [openSections, setOpenSections] = useState<string[]>([
     "pricing",
     "general",
@@ -55,7 +67,10 @@ export default function ProductDetailPage() {
 
   const fetchProduct = useCallback(async () => {
     try {
-      const res = await fetch(`/api/admin/products/${id}`);
+      const [res, pluginsRes] = await Promise.all([
+        fetch(`/api/admin/products/${id}`),
+        fetch("/api/admin/plugins"),
+      ]);
       if (!res.ok) {
         setError(true);
         return;
@@ -63,6 +78,22 @@ export default function ProductDetailPage() {
       const data = await res.json();
       setProduct(data.product);
       setSettings(data.settings);
+
+      if (pluginsRes.ok) {
+        const pluginsData = await pluginsRes.json();
+        const thisPlugin = pluginsData.plugins?.find(
+          (p: { productId: string }) => p.productId === id
+        );
+        setPluginInfo(
+          thisPlugin
+            ? {
+                uploaded: thisPlugin.uploaded,
+                fileSize: thisPlugin.fileSize,
+                updatedAt: thisPlugin.updatedAt,
+              }
+            : null
+        );
+      }
     } catch {
       setError(true);
     } finally {
@@ -177,6 +208,33 @@ export default function ProductDetailPage() {
       <BrandsSection
         product={product}
         settings={settings}
+        openSections={openSections}
+        toggleSection={toggleSection}
+        onRefetch={fetchProduct}
+      />
+
+      {/* Section 8: Images & Screenshots */}
+      <ScreenshotsSection
+        product={product}
+        settings={settings}
+        openSections={openSections}
+        toggleSection={toggleSection}
+        onRefetch={fetchProduct}
+      />
+
+      {/* Section 9: Manuel */}
+      <ManualSection
+        product={product}
+        settings={settings}
+        openSections={openSections}
+        toggleSection={toggleSection}
+        onRefetch={fetchProduct}
+      />
+
+      {/* Section 10: Fichier Plugin (.qplugx) */}
+      <PluginFileSection
+        product={product}
+        pluginInfo={pluginInfo}
         openSections={openSections}
         toggleSection={toggleSection}
         onRefetch={fetchProduct}
@@ -1198,6 +1256,485 @@ function BrandsSection({
               <RotateCcw className="w-4 h-4 mr-2" />
               Réinitialiser
             </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section 8: Images & Screenshots
+// ---------------------------------------------------------------------------
+
+function ScreenshotsSection({
+  product,
+  settings,
+  openSections,
+  toggleSection,
+  onRefetch,
+}: SectionProps) {
+  const content = (settings?.content ?? {}) as Record<string, unknown>;
+  const initScreenshots =
+    (content.screenshots as string[] | undefined) ??
+    product.screenshots ??
+    [];
+
+  const [screenshots, setScreenshots] = useState<string[]>(initScreenshots);
+  const [uploadingScreenshots, setUploadingScreenshots] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  useEffect(() => {
+    const c = (settings?.content ?? {}) as Record<string, unknown>;
+    setScreenshots(
+      (c.screenshots as string[] | undefined) ?? product.screenshots ?? []
+    );
+  }, [settings, product.screenshots]);
+
+  async function handleScreenshotUpload(
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingScreenshots(true);
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const formData = new FormData();
+        formData.append("type", "screenshot");
+        formData.append("file", files[i]);
+        await fetch(`/api/admin/products/${product.id}/assets`, {
+          method: "POST",
+          body: formData,
+        });
+      }
+      await onRefetch();
+    } finally {
+      setUploadingScreenshots(false);
+      e.target.value = "";
+    }
+  }
+
+  async function handleDeleteScreenshot(url: string) {
+    await fetch(`/api/admin/products/${product.id}/assets`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "screenshot", url }),
+    });
+    await onRefetch();
+  }
+
+  async function handleReset() {
+    setResetting(true);
+    try {
+      await fetch(`/api/admin/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: { screenshots: null } }),
+      });
+      await onRefetch();
+    } finally {
+      setResetting(false);
+    }
+  }
+
+  return (
+    <div className="border border-border/50 rounded-xl bg-card/50 overflow-hidden">
+      <button
+        onClick={() => toggleSection("screenshots")}
+        className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+      >
+        <h2 className="font-semibold text-foreground flex items-center gap-2">
+          <ImagePlus className="w-4 h-4 text-primary" />
+          Images &amp; Screenshots
+        </h2>
+        <ChevronDown
+          className={cn(
+            "w-4 h-4 text-muted-foreground transition-transform",
+            openSections.includes("screenshots") && "rotate-180"
+          )}
+        />
+      </button>
+      {openSections.includes("screenshots") && (
+        <div className="p-5 pt-0 border-t border-border/50 space-y-4">
+          {/* Thumbnail grid */}
+          {screenshots.length > 0 && (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              {screenshots.map((url, i) => (
+                <div key={i} className="relative group">
+                  <img
+                    src={url}
+                    alt={`Screenshot ${i + 1}`}
+                    className="aspect-square object-cover rounded-lg w-full"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteScreenshot(url)}
+                    className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Upload drop zone */}
+          <label className="border-2 border-dashed border-border/50 rounded-xl p-8 flex flex-col items-center gap-2 cursor-pointer hover:border-primary/50 transition-colors">
+            {uploadingScreenshots ? (
+              <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
+            ) : (
+              <ImagePlus className="w-8 h-8 text-muted-foreground" />
+            )}
+            <span className="text-sm text-muted-foreground">
+              Cliquer ou glisser des images ici
+            </span>
+            <span className="text-xs text-muted-foreground">
+              PNG, JPEG, WebP — max 5 Mo par image
+            </span>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              multiple
+              className="hidden"
+              onChange={handleScreenshotUpload}
+              disabled={uploadingScreenshots}
+            />
+          </label>
+
+          {/* Reset */}
+          <div className="flex items-center gap-3 pt-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleReset}
+              disabled={resetting}
+            >
+              {resetting ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <RotateCcw className="w-4 h-4 mr-2" />
+              )}
+              Réinitialiser
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section 9: Manuel
+// ---------------------------------------------------------------------------
+
+function ManualSection({
+  product,
+  settings,
+  openSections,
+  toggleSection,
+  onRefetch,
+}: SectionProps) {
+  const content = (settings?.content ?? {}) as Record<string, unknown>;
+  const initManualUrl =
+    (content.manualUrl as string | undefined) ?? product.manualUrl ?? null;
+
+  const [manualUrl, setManualUrl] = useState<string | null>(initManualUrl);
+  const [uploadingManual, setUploadingManual] = useState(false);
+
+  useEffect(() => {
+    const c = (settings?.content ?? {}) as Record<string, unknown>;
+    setManualUrl(
+      (c.manualUrl as string | undefined) ?? product.manualUrl ?? null
+    );
+  }, [settings, product.manualUrl]);
+
+  const hasManual = manualUrl && manualUrl !== "#";
+
+  async function handleManualUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingManual(true);
+    try {
+      const formData = new FormData();
+      formData.append("type", "manual");
+      formData.append("file", file);
+      await fetch(`/api/admin/products/${product.id}/assets`, {
+        method: "POST",
+        body: formData,
+      });
+      await onRefetch();
+    } finally {
+      setUploadingManual(false);
+      e.target.value = "";
+    }
+  }
+
+  async function handleDeleteManual() {
+    if (!manualUrl) return;
+    await fetch(`/api/admin/products/${product.id}/assets`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "manual", url: manualUrl }),
+    });
+    await onRefetch();
+  }
+
+  return (
+    <div className="border border-border/50 rounded-xl bg-card/50 overflow-hidden">
+      <button
+        onClick={() => toggleSection("manual")}
+        className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+      >
+        <h2 className="font-semibold text-foreground flex items-center gap-2">
+          <FileText className="w-4 h-4 text-primary" />
+          Manuel
+        </h2>
+        <ChevronDown
+          className={cn(
+            "w-4 h-4 text-muted-foreground transition-transform",
+            openSections.includes("manual") && "rotate-180"
+          )}
+        />
+      </button>
+      {openSections.includes("manual") && (
+        <div className="p-5 pt-0 border-t border-border/50 space-y-4">
+          {hasManual ? (
+            <div className="flex items-center gap-3 flex-wrap">
+              <a
+                href={manualUrl!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline truncate max-w-xs flex items-center gap-1"
+              >
+                <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                {manualUrl!.length > 50
+                  ? manualUrl!.slice(0, 50) + "..."
+                  : manualUrl}
+              </a>
+              <a
+                href={manualUrl!}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  Télécharger
+                </Button>
+              </a>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={handleDeleteManual}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Supprimer
+              </Button>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Aucun manuel uploadé
+            </p>
+          )}
+
+          {/* Upload */}
+          <div>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={uploadingManual}
+              onClick={() =>
+                (document.getElementById("manual-upload") as HTMLInputElement)?.click()
+              }
+            >
+              {uploadingManual ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Upload className="w-4 h-4 mr-2" />
+              )}
+              {hasManual ? "Remplacer le manuel" : "Uploader un manuel"}
+            </Button>
+            <input
+              id="manual-upload"
+              type="file"
+              accept=".pdf"
+              className="hidden"
+              onChange={handleManualUpload}
+              disabled={uploadingManual}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section 10: Fichier Plugin (.qplugx)
+// ---------------------------------------------------------------------------
+
+function PluginFileSection({
+  product,
+  pluginInfo,
+  openSections,
+  toggleSection,
+  onRefetch,
+}: {
+  product: ProductType;
+  pluginInfo: {
+    uploaded: boolean;
+    fileSize: number | null;
+    updatedAt: string | null;
+  } | null;
+  openSections: string[];
+  toggleSection: (id: string) => void;
+  onRefetch: () => Promise<void>;
+}) {
+  const [uploadingPlugin, setUploadingPlugin] = useState(false);
+
+  function formatFileSize(bytes: number | null) {
+    if (!bytes) return "\u2014";
+    if (bytes < 1024) return `${bytes} o`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+  }
+
+  async function handlePluginUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingPlugin(true);
+    try {
+      const formData = new FormData();
+      formData.append("productId", product.id);
+      formData.append("file", file);
+      await fetch("/api/admin/plugins", {
+        method: "POST",
+        body: formData,
+      });
+      await onRefetch();
+    } finally {
+      setUploadingPlugin(false);
+      e.target.value = "";
+    }
+  }
+
+  async function handleDeletePlugin() {
+    await fetch("/api/admin/plugins", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId: product.id }),
+    });
+    await onRefetch();
+  }
+
+  return (
+    <div className="border border-border/50 rounded-xl bg-card/50 overflow-hidden">
+      <button
+        onClick={() => toggleSection("plugin-file")}
+        className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+      >
+        <h2 className="font-semibold text-foreground flex items-center gap-2">
+          <HardDrive className="w-4 h-4 text-primary" />
+          Fichier Plugin (.qplugx)
+        </h2>
+        <ChevronDown
+          className={cn(
+            "w-4 h-4 text-muted-foreground transition-transform",
+            openSections.includes("plugin-file") && "rotate-180"
+          )}
+        />
+      </button>
+      {openSections.includes("plugin-file") && (
+        <div className="p-5 pt-0 border-t border-border/50 space-y-4">
+          {/* Status */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Statut :</span>
+              {pluginInfo?.uploaded ? (
+                <Badge
+                  variant="outline"
+                  className="text-emerald-500 border-emerald-500/30"
+                >
+                  Uploadé
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-muted-foreground">
+                  Non uploadé
+                </Badge>
+              )}
+            </div>
+            {pluginInfo?.uploaded && (
+              <>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground">Taille :</span>
+                  <span>{formatFileSize(pluginInfo.fileSize)}</span>
+                </div>
+                {pluginInfo.updatedAt && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">
+                      Dernière mise à jour :
+                    </span>
+                    <span>
+                      {new Date(pluginInfo.updatedAt).toLocaleDateString(
+                        "fr-FR",
+                        {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }
+                      )}
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-3">
+            <div>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={uploadingPlugin}
+                onClick={() =>
+                  (document.getElementById("plugin-upload") as HTMLInputElement)?.click()
+                }
+              >
+                {uploadingPlugin ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <Upload className="w-4 h-4 mr-2" />
+                )}
+                {pluginInfo?.uploaded
+                  ? "Remplacer le fichier"
+                  : "Uploader le fichier"}
+              </Button>
+              <input
+                id="plugin-upload"
+                type="file"
+                accept=".qplugx"
+                className="hidden"
+                onChange={handlePluginUpload}
+                disabled={uploadingPlugin}
+              />
+            </div>
+            {pluginInfo?.uploaded && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={handleDeletePlugin}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Supprimer
+              </Button>
+            )}
           </div>
         </div>
       )}
