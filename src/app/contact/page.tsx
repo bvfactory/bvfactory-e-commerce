@@ -191,6 +191,7 @@ export default function ContactPage() {
                                         <motion.div
                                             initial={{ opacity: 0, height: 0 }}
                                             animate={{ opacity: 1, height: "auto" }}
+                                            role="alert"
                                             className="text-red-400 font-mono text-[10px] bg-red-500/10 p-3 rounded border border-red-500/20 uppercase leading-relaxed"
                                         >
                                             {error}
@@ -201,7 +202,7 @@ export default function ContactPage() {
                                     <Button
                                         type="submit"
                                         disabled={isSending}
-                                        className="w-full h-14 cta-gradient text-white font-bold tracking-widest uppercase text-sm border-0 flex items-center justify-center gap-2 group animate-glow-pulse"
+                                        className="w-full h-14 cta-gradient text-white font-bold tracking-widest uppercase text-sm border-0 flex items-center justify-center gap-2 group animate-glow-pulse cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050d1a]"
                                     >
                                         {isSending ? (
                                             <>

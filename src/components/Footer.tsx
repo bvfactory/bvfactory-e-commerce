@@ -15,12 +15,12 @@ export function Footer() {
                             <span className="text-[9px] text-slate-500 uppercase font-mono tracking-widest block">Show Control Division</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-8 text-xs font-mono text-slate-500 uppercase tracking-wider">
-                        <Link href="/plugins" className="hover:text-teal-400 transition-colors">Store</Link>
-                        <Link href="/about" className="hover:text-teal-400 transition-colors">About</Link>
-                        <Link href="/activation" className="hover:text-teal-400 transition-colors">Activation</Link>
-                        <Link href="/contact" className="hover:text-teal-400 transition-colors">Contact</Link>
-                    </div>
+                    <nav className="flex items-center gap-2 text-xs font-mono text-slate-500 uppercase tracking-wider" aria-label="Footer navigation">
+                        <Link href="/plugins" className="px-3 py-2 rounded-lg hover:text-teal-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50">Store</Link>
+                        <Link href="/about" className="px-3 py-2 rounded-lg hover:text-teal-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50">About</Link>
+                        <Link href="/activation" className="px-3 py-2 rounded-lg hover:text-teal-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50">Activation</Link>
+                        <Link href="/contact" className="px-3 py-2 rounded-lg hover:text-teal-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50">Contact</Link>
+                    </nav>
                     <p className="text-[10px] font-mono text-slate-600 tracking-wider">
                         &copy; {new Date().getFullYear()} BVFactory. All rights reserved.
                     </p>

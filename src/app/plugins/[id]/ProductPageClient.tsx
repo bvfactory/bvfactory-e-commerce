@@ -245,9 +245,11 @@ export default function ProductPageClient() {
                                     <h4 className="text-sm font-mono text-teal-400 uppercase tracking-widest mb-4">Interface Preview</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {product.screenshots.map((src, idx) => (
-                                            <div
+                                            <button
                                                 key={idx}
-                                                className="relative group aspect-video rounded-xl overflow-hidden border border-white/10 cursor-pointer"
+                                                type="button"
+                                                aria-label={`Enlarge ${product.name} screenshot ${idx + 1}`}
+                                                className="relative group aspect-video rounded-xl overflow-hidden border border-white/10 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050d1a]"
                                                 onClick={() => setSelectedImage(src)}
                                             >
                                                 <div className="absolute inset-0 bg-teal-500/20 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center">
@@ -259,7 +261,7 @@ export default function ProductPageClient() {
                                                     fill
                                                     className="object-cover transition-transform duration-700 group-hover:scale-110 blur-[2px] group-hover:blur-none"
                                                 />
-                                            </div>
+                                            </button>
                                         ))}
                                     </div>
                                 </div>
@@ -282,7 +284,8 @@ export default function ProductPageClient() {
                                         <div key={i} className="border border-white/5 rounded-xl overflow-hidden">
                                             <button
                                                 onClick={() => setOpenFaqIndex(openFaqIndex === i ? null : i)}
-                                                className="w-full flex items-center justify-between p-4 text-left hover:bg-white/[0.02] transition-colors"
+                                                aria-expanded={openFaqIndex === i}
+                                                className="w-full flex items-center justify-between p-4 text-left hover:bg-white/[0.02] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050d1a] rounded-xl"
                                             >
                                                 <span className="text-sm font-medium text-slate-200 pr-4">{faqItem.question}</span>
                                                 <motion.div
@@ -374,7 +377,7 @@ export default function ProductPageClient() {
 
                                 <Button
                                     onClick={() => setIsCheckoutOpen(true)}
-                                    className="w-full h-14 cta-gradient text-white font-bold tracking-widest uppercase text-sm mb-4 border-0 animate-glow-pulse"
+                                    className="w-full h-14 cta-gradient text-white font-bold tracking-widest uppercase text-sm mb-4 border-0 animate-glow-pulse cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050d1a]"
                                 >
                                     {product.price_cents === 0 ? "Get Free License" : "Add to Cart"}
                                 </Button>
@@ -459,7 +462,7 @@ export default function ProductPageClient() {
                         <h3 className="text-xl font-bold text-white mb-8 uppercase tracking-wide text-center">Other Modules</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {relatedProducts.map((rp) => (
-                                <Link key={rp.id} href={`/plugins/${rp.id}`} className="block group">
+                                <Link key={rp.id} href={`/plugins/${rp.id}`} className="block group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded-2xl">
                                     <motion.div
                                         whileHover={{ y: -4 }}
                                         className="glass-panel rounded-2xl p-6 flex items-center gap-5 group-hover:border-teal-500/20 transition-colors"
@@ -473,7 +476,7 @@ export default function ProductPageClient() {
                                         </div>
                                         <div className="text-right flex-shrink-0">
                                             <p className={`font-mono font-bold ${rp.price_cents === 0 ? 'text-teal-400' : 'text-white'}`}>{isLoading ? "..." : formatPrice(rp.price_cents)}</p>
-                                            <ArrowRight className="w-4 h-4 text-teal-500 opacity-0 group-hover:opacity-100 transition-opacity ml-auto" />
+                                            <ArrowRight className="w-4 h-4 text-teal-500 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity ml-auto" />
                                         </div>
                                     </motion.div>
                                 </Link>
@@ -536,7 +539,8 @@ export default function ProductPageClient() {
                             <Image src={selectedImage} alt="Enlarged screenshot" fill className="object-contain" />
                             <button
                                 onClick={() => setSelectedImage(null)}
-                                className="absolute top-4 right-4 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 backdrop-blur-md border border-white/20 transition-colors"
+                                aria-label="Close image viewer"
+                                className="absolute top-4 right-4 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 backdrop-blur-md border border-white/20 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50"
                             >
                                 <X className="w-5 h-5" />
                             </button>

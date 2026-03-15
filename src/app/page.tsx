@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import Link from "next/link";
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { ArrowRight, Cpu, Shield, Zap, Globe, ChevronDown, HelpCircle } from "lucide-react";
+import { ArrowRight, ChevronDown, HelpCircle, Shield } from "lucide-react";
 import { BVFactoryLogo } from "@/components/BVFactoryLogo";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Footer } from "@/components/Footer";
 
 import { MOCK_PRODUCTS, getProductIcon } from "@/data/products";
@@ -40,29 +40,42 @@ const HOMEPAGE_FAQ = [
 export default function Home() {
   const { formatPrice, isLoading } = useCurrency();
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  const noMotion = prefersReducedMotion;
 
   const container: Variants = {
-    hidden: { opacity: 0 },
+    hidden: noMotion ? {} : { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.12, delayChildren: 0.3 }
+      transition: noMotion ? {} : { staggerChildren: 0.12, delayChildren: 0.3 }
     }
   };
 
   const item: Variants = {
-    hidden: { opacity: 0, y: 30 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 20 } }
+    hidden: noMotion ? {} : { opacity: 0, y: 30 },
+    show: noMotion ? {} : { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 20 } }
   };
 
-  const stats = [
-    { icon: <Cpu className="w-4 h-4" />, label: "Cores Supported", value: "500+" },
-    { icon: <Shield className="w-4 h-4" />, label: "Uptime", value: "99.99%" },
-    { icon: <Zap className="w-4 h-4" />, label: "Avg Latency", value: "<0.5ms" },
-    { icon: <Globe className="w-4 h-4" />, label: "Countries", value: "45+" },
-  ];
 
   return (
     <div className="flex min-h-screen flex-col font-sans selection:bg-teal-500/30 overflow-x-hidden bg-[#050d1a]">
+
+      {/* Skip to content */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:bg-teal-500 focus:text-slate-900 focus:rounded-lg focus:text-sm focus:font-bold"
+      >
+        Skip to main content
+      </a>
 
       {/* === BACKGROUND SYSTEM === */}
       <div className="fixed inset-0 z-0 pointer-events-none">
@@ -79,18 +92,15 @@ export default function Home() {
 
         {/* Scanlines */}
         <div className="absolute inset-0 overflow-hidden">
-          {/* Primary scanline — bright, slow */}
+          {/* Primary scanline */}
           <div className="absolute w-full h-[1px] bg-gradient-to-r from-transparent via-teal-400 to-transparent opacity-[0.07]" style={{ animation: 'scanline 6s linear infinite' }} />
-          {/* Secondary scanline — dimmer, offset */}
-          <div className="absolute w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-300 to-transparent opacity-[0.04]" style={{ animation: 'scanline 9s linear infinite', animationDelay: '3s' }} />
-          {/* Wide glow band that follows the primary line */}
+          {/* Wide glow band */}
           <div className="absolute w-full h-[60px] bg-gradient-to-r from-transparent via-teal-500/[0.03] to-transparent blur-sm" style={{ animation: 'scanline 6s linear infinite' }} />
         </div>
 
         {/* Horizontal accent lines (static, architectural) */}
         <div className="absolute top-[20%] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
         <div className="absolute top-[55%] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-teal-400/[0.04] to-transparent" />
-        <div className="absolute top-[85%] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/[0.02] to-transparent" />
 
         {/* Corner accents */}
         <div className="absolute top-6 left-6 w-16 h-16 border-l border-t border-teal-500/10" />
@@ -102,14 +112,12 @@ export default function Home() {
         <div className="absolute w-1 h-1 rounded-full bg-teal-400/30 top-[15%] left-[10%] animate-float" />
         <div className="absolute w-1 h-1 rounded-full bg-cyan-400/20 top-[40%] right-[15%] animate-float" style={{ animationDelay: '2s' }} />
         <div className="absolute w-0.5 h-0.5 rounded-full bg-teal-300/25 top-[70%] left-[75%] animate-float" style={{ animationDelay: '4s' }} />
-        <div className="absolute w-1 h-1 rounded-full bg-blue-400/20 top-[60%] left-[25%] animate-float" style={{ animationDelay: '1s' }} />
-        <div className="absolute w-0.5 h-0.5 rounded-full bg-teal-400/20 top-[25%] right-[30%] animate-float" style={{ animationDelay: '3s' }} />
       </div>
 
       <Navbar />
 
       {/* === HERO SECTION === */}
-      <section className="relative z-10 pt-20 pb-16 md:pt-32 md:pb-24 px-6">
+      <section id="main-content" className="relative z-10 pt-20 pb-16 md:pt-32 md:pb-24 px-6">
         <div className="max-w-6xl mx-auto text-center">
 
           {/* Logo */}
@@ -117,21 +125,10 @@ export default function Home() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.05, type: "spring", stiffness: 100 }}
-            className="relative inline-block mb-8"
+            className="relative flex justify-center mb-8"
           >
             <div className="absolute inset-0 bg-teal-500/20 blur-[60px] rounded-full scale-150" />
             <BVFactoryLogo className="h-24 w-24 md:h-32 md:w-32 relative drop-shadow-[0_0_30px_rgba(20,184,166,0.3)]" />
-          </motion.div>
-
-          {/* Status badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 mb-8"
-          >
-            <span className="w-2 h-2 rounded-full bg-teal-400 animate-status-blink" />
-            <span className="text-[11px] font-mono uppercase tracking-widest text-teal-400">System Online — v3.0</span>
           </motion.div>
 
           {/* Main heading */}
@@ -139,7 +136,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25, type: "spring", stiffness: 80 }}
-            className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white leading-[1.05] mb-6"
+            className="text-5xl md:text-7xl lg:text-8xl font-bold font-mono tracking-tight text-white leading-[1.05] mb-6"
           >
             <span className="block">Professional</span>
             <span className="block bg-gradient-to-r from-teal-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
@@ -166,7 +163,7 @@ export default function Home() {
             className="flex flex-col sm:flex-row gap-4 items-center justify-center mb-16"
           >
             <Link href="/plugins">
-              <Button className="h-14 px-8 cta-gradient text-white font-bold tracking-widest uppercase text-sm border-0 animate-glow-pulse group">
+              <Button className="h-14 px-8 cta-gradient text-white font-bold tracking-widest uppercase text-sm border-0 animate-glow-pulse group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050d1a]">
                 <span className="flex items-center gap-2">
                   Explore Modules
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -174,29 +171,12 @@ export default function Home() {
               </Button>
             </Link>
             <Link href="/activation">
-              <Button variant="outline" className="h-14 px-8 bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white font-mono text-xs uppercase tracking-widest">
+              <Button variant="outline" className="h-14 px-8 bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white font-mono text-xs uppercase tracking-widest cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050d1a]">
                 Activation Portal
               </Button>
             </Link>
           </motion.div>
 
-          {/* Stats bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="flex flex-wrap items-center justify-center gap-8 md:gap-12"
-          >
-            {stats.map((stat, i) => (
-              <div key={i} className="flex items-center gap-3 text-left">
-                <div className="text-teal-500/60">{stat.icon}</div>
-                <div>
-                  <p className="text-xl font-bold font-mono text-white">{stat.value}</p>
-                  <p className="text-[10px] font-mono uppercase tracking-widest text-slate-500">{stat.label}</p>
-                </div>
-              </div>
-            ))}
-          </motion.div>
         </div>
       </section>
 
@@ -216,7 +196,7 @@ export default function Home() {
           >
             <p className="text-[11px] font-mono uppercase tracking-[0.3em] text-teal-500 mb-3">Module Library</p>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
-              Choose Your Arsenal
+              Our Modules
             </h2>
           </motion.div>
 
@@ -230,7 +210,7 @@ export default function Home() {
           >
             {MOCK_PRODUCTS.map((product) => (
               <motion.div key={product.id} variants={item}>
-                <Link href={`/plugins/${product.id}`} className="block group">
+                <Link href={`/plugins/${product.id}`} className="block group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050d1a] rounded-2xl">
                   <div className="premium-card relative rounded-2xl overflow-hidden glass-panel p-[1px]">
                     {/* Gradient border on hover */}
                     <div className="absolute inset-0 bg-gradient-to-br from-teal-500/0 via-blue-500/0 to-purple-500/0 group-hover:from-teal-500/30 group-hover:via-blue-500/20 group-hover:to-purple-500/30 transition-all duration-700 rounded-2xl" />
@@ -273,8 +253,8 @@ export default function Home() {
                           </p>
                           <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">{product.price_cents === 0 ? "Free License" : "Lifetime License"}</p>
                         </div>
-                        <div className="flex items-center gap-1.5 text-teal-500 text-xs font-mono uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-                          View <ArrowRight className="w-3 h-3" />
+                        <div className="flex items-center gap-1.5 text-teal-500 text-xs font-mono uppercase tracking-wider opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                          View <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                         </div>
                       </div>
                     </div>
@@ -290,7 +270,7 @@ export default function Home() {
       <section className="relative z-10 px-6 pb-8">
         <div className="max-w-6xl mx-auto text-center">
           <Link href="/plugins">
-            <Button variant="outline" className="h-12 px-8 bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white font-mono text-xs uppercase tracking-widest group">
+            <Button variant="outline" className="h-12 px-8 bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white font-mono text-xs uppercase tracking-widest group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050d1a]">
               View All Modules
               <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
@@ -361,7 +341,8 @@ export default function Home() {
               <div key={i} className="glass-panel rounded-xl overflow-hidden">
                 <button
                   onClick={() => setOpenFaqIndex(openFaqIndex === i ? null : i)}
-                  className="w-full flex items-center justify-between p-5 text-left hover:bg-white/[0.02] transition-colors"
+                  aria-expanded={openFaqIndex === i}
+                  className="w-full flex items-center justify-between p-5 text-left hover:bg-white/[0.02] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050d1a] rounded-xl"
                 >
                   <span className="text-sm font-medium text-slate-200 pr-4">{faq.question}</span>
                   <motion.div

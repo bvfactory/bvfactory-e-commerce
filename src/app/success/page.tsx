@@ -89,7 +89,7 @@ function SuccessSequence() {
                                     Generating License
                                 </h2>
                                 <p className="text-teal-400 font-mono text-xs opacity-70 mb-8 flex items-center gap-2">
-                                    <RefreshCw className="w-3 h-3 animate-spin" /> Bounding to Q-SYS Hardware
+                                    <RefreshCw className="w-3 h-3 animate-spin" /> Binding to Q-SYS Hardware
                                 </p>
 
                                 {/* Certificate visual */}
@@ -173,19 +173,19 @@ function SuccessSequence() {
                             <div className="flex flex-col gap-4">
                                 {activationCode ? (
                                     <Link href={`/activation?code=${activationCode}`} className="w-full">
-                                        <Button className="w-full h-12 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold uppercase tracking-widest text-sm transition-colors shadow-[0_0_20px_rgba(245,158,11,0.4)]">
+                                        <Button className="w-full h-12 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold uppercase tracking-widest text-sm transition-colors shadow-[0_0_20px_rgba(245,158,11,0.4)] cursor-pointer">
                                             Access Activation Portal
                                         </Button>
                                     </Link>
                                 ) : orderId ? (
                                     <Link href={`/activation`} className="w-full">
-                                        <Button className="w-full h-12 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold uppercase tracking-widest text-sm transition-colors shadow-[0_0_20px_rgba(245,158,11,0.4)]">
+                                        <Button className="w-full h-12 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold uppercase tracking-widest text-sm transition-colors shadow-[0_0_20px_rgba(245,158,11,0.4)] cursor-pointer">
                                             Activation Portal (Check Email)
                                         </Button>
                                     </Link>
                                 ) : null}
                                 <Link href="/" className="w-full">
-                                    <Button className="w-full h-12 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-50 font-mono uppercase tracking-widest text-xs transition-colors">
+                                    <Button className="w-full h-12 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-50 font-mono uppercase tracking-widest text-xs transition-colors cursor-pointer">
                                         Return to Store
                                     </Button>
                                 </Link>

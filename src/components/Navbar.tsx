@@ -86,7 +86,8 @@ export function Navbar() {
                         {/* Cart Button */}
                         <button
                             onClick={() => setIsCartOpen(true)}
-                            className="relative flex items-center gap-2.5 px-4 py-2 rounded-xl bg-gradient-to-r from-teal-500/10 to-blue-600/10 border border-teal-500/20 text-teal-400 hover:from-teal-500/20 hover:to-blue-600/20 hover:border-teal-400/40 transition-all duration-300 group"
+                            aria-label={`Open cart${items.length > 0 ? `, ${items.length} items` : ''}`}
+                            className="relative flex items-center gap-2.5 px-4 py-2 rounded-xl bg-gradient-to-r from-teal-500/10 to-blue-600/10 border border-teal-500/20 text-teal-400 hover:from-teal-500/20 hover:to-blue-600/20 hover:border-teal-400/40 transition-all duration-300 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50"
                         >
                             <ShoppingCart className="w-4 h-4 group-hover:scale-110 transition-transform duration-300" />
                             <span className="text-[11px] font-mono uppercase tracking-wider">
@@ -111,7 +112,8 @@ export function Navbar() {
                     <div className="flex md:hidden items-center gap-3">
                         <button
                             onClick={() => setIsCartOpen(true)}
-                            className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-400"
+                            aria-label="Open cart"
+                            className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-400 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50"
                         >
                             <ShoppingCart className="w-4 h-4" />
                             {items.length > 0 && (
@@ -126,7 +128,9 @@ export function Navbar() {
                         </button>
                         <button
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+                            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+                            aria-expanded={isMobileMenuOpen}
+                            className="flex items-center justify-center w-11 h-11 rounded-xl bg-white/5 border border-white/10 text-slate-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50"
                         >
                             <AnimatePresence mode="wait">
                                 {isMobileMenuOpen ? (

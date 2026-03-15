@@ -48,7 +48,7 @@ export function AddToCartModal({ product, isOpen, onClose }: AddToCartModalProps
                 <h2 className="text-xl font-bold tracking-tight uppercase text-white drop-shadow-md">
                     Target Configuration
                 </h2>
-                <button onClick={onClose} className="text-white/50 hover:text-white transition-colors text-sm font-mono uppercase tracking-widest">
+                <button onClick={onClose} aria-label="Close modal" className="text-white/50 hover:text-white transition-colors text-sm font-mono uppercase tracking-widest cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 rounded">
                     [ Close ]
                 </button>
             </div>
@@ -87,7 +87,7 @@ export function AddToCartModal({ product, isOpen, onClose }: AddToCartModalProps
                 </div>
 
                 <div className="pt-6 relative">
-                    <Button type="submit" className="w-full h-14 bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 text-white font-bold tracking-widest uppercase text-sm shadow-[0_10px_30px_rgba(20,184,166,0.5)] transition-all hover:shadow-[0_10px_40px_rgba(20,184,166,0.7)] border border-white/20">
+                    <Button type="submit" className="w-full h-14 bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 text-white font-bold tracking-widest uppercase text-sm shadow-[0_10px_30px_rgba(20,184,166,0.5)] transition-all hover:shadow-[0_10px_40px_rgba(20,184,166,0.7)] border border-white/20 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400">
                         {product.price_cents === 0 ? "Get Free License" : "Queue License Generation"}
                     </Button>
                 </div>

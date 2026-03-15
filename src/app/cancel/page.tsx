@@ -48,13 +48,13 @@ export default function CancelPage() {
 
                         <div className="flex flex-col gap-3">
                             <Link href="/#plugins" className="w-full">
-                                <Button className="w-full h-12 cta-gradient text-white font-bold tracking-widest uppercase text-sm border-0 flex items-center justify-center gap-2 group">
+                                <Button className="w-full h-12 cta-gradient text-white font-bold tracking-widest uppercase text-sm border-0 flex items-center justify-center gap-2 group cursor-pointer">
                                     <RotateCcw className="w-4 h-4" />
                                     Try Again
                                 </Button>
                             </Link>
                             <Link href="/" className="w-full">
-                                <Button variant="outline" className="w-full h-12 bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white font-mono text-xs uppercase tracking-widest flex items-center justify-center gap-2">
+                                <Button variant="outline" className="w-full h-12 bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white font-mono text-xs uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer">
                                     <ArrowLeft className="w-4 h-4" />
                                     Return to Store
                                 </Button>

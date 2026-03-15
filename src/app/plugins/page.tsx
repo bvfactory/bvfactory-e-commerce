@@ -79,7 +79,8 @@ export default function PluginsStorePage() {
                                 <button
                                     key={cat.id}
                                     onClick={() => setActiveCategory(cat.id)}
-                                    className={`relative px-4 py-2 text-[11px] font-mono uppercase tracking-wider rounded-lg transition-all duration-300 ${activeCategory === cat.id
+                                    aria-pressed={activeCategory === cat.id}
+                                    className={`relative px-4 py-2 text-[11px] font-mono uppercase tracking-wider rounded-lg transition-all duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 ${activeCategory === cat.id
                                         ? "text-white"
                                         : "text-slate-400 hover:text-white"
                                         }`}
@@ -121,7 +122,7 @@ export default function PluginsStorePage() {
                         >
                             {filtered.map((product) => (
                                 <motion.div key={product.id} variants={item}>
-                                    <Link href={`/plugins/${product.id}`} className="block group h-full">
+                                    <Link href={`/plugins/${product.id}`} className="block group h-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050d1a] rounded-2xl">
                                         <div className="premium-card relative rounded-2xl overflow-hidden glass-panel p-[1px] h-full">
                                             <div className="absolute inset-0 bg-gradient-to-br from-teal-500/0 via-blue-500/0 to-purple-500/0 group-hover:from-teal-500/30 group-hover:via-blue-500/20 group-hover:to-purple-500/30 transition-all duration-700 rounded-2xl" />
 
@@ -176,8 +177,8 @@ export default function PluginsStorePage() {
                                                         </p>
                                                         <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">{product.price_cents === 0 ? "Free License" : "Lifetime License"}</p>
                                                     </div>
-                                                    <div className="flex items-center gap-1.5 text-teal-500 text-xs font-mono uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        View <ArrowRight className="w-3 h-3" />
+                                                    <div className="flex items-center gap-1.5 text-teal-500 text-xs font-mono uppercase tracking-wider opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                                        View <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                                                     </div>
                                                 </div>
                                             </div>

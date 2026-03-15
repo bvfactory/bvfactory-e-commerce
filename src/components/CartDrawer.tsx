@@ -146,7 +146,8 @@ export function CartDrawer() {
                                 </h2>
                                 <button
                                     onClick={() => setIsCartOpen(false)}
-                                    className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+                                    aria-label="Close cart"
+                                    className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50"
                                 >
                                     <X className="w-5 h-5" />
                                 </button>
@@ -186,7 +187,8 @@ export function CartDrawer() {
                                                 </div>
                                                 <button
                                                     onClick={() => removeItem(item.id)}
-                                                    className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                                    aria-label={`Remove ${item.product.name} from cart`}
+                                                    className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
@@ -216,7 +218,8 @@ export function CartDrawer() {
                                                 </div>
                                                 <button
                                                     onClick={handleRemoveDiscount}
-                                                    className="text-slate-400 hover:text-red-400 transition-colors"
+                                                    aria-label="Remove discount code"
+                                                    className="text-slate-400 hover:text-red-400 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 rounded"
                                                 >
                                                     <X className="w-4 h-4" />
                                                 </button>
@@ -301,7 +304,7 @@ export function CartDrawer() {
                                         <Button
                                             type="submit"
                                             disabled={isCheckingOut}
-                                            className="w-full h-14 cta-gradient text-white font-bold tracking-widest uppercase text-sm border-0 flex items-center justify-center gap-2 group"
+                                            className="w-full h-14 cta-gradient text-white font-bold tracking-widest uppercase text-sm border-0 flex items-center justify-center gap-2 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
                                         >
                                             {isCheckingOut ? (
                                                 <>

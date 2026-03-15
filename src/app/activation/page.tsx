@@ -163,7 +163,7 @@ function ActivationPortalInner() {
                                 <Button
                                     onClick={() => handleSearch(codeInput)}
                                     disabled={isLoading || !codeInput}
-                                    className="w-full bg-teal-600 hover:bg-teal-500 text-white font-mono uppercase tracking-widest text-xs"
+                                    className="w-full bg-teal-600 hover:bg-teal-500 text-white font-mono uppercase tracking-widest text-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
                                 >
                                     {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Authenticate Sequence"}
                                 </Button>
@@ -172,6 +172,7 @@ function ActivationPortalInner() {
                                     <motion.div
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: "auto" }}
+                                        role="alert"
                                         className="text-red-400 font-mono text-[10px] bg-red-500/10 p-3 rounded border border-red-500/20 mt-4 uppercase leading-relaxed"
                                     >
                                         {error}
@@ -254,8 +255,13 @@ function ActivationPortalInner() {
                                                     <p className="font-mono text-sm text-white">{license.coreId}</p>
                                                 </div>
 
-                                                <div className="bg-teal-950/30 rounded-lg p-4 border border-teal-500/20 relative cursor-pointer hover:bg-teal-900/40 transition-colors"
+                                                <div
+                                                    className="bg-teal-950/30 rounded-lg p-4 border border-teal-500/20 relative cursor-pointer hover:bg-teal-900/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50"
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    aria-label={`Copy license key for ${license.product.name}`}
                                                     onClick={() => license.licenseKey && copyToClipboard(license.licenseKey)}
+                                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); license.licenseKey && copyToClipboard(license.licenseKey); } }}
                                                 >
                                                     <p className="text-[10px] font-mono text-teal-600 uppercase tracking-widest mb-1 flex items-center gap-2">
                                                         <Key className="w-3 h-3" /> Cryptographic Key
