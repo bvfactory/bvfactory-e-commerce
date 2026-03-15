@@ -37,6 +37,7 @@ CREATE TABLE licenses (
   license_key TEXT NOT NULL UNIQUE,
   key_hash TEXT NOT NULL,
   salt TEXT NOT NULL,
+  algorithm_version TEXT DEFAULT 'hmac-sha256-v1',
   status TEXT DEFAULT 'active' CHECK (status IN ('active', 'revoked', 'expired')),
   activated_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -113,3 +114,25 @@ CREATE INDEX idx_licenses_order_id ON licenses(order_id);
 CREATE INDEX idx_licenses_product_core ON licenses(product_id, core_id);
 CREATE INDEX idx_licenses_license_key ON licenses(license_key);
 CREATE INDEX idx_licenses_key_hash ON licenses(key_hash);
+
+-- Product settings (admin-managed price overrides & promotions)
+CREATE TABLE product_settings (
+  product_id TEXT PRIMARY KEY,
+  price_cents INTEGER,
+  promo_percent INTEGER CHECK (promo_percent IS NULL OR (promo_percent >= 0 AND promo_percent <= 100)),
+  promo_active BOOLEAN DEFAULT false,
+  promo_label TEXT,
+  content JSONB DEFAULT '{}'::jsonb,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE product_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Product settings readable by everyone"
+  ON product_settings FOR SELECT USING (true);
+CREATE POLICY "Product settings modifiable via service role"
+  ON product_settings FOR ALL USING (true);
+
+-- Admin panel indexes
+CREATE INDEX idx_orders_customer_email ON orders(customer_email);
+CREATE INDEX idx_orders_created_at ON orders(created_at DESC);
+CREATE INDEX idx_licenses_created_at ON licenses(created_at DESC);
