@@ -12,13 +12,21 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
   ArrowLeft,
+  ArrowUp,
+  ArrowDown,
   ChevronDown,
+  Cpu,
   DollarSign,
-  Type,
+  List,
   Loader2,
+  Plus,
   RotateCcw,
   Save,
+  Settings,
   Check,
+  Trash2,
+  Type,
+  Users,
 } from "lucide-react";
 
 interface ProductSettings {
@@ -138,7 +146,41 @@ export default function ProductDetailPage() {
         onRefetch={fetchProduct}
       />
 
-      {/* Future sections (Tasks 5-7) can be added here */}
+      {/* Section 3: Fonctionnalités */}
+      <FeaturesSection
+        product={product}
+        settings={settings}
+        openSections={openSections}
+        toggleSection={toggleSection}
+        onRefetch={fetchProduct}
+      />
+
+      {/* Section 5: Spécifications techniques */}
+      <SpecsSection
+        product={product}
+        settings={settings}
+        openSections={openSections}
+        toggleSection={toggleSection}
+        onRefetch={fetchProduct}
+      />
+
+      {/* Section 6: Compatibilité */}
+      <CompatibilitySection
+        product={product}
+        settings={settings}
+        openSections={openSections}
+        toggleSection={toggleSection}
+        onRefetch={fetchProduct}
+      />
+
+      {/* Section 7: Marques compatibles */}
+      <BrandsSection
+        product={product}
+        settings={settings}
+        openSections={openSections}
+        toggleSection={toggleSection}
+        onRefetch={fetchProduct}
+      />
     </div>
   );
 }
@@ -528,6 +570,632 @@ function GeneralInfoSection({
               ) : (
                 <RotateCcw className="w-4 h-4 mr-2" />
               )}
+              Réinitialiser
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section 3: Fonctionnalités
+// ---------------------------------------------------------------------------
+
+interface SectionProps {
+  product: ProductType;
+  settings: ProductSettings | null;
+  openSections: string[];
+  toggleSection: (id: string) => void;
+  onRefetch: () => Promise<void>;
+}
+
+function FeaturesSection({
+  product,
+  settings,
+  openSections,
+  toggleSection,
+  onRefetch,
+}: SectionProps) {
+  const content = (settings?.content ?? {}) as Record<string, unknown>;
+  const initFeatures = (content.features as string[] | undefined) ?? product.features;
+
+  const [features, setFeatures] = useState<string[]>(initFeatures);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const c = (settings?.content ?? {}) as Record<string, unknown>;
+    setFeatures((c.features as string[] | undefined) ?? product.features);
+  }, [settings, product.features]);
+
+  function updateFeature(i: number, value: string) {
+    setFeatures((prev) => prev.map((f, idx) => (idx === i ? value : f)));
+  }
+
+  function removeFeature(i: number) {
+    setFeatures((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function moveFeature(i: number, direction: number) {
+    setFeatures((prev) => {
+      const next = [...prev];
+      const j = i + direction;
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      await fetch(`/api/admin/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: { features } }),
+      });
+      await onRefetch();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleReset() {
+    setFeatures([...product.features]);
+  }
+
+  return (
+    <div className="border border-border/50 rounded-xl bg-card/50 overflow-hidden">
+      <button
+        onClick={() => toggleSection("features")}
+        className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+      >
+        <h2 className="font-semibold text-foreground flex items-center gap-2">
+          <List className="w-4 h-4 text-primary" />
+          Fonctionnalités
+        </h2>
+        <ChevronDown
+          className={cn(
+            "w-4 h-4 text-muted-foreground transition-transform",
+            openSections.includes("features") && "rotate-180"
+          )}
+        />
+      </button>
+      {openSections.includes("features") && (
+        <div className="p-5 pt-0 border-t border-border/50 space-y-4">
+          <div className="space-y-2">
+            {features.map((feature, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <div className="flex flex-col gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => moveFeature(i, -1)}
+                    disabled={i === 0}
+                    className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                  >
+                    <ArrowUp className="w-3 h-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveFeature(i, 1)}
+                    disabled={i === features.length - 1}
+                    className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                  >
+                    <ArrowDown className="w-3 h-3" />
+                  </button>
+                </div>
+                <Input
+                  value={feature}
+                  onChange={(e) => updateFeature(i, e.target.value)}
+                  className="flex-1"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => removeFeature(i)}
+                >
+                  <Trash2 className="w-3 h-3 text-muted-foreground" />
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setFeatures((prev) => [...prev, ""])}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Ajouter une fonctionnalité
+          </Button>
+
+          <div className="flex items-center gap-3 pt-2">
+            <Button onClick={handleSave} disabled={saving} size="sm">
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Enregistrer
+            </Button>
+            {saved && (
+              <span className="text-sm text-emerald-500 flex items-center gap-1">
+                <Check className="w-4 h-4" />
+                Enregistré !
+              </span>
+            )}
+            <Button variant="ghost" size="sm" onClick={handleReset}>
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Réinitialiser
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section 5: Spécifications techniques
+// ---------------------------------------------------------------------------
+
+function SpecsSection({
+  product,
+  settings,
+  openSections,
+  toggleSection,
+  onRefetch,
+}: SectionProps) {
+  const content = (settings?.content ?? {}) as Record<string, unknown>;
+  const initSpecs = (content.specs as Record<string, string> | undefined) ?? product.specs;
+
+  function toArray(obj: Record<string, string>) {
+    return Object.entries(obj).map(([key, value]) => ({ key, value }));
+  }
+
+  const [specs, setSpecs] = useState<{ key: string; value: string }[]>(
+    toArray(initSpecs)
+  );
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const c = (settings?.content ?? {}) as Record<string, unknown>;
+    const s = (c.specs as Record<string, string> | undefined) ?? product.specs;
+    setSpecs(toArray(s));
+  }, [settings, product.specs]);
+
+  function updateSpec(i: number, field: "key" | "value", val: string) {
+    setSpecs((prev) =>
+      prev.map((s, idx) => (idx === i ? { ...s, [field]: val } : s))
+    );
+  }
+
+  function removeSpec(i: number) {
+    setSpecs((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const specsObj: Record<string, string> = {};
+      for (const s of specs) {
+        if (s.key.trim()) specsObj[s.key.trim()] = s.value;
+      }
+      await fetch(`/api/admin/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: { specs: specsObj } }),
+      });
+      await onRefetch();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleReset() {
+    setSpecs(toArray(product.specs));
+  }
+
+  return (
+    <div className="border border-border/50 rounded-xl bg-card/50 overflow-hidden">
+      <button
+        onClick={() => toggleSection("specs")}
+        className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+      >
+        <h2 className="font-semibold text-foreground flex items-center gap-2">
+          <Settings className="w-4 h-4 text-primary" />
+          Spécifications techniques
+        </h2>
+        <ChevronDown
+          className={cn(
+            "w-4 h-4 text-muted-foreground transition-transform",
+            openSections.includes("specs") && "rotate-180"
+          )}
+        />
+      </button>
+      {openSections.includes("specs") && (
+        <div className="p-5 pt-0 border-t border-border/50 space-y-4">
+          <div className="space-y-2">
+            {specs.map((spec, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Input
+                  value={spec.key}
+                  onChange={(e) => updateSpec(i, "key", e.target.value)}
+                  placeholder="Clé"
+                  className="flex-1"
+                />
+                <Input
+                  value={spec.value}
+                  onChange={(e) => updateSpec(i, "value", e.target.value)}
+                  placeholder="Valeur"
+                  className="flex-1"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => removeSpec(i)}
+                >
+                  <Trash2 className="w-3 h-3 text-muted-foreground" />
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSpecs((prev) => [...prev, { key: "", value: "" }])}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Ajouter une spécification
+          </Button>
+
+          <div className="flex items-center gap-3 pt-2">
+            <Button onClick={handleSave} disabled={saving} size="sm">
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Enregistrer
+            </Button>
+            {saved && (
+              <span className="text-sm text-emerald-500 flex items-center gap-1">
+                <Check className="w-4 h-4" />
+                Enregistré !
+              </span>
+            )}
+            <Button variant="ghost" size="sm" onClick={handleReset}>
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Réinitialiser
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section 6: Compatibilité
+// ---------------------------------------------------------------------------
+
+function CompatibilitySection({
+  product,
+  settings,
+  openSections,
+  toggleSection,
+  onRefetch,
+}: SectionProps) {
+  const content = (settings?.content ?? {}) as Record<string, unknown>;
+  const initCompat = (content.compatibility as {
+    minQsysVersion?: string;
+    supportedCores?: string[];
+    os?: string;
+  } | undefined) ?? product.compatibility;
+
+  const [compatibility, setCompatibility] = useState({
+    minQsysVersion: initCompat.minQsysVersion ?? "",
+    supportedCores: (initCompat.supportedCores ?? []).join(", "),
+    os: initCompat.os ?? "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const c = (settings?.content ?? {}) as Record<string, unknown>;
+    const compat = (c.compatibility as {
+      minQsysVersion?: string;
+      supportedCores?: string[];
+      os?: string;
+    } | undefined) ?? product.compatibility;
+    setCompatibility({
+      minQsysVersion: compat.minQsysVersion ?? "",
+      supportedCores: (compat.supportedCores ?? []).join(", "),
+      os: compat.os ?? "",
+    });
+  }, [settings, product.compatibility]);
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      await fetch(`/api/admin/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: {
+            compatibility: {
+              minQsysVersion: compatibility.minQsysVersion,
+              supportedCores: compatibility.supportedCores
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean),
+              os: compatibility.os || undefined,
+            },
+          },
+        }),
+      });
+      await onRefetch();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleReset() {
+    setCompatibility({
+      minQsysVersion: product.compatibility.minQsysVersion,
+      supportedCores: product.compatibility.supportedCores.join(", "),
+      os: product.compatibility.os ?? "",
+    });
+  }
+
+  return (
+    <div className="border border-border/50 rounded-xl bg-card/50 overflow-hidden">
+      <button
+        onClick={() => toggleSection("compatibility")}
+        className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+      >
+        <h2 className="font-semibold text-foreground flex items-center gap-2">
+          <Cpu className="w-4 h-4 text-primary" />
+          Compatibilité
+        </h2>
+        <ChevronDown
+          className={cn(
+            "w-4 h-4 text-muted-foreground transition-transform",
+            openSections.includes("compatibility") && "rotate-180"
+          )}
+        />
+      </button>
+      {openSections.includes("compatibility") && (
+        <div className="p-5 pt-0 border-t border-border/50 space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="minQsysVersion">Version Q-SYS minimum</Label>
+            <Input
+              id="minQsysVersion"
+              type="text"
+              value={compatibility.minQsysVersion}
+              onChange={(e) =>
+                setCompatibility((prev) => ({
+                  ...prev,
+                  minQsysVersion: e.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="supportedCores">Cores supportés</Label>
+            <Input
+              id="supportedCores"
+              type="text"
+              placeholder="Core 110f, Core 510i, ..."
+              value={compatibility.supportedCores}
+              onChange={(e) =>
+                setCompatibility((prev) => ({
+                  ...prev,
+                  supportedCores: e.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="os">Système requis</Label>
+            <Input
+              id="os"
+              type="text"
+              placeholder="Windows, macOS, ..."
+              value={compatibility.os}
+              onChange={(e) =>
+                setCompatibility((prev) => ({
+                  ...prev,
+                  os: e.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <Button onClick={handleSave} disabled={saving} size="sm">
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Enregistrer
+            </Button>
+            {saved && (
+              <span className="text-sm text-emerald-500 flex items-center gap-1">
+                <Check className="w-4 h-4" />
+                Enregistré !
+              </span>
+            )}
+            <Button variant="ghost" size="sm" onClick={handleReset}>
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Réinitialiser
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section 7: Marques compatibles
+// ---------------------------------------------------------------------------
+
+const AVAILABLE_LOGOS = [
+  { value: "/brands/iiyama.svg", label: "iiyama" },
+  { value: "/brands/philips.svg", label: "Philips" },
+  { value: "/brands/resolume.svg", label: "Resolume" },
+  { value: "/brands/madmapper.svg", label: "MadMapper" },
+  { value: "/brands/mitsubishi.svg", label: "Mitsubishi" },
+  { value: "/brands/avaccess.svg", label: "AV Access" },
+];
+
+function BrandsSection({
+  product,
+  settings,
+  openSections,
+  toggleSection,
+  onRefetch,
+}: SectionProps) {
+  const content = (settings?.content ?? {}) as Record<string, unknown>;
+  const initBrands = (content.compatibleBrands as { name: string; logo: string }[] | undefined) ??
+    product.compatibleBrands ?? [];
+
+  const [brands, setBrands] = useState<{ name: string; logo: string }[]>(
+    initBrands.map((b) => ({ ...b }))
+  );
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const c = (settings?.content ?? {}) as Record<string, unknown>;
+    const b = (c.compatibleBrands as { name: string; logo: string }[] | undefined) ??
+      product.compatibleBrands ?? [];
+    setBrands(b.map((br) => ({ ...br })));
+  }, [settings, product.compatibleBrands]);
+
+  function updateBrand(i: number, field: "name" | "logo", val: string) {
+    setBrands((prev) =>
+      prev.map((b, idx) => (idx === i ? { ...b, [field]: val } : b))
+    );
+  }
+
+  function removeBrand(i: number) {
+    setBrands((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      await fetch(`/api/admin/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: { compatibleBrands: brands } }),
+      });
+      await onRefetch();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleReset() {
+    const b = product.compatibleBrands ?? [];
+    setBrands(b.map((br) => ({ ...br })));
+  }
+
+  return (
+    <div className="border border-border/50 rounded-xl bg-card/50 overflow-hidden">
+      <button
+        onClick={() => toggleSection("brands")}
+        className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+      >
+        <h2 className="font-semibold text-foreground flex items-center gap-2">
+          <Users className="w-4 h-4 text-primary" />
+          Marques compatibles
+        </h2>
+        <ChevronDown
+          className={cn(
+            "w-4 h-4 text-muted-foreground transition-transform",
+            openSections.includes("brands") && "rotate-180"
+          )}
+        />
+      </button>
+      {openSections.includes("brands") && (
+        <div className="p-5 pt-0 border-t border-border/50 space-y-4">
+          <div className="space-y-2">
+            {brands.map((brand, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Input
+                  value={brand.name}
+                  onChange={(e) => updateBrand(i, "name", e.target.value)}
+                  placeholder="Nom de la marque"
+                  className="flex-1"
+                />
+                <select
+                  value={brand.logo}
+                  onChange={(e) => updateBrand(i, "logo", e.target.value)}
+                  className="h-9 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="">— Logo —</option>
+                  {AVAILABLE_LOGOS.map((logo) => (
+                    <option key={logo.value} value={logo.value}>
+                      {logo.label}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => removeBrand(i)}
+                >
+                  <Trash2 className="w-3 h-3 text-muted-foreground" />
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setBrands((prev) => [...prev, { name: "", logo: "" }])
+            }
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Ajouter une marque
+          </Button>
+
+          <div className="flex items-center gap-3 pt-2">
+            <Button onClick={handleSave} disabled={saving} size="sm">
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Enregistrer
+            </Button>
+            {saved && (
+              <span className="text-sm text-emerald-500 flex items-center gap-1">
+                <Check className="w-4 h-4" />
+                Enregistré !
+              </span>
+            )}
+            <Button variant="ghost" size="sm" onClick={handleReset}>
+              <RotateCcw className="w-4 h-4 mr-2" />
               Réinitialiser
             </Button>
           </div>
