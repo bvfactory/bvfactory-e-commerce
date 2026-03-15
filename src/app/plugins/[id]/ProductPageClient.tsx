@@ -1,24 +1,18 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { MOCK_PRODUCTS, getProductIcon } from "@/data/products";
+import { ProductType, getProductIcon } from "@/data/products";
 import { useCurrency } from "@/contexts/CurrencyContext";
-import { notFound } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { Download, ChevronLeft, ShieldCheck, Box, Play, ChevronDown, HelpCircle, Cpu, ArrowRight, X } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useParams } from "next/navigation";
 import { AddToCartModal } from "@/components/CheckoutModal";
 import Image from "next/image";
 
-export default function ProductPageClient() {
-    const { id } = useParams();
-    const product = MOCK_PRODUCTS.find((p) => p.id === id);
-    const relatedProducts = MOCK_PRODUCTS.filter((p) => p.id !== id).slice(0, 2);
-
+export default function ProductPageClient({ product, relatedProducts }: { product: ProductType; relatedProducts: ProductType[] }) {
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [showVideo, setShowVideo] = useState(false);
@@ -34,10 +28,6 @@ export default function ProductPageClient() {
     const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
     const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
     const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "-10%"]);
-
-    if (!product) {
-        notFound();
-    }
 
     return (
         <div ref={containerRef} className="bg-[#050d1a] min-h-screen text-slate-200 selection:bg-teal-500/30 overflow-x-hidden relative">
@@ -381,6 +371,14 @@ export default function ProductPageClient() {
                                 >
                                     {product.price_cents === 0 ? "Get Free License" : "Add to Cart"}
                                 </Button>
+
+                                {product.pluginFileName && (
+                                    <a href={`/api/download-plugin?productId=${product.id}`} className="block">
+                                        <Button variant="outline" className="w-full h-12 bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white font-mono text-xs uppercase tracking-widest cursor-pointer">
+                                            <Download className="w-4 h-4 mr-2" /> Download Plugin
+                                        </Button>
+                                    </a>
+                                )}
 
                                 {product.manualUrl && (
                                     <Button variant="outline" className="w-full h-12 bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white font-mono text-xs uppercase tracking-widest">
