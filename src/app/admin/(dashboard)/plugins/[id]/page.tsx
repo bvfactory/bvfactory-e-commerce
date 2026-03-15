@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { ProductType, getProductIcon } from "@/data/products";
+import { ProductType, VersionHistory, FaqItem, getProductIcon } from "@/data/products";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,9 @@ import {
   Save,
   Settings,
   Check,
+  HelpCircle,
+  History,
+  Pencil,
   Trash2,
   Type,
   Upload,
@@ -235,6 +238,24 @@ export default function ProductDetailPage() {
       <PluginFileSection
         product={product}
         pluginInfo={pluginInfo}
+        openSections={openSections}
+        toggleSection={toggleSection}
+        onRefetch={fetchProduct}
+      />
+
+      {/* Section 11: Historique des versions */}
+      <ChangelogSection
+        product={product}
+        settings={settings}
+        openSections={openSections}
+        toggleSection={toggleSection}
+        onRefetch={fetchProduct}
+      />
+
+      {/* Section 12: FAQ */}
+      <FaqSection
+        product={product}
+        settings={settings}
         openSections={openSections}
         toggleSection={toggleSection}
         onRefetch={fetchProduct}
@@ -1738,6 +1759,596 @@ function PluginFileSection({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section 11: Historique des versions (Changelog)
+// ---------------------------------------------------------------------------
+
+function ChangelogSection({
+  product,
+  settings,
+  openSections,
+  toggleSection,
+  onRefetch,
+}: SectionProps) {
+  const content = (settings?.content ?? {}) as Record<string, unknown>;
+  const initVersionHistory =
+    (content.versionHistory as VersionHistory[] | undefined) ??
+    product.versionHistory ??
+    [];
+
+  const [versionHistory, setVersionHistory] =
+    useState<VersionHistory[]>(initVersionHistory);
+  const [editingVersion, setEditingVersion] = useState<number | null>(null);
+  const [addingVersion, setAddingVersion] = useState(false);
+  const [newVersion, setNewVersion] = useState({
+    version: "",
+    date: new Date().toISOString().split("T")[0],
+    changes: "",
+  });
+  const [savingChangelog, setSavingChangelog] = useState(false);
+  const [savedChangelog, setSavedChangelog] = useState(false);
+
+  useEffect(() => {
+    const c = (settings?.content ?? {}) as Record<string, unknown>;
+    setVersionHistory(
+      (c.versionHistory as VersionHistory[] | undefined) ??
+        product.versionHistory ??
+        []
+    );
+  }, [settings, product.versionHistory]);
+
+  function removeVersion(i: number) {
+    setVersionHistory((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function updateVersion(i: number, updated: VersionHistory) {
+    setVersionHistory((prev) =>
+      prev.map((v, idx) => (idx === i ? updated : v))
+    );
+  }
+
+  function addVersion() {
+    const changes = newVersion.changes
+      .split("\n")
+      .map((c) => c.trim())
+      .filter(Boolean);
+    if (!newVersion.version.trim()) return;
+    setVersionHistory((prev) => [
+      { version: newVersion.version.trim(), date: newVersion.date, changes },
+      ...prev,
+    ]);
+    setNewVersion({
+      version: "",
+      date: new Date().toISOString().split("T")[0],
+      changes: "",
+    });
+    setAddingVersion(false);
+  }
+
+  async function handleSave() {
+    setSavingChangelog(true);
+    try {
+      await fetch(`/api/admin/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: { versionHistory } }),
+      });
+      await onRefetch();
+      setSavedChangelog(true);
+      setTimeout(() => setSavedChangelog(false), 2000);
+    } finally {
+      setSavingChangelog(false);
+    }
+  }
+
+  function handleReset() {
+    setVersionHistory([...(product.versionHistory ?? [])]);
+    setEditingVersion(null);
+    setAddingVersion(false);
+  }
+
+  return (
+    <div className="border border-border/50 rounded-xl bg-card/50 overflow-hidden">
+      <button
+        onClick={() => toggleSection("changelog")}
+        className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+      >
+        <h2 className="font-semibold text-foreground flex items-center gap-2">
+          <History className="w-4 h-4 text-primary" />
+          Historique des versions
+        </h2>
+        <ChevronDown
+          className={cn(
+            "w-4 h-4 text-muted-foreground transition-transform",
+            openSections.includes("changelog") && "rotate-180"
+          )}
+        />
+      </button>
+      {openSections.includes("changelog") && (
+        <div className="p-5 pt-0 border-t border-border/50 space-y-4">
+          {/* Add new version */}
+          {addingVersion ? (
+            <div className="border border-border rounded-lg p-4 space-y-3 bg-muted/30">
+              <div className="flex items-center gap-3">
+                <div className="flex-1 space-y-1">
+                  <Label>Version</Label>
+                  <Input
+                    value={newVersion.version}
+                    onChange={(e) =>
+                      setNewVersion((prev) => ({
+                        ...prev,
+                        version: e.target.value,
+                      }))
+                    }
+                    placeholder="v1.0.0"
+                  />
+                </div>
+                <div className="flex-1 space-y-1">
+                  <Label>Date</Label>
+                  <Input
+                    type="date"
+                    value={newVersion.date}
+                    onChange={(e) =>
+                      setNewVersion((prev) => ({
+                        ...prev,
+                        date: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label>Changements</Label>
+                <textarea
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[80px]"
+                  rows={3}
+                  placeholder="Un changement par ligne"
+                  value={newVersion.changes}
+                  onChange={(e) =>
+                    setNewVersion((prev) => ({
+                      ...prev,
+                      changes: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={addVersion}>
+                  <Check className="w-4 h-4 mr-2" />
+                  OK
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAddingVersion(false)}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Annuler
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAddingVersion(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Ajouter une version
+            </Button>
+          )}
+
+          {/* Version entries */}
+          <div className="space-y-3">
+            {versionHistory.map((entry, i) => (
+              <div
+                key={i}
+                className="border border-border/50 rounded-lg p-4 space-y-2"
+              >
+                {editingVersion === i ? (
+                  <VersionEditForm
+                    entry={entry}
+                    onSave={(updated) => {
+                      updateVersion(i, updated);
+                      setEditingVersion(null);
+                    }}
+                    onCancel={() => setEditingVersion(null)}
+                  />
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 text-sm">
+                        <span className="font-semibold">{entry.version}</span>
+                        <span className="text-muted-foreground">
+                          {entry.date}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => removeVersion(i)}
+                        >
+                          <Trash2 className="w-3 h-3 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    </div>
+                    <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5">
+                      {entry.changes.map((change, j) => (
+                        <li key={j}>{change}</li>
+                      ))}
+                    </ul>
+                    <div className="flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingVersion(i)}
+                      >
+                        <Pencil className="w-3 h-3 mr-1" />
+                        Éditer
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-3 pt-2">
+            <Button
+              onClick={handleSave}
+              disabled={savingChangelog}
+              size="sm"
+            >
+              {savingChangelog ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Enregistrer
+            </Button>
+            {savedChangelog && (
+              <span className="text-sm text-emerald-500 flex items-center gap-1">
+                <Check className="w-4 h-4" />
+                Enregistré !
+              </span>
+            )}
+            <Button variant="ghost" size="sm" onClick={handleReset}>
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Réinitialiser
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function VersionEditForm({
+  entry,
+  onSave,
+  onCancel,
+}: {
+  entry: VersionHistory;
+  onSave: (updated: VersionHistory) => void;
+  onCancel: () => void;
+}) {
+  const [version, setVersion] = useState(entry.version);
+  const [date, setDate] = useState(entry.date);
+  const [changes, setChanges] = useState(entry.changes.join("\n"));
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        <div className="flex-1 space-y-1">
+          <Label>Version</Label>
+          <Input value={version} onChange={(e) => setVersion(e.target.value)} />
+        </div>
+        <div className="flex-1 space-y-1">
+          <Label>Date</Label>
+          <Input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+        </div>
+      </div>
+      <div className="space-y-1">
+        <Label>Changements</Label>
+        <textarea
+          className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[80px]"
+          rows={3}
+          value={changes}
+          onChange={(e) => setChanges(e.target.value)}
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          onClick={() =>
+            onSave({
+              version: version.trim(),
+              date,
+              changes: changes
+                .split("\n")
+                .map((c) => c.trim())
+                .filter(Boolean),
+            })
+          }
+        >
+          <Check className="w-4 h-4 mr-2" />
+          OK
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onCancel}>
+          <X className="w-4 h-4 mr-2" />
+          Annuler
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section 12: FAQ (Questions fréquentes)
+// ---------------------------------------------------------------------------
+
+function FaqSection({
+  product,
+  settings,
+  openSections,
+  toggleSection,
+  onRefetch,
+}: SectionProps) {
+  const content = (settings?.content ?? {}) as Record<string, unknown>;
+  const initFaq =
+    (content.faq as FaqItem[] | undefined) ?? product.faq ?? [];
+
+  const [faq, setFaq] = useState<FaqItem[]>(initFaq);
+  const [editingFaq, setEditingFaq] = useState<number | null>(null);
+  const [addingFaq, setAddingFaq] = useState(false);
+  const [newFaq, setNewFaq] = useState({ question: "", answer: "" });
+  const [savingFaq, setSavingFaq] = useState(false);
+  const [savedFaq, setSavedFaq] = useState(false);
+
+  useEffect(() => {
+    const c = (settings?.content ?? {}) as Record<string, unknown>;
+    setFaq((c.faq as FaqItem[] | undefined) ?? product.faq ?? []);
+  }, [settings, product.faq]);
+
+  function removeFaq(i: number) {
+    setFaq((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function updateFaq(i: number, updated: FaqItem) {
+    setFaq((prev) => prev.map((f, idx) => (idx === i ? updated : f)));
+  }
+
+  function addFaqItem() {
+    if (!newFaq.question.trim()) return;
+    setFaq((prev) => [...prev, { question: newFaq.question.trim(), answer: newFaq.answer.trim() }]);
+    setNewFaq({ question: "", answer: "" });
+    setAddingFaq(false);
+  }
+
+  async function handleSave() {
+    setSavingFaq(true);
+    try {
+      await fetch(`/api/admin/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: { faq } }),
+      });
+      await onRefetch();
+      setSavedFaq(true);
+      setTimeout(() => setSavedFaq(false), 2000);
+    } finally {
+      setSavingFaq(false);
+    }
+  }
+
+  function handleReset() {
+    setFaq([...(product.faq ?? [])]);
+    setEditingFaq(null);
+    setAddingFaq(false);
+  }
+
+  return (
+    <div className="border border-border/50 rounded-xl bg-card/50 overflow-hidden">
+      <button
+        onClick={() => toggleSection("faq")}
+        className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+      >
+        <h2 className="font-semibold text-foreground flex items-center gap-2">
+          <HelpCircle className="w-4 h-4 text-primary" />
+          Questions fréquentes
+        </h2>
+        <ChevronDown
+          className={cn(
+            "w-4 h-4 text-muted-foreground transition-transform",
+            openSections.includes("faq") && "rotate-180"
+          )}
+        />
+      </button>
+      {openSections.includes("faq") && (
+        <div className="p-5 pt-0 border-t border-border/50 space-y-4">
+          {/* FAQ entries */}
+          <div className="space-y-3">
+            {faq.map((item, i) => (
+              <div
+                key={i}
+                className="border border-border/50 rounded-lg p-4 space-y-2"
+              >
+                {editingFaq === i ? (
+                  <FaqEditForm
+                    item={item}
+                    onSave={(updated) => {
+                      updateFaq(i, updated);
+                      setEditingFaq(null);
+                    }}
+                    onCancel={() => setEditingFaq(null)}
+                  />
+                ) : (
+                  <>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-1 flex-1">
+                        <p className="text-sm font-semibold">
+                          Q: {item.question}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          R: {item.answer}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => removeFaq(i)}
+                        >
+                          <Trash2 className="w-3 h-3 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingFaq(i)}
+                      >
+                        <Pencil className="w-3 h-3 mr-1" />
+                        Éditer
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Add new FAQ */}
+          {addingFaq ? (
+            <div className="border border-border rounded-lg p-4 space-y-3 bg-muted/30">
+              <div className="space-y-1">
+                <Label>Question</Label>
+                <Input
+                  value={newFaq.question}
+                  onChange={(e) =>
+                    setNewFaq((prev) => ({ ...prev, question: e.target.value }))
+                  }
+                  placeholder="Comment fonctionne le plugin ?"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Réponse</Label>
+                <textarea
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[80px]"
+                  rows={3}
+                  placeholder="La réponse à la question..."
+                  value={newFaq.answer}
+                  onChange={(e) =>
+                    setNewFaq((prev) => ({ ...prev, answer: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={addFaqItem}>
+                  <Check className="w-4 h-4 mr-2" />
+                  OK
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAddingFaq(false)}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Annuler
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAddingFaq(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Ajouter une question
+            </Button>
+          )}
+
+          {/* Actions */}
+          <div className="flex items-center gap-3 pt-2">
+            <Button onClick={handleSave} disabled={savingFaq} size="sm">
+              {savingFaq ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Enregistrer
+            </Button>
+            {savedFaq && (
+              <span className="text-sm text-emerald-500 flex items-center gap-1">
+                <Check className="w-4 h-4" />
+                Enregistré !
+              </span>
+            )}
+            <Button variant="ghost" size="sm" onClick={handleReset}>
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Réinitialiser
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FaqEditForm({
+  item,
+  onSave,
+  onCancel,
+}: {
+  item: FaqItem;
+  onSave: (updated: FaqItem) => void;
+  onCancel: () => void;
+}) {
+  const [question, setQuestion] = useState(item.question);
+  const [answer, setAnswer] = useState(item.answer);
+
+  return (
+    <div className="space-y-3">
+      <div className="space-y-1">
+        <Label>Question</Label>
+        <Input value={question} onChange={(e) => setQuestion(e.target.value)} />
+      </div>
+      <div className="space-y-1">
+        <Label>Réponse</Label>
+        <textarea
+          className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[80px]"
+          rows={3}
+          value={answer}
+          onChange={(e) => setAnswer(e.target.value)}
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          onClick={() =>
+            onSave({ question: question.trim(), answer: answer.trim() })
+          }
+        >
+          <Check className="w-4 h-4 mr-2" />
+          OK
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onCancel}>
+          <X className="w-4 h-4 mr-2" />
+          Annuler
+        </Button>
+      </div>
     </div>
   );
 }
