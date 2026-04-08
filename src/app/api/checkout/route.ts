@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateLicenseKey, generateActivationCode } from "@/lib/license";
-import { sendOrderConfirmation } from "@/lib/email";
+import { sendOrderConfirmation, sendAdminNotification } from "@/lib/email";
 import { getEffectivePrice } from "@/lib/product-settings";
 import Stripe from "stripe";
 
@@ -94,7 +94,18 @@ export async function POST(req: Request) {
                 if (!used || used.length === 0) {
                     return NextResponse.json({ error: "Code de réduction invalide ou épuisé" }, { status: 400 });
                 }
+                sendAdminNotification("discount_used", `${discountCode.toUpperCase()} (commande gratuite)`, {
+                    "Code": discountCode.toUpperCase().trim(),
+                    "Reduction": `${appliedDiscountPercent}%`,
+                    "Client": email,
+                });
             }
+            // Notify admin of free order
+            sendAdminNotification("order_free", `${verifiedItems.map(i => i.product.name).join(", ")} pour ${email}`, {
+                "Client": email,
+                "Produits": verifiedItems.map(i => `${i.product.name} (${i.coreId})`).join(", "),
+                ...(appliedDiscountPercent > 0 ? { "Code promo": `${discountCode?.toUpperCase()} (-${appliedDiscountPercent}%)` } : {}),
+            });
             return await handleFreeOrder(supabase, order, verifiedItems, email);
         }
 
