@@ -185,6 +185,10 @@ export class LightForgeFnv1aAlgorithm implements LicenseAlgorithm {
     readonly description =
         "Algorithme déterministe compatible Q-SYS LightForge. Clé DMXR-XXXX-XXXX-XXXX.";
 
+    /**
+     * Separate secret from LICENSE_MASTER_SECRET because the Q-SYS plugin
+     * uses this exact secret for offline validation — it must match byte-for-byte.
+     */
     private getSecret(): string {
         const secret = process.env.LIGHTFORGE_LICENSE_SECRET;
         if (!secret) {
@@ -208,6 +212,23 @@ export class LightForgeFnv1aAlgorithm implements LicenseAlgorithm {
         return (mid * 65536 + aLo * bLo) % 4294967296;
     }
 
+    /** XOR the low byte of h with byte b (bit-by-bit, Lua-compatible). */
+    private xorLowByte(h: number, b: number): number {
+        let hm = h % 256;
+        let bm = b % 256;
+        let xor8 = 0;
+        let p = 1;
+        for (let bit = 0; bit < 8; bit++) {
+            const ha = hm % 2;
+            const ba = bm % 2;
+            if (ha !== ba) xor8 += p;
+            hm = Math.floor(hm / 2);
+            bm = Math.floor(bm / 2);
+            p *= 2;
+        }
+        return (h - (h % 256)) + xor8;
+    }
+
     /**
      * FNV-1a two-round keyed hash.
      * Input: secret|id|lengthHex|secret
@@ -227,40 +248,14 @@ export class LightForgeFnv1aAlgorithm implements LicenseAlgorithm {
 
         // Round 1
         for (let i = 0; i < data.length; i++) {
-            const b = data.charCodeAt(i);
-            let hm = h % 256;
-            let bm = b % 256;
-            let xor8 = 0;
-            let p = 1;
-            for (let bit = 0; bit < 8; bit++) {
-                const ha = hm % 2;
-                const ba = bm % 2;
-                if (ha !== ba) xor8 += p;
-                hm = Math.floor(hm / 2);
-                bm = Math.floor(bm / 2);
-                p *= 2;
-            }
-            h = h - (h % 256) + xor8;
+            h = this.xorLowByte(h, data.charCodeAt(i));
             h = this.mul32(h, 16777619); // FNV-1a prime
         }
 
         // Round 2: avalanche — fold hex representation back through
         const r2 = (h >>> 0).toString(16).toUpperCase().padStart(8, "0");
         for (let i = 0; i < r2.length; i++) {
-            const b = r2.charCodeAt(i);
-            let hm = h % 256;
-            let bm = b % 256;
-            let xor8 = 0;
-            let p = 1;
-            for (let bit = 0; bit < 8; bit++) {
-                const ha = hm % 2;
-                const ba = bm % 2;
-                if (ha !== ba) xor8 += p;
-                hm = Math.floor(hm / 2);
-                bm = Math.floor(bm / 2);
-                p *= 2;
-            }
-            h = h - (h % 256) + xor8;
+            h = this.xorLowByte(h, r2.charCodeAt(i));
             h = this.mul32(h, 16777619);
         }
 
@@ -287,6 +282,8 @@ export class LightForgeFnv1aAlgorithm implements LicenseAlgorithm {
     }
 
     generate(productId: string, coreId: string): LicenseResult {
+        // coreId is NOT uppercased — the Lua plugin passes System.LockingId
+        // as-is, and the key must match byte-for-byte.
         const secret = this.getSecret();
         const h1 = this.licHash(coreId, secret);
         const licenseKey = this.formatLicKey(h1, secret);
@@ -299,7 +296,7 @@ export class LightForgeFnv1aAlgorithm implements LicenseAlgorithm {
 
         return {
             licenseKey,
-            salt: "",
+            salt: "", // deterministic algorithm — no salt needed
             keyHash,
             algorithmVersion: this.name,
         };
