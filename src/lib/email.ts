@@ -17,6 +17,115 @@ interface OrderEmailParams {
     paidAt?: string;
 }
 
+type AdminNotificationType =
+    | "order_paid"
+    | "order_free"
+    | "contact_received"
+    | "license_activated"
+    | "admin_login_failed"
+    | "discount_used";
+
+interface AdminNotificationConfig {
+    label: string;
+    color: string;
+}
+
+const NOTIFICATION_CONFIG: Record<AdminNotificationType, AdminNotificationConfig> = {
+    order_paid: { label: "NOUVELLE COMMANDE", color: "#0f4a42" },
+    order_free: { label: "LICENCE GRATUITE", color: "#14b8a6" },
+    contact_received: { label: "NOUVEAU MESSAGE", color: "#1e40af" },
+    license_activated: { label: "LICENCE ACTIVEE", color: "#7c3aed" },
+    admin_login_failed: { label: "ALERTE SECURITE", color: "#dc2626" },
+    discount_used: { label: "CODE PROMO UTILISE", color: "#ea580c" },
+};
+
+const ADMIN_EMAILS = ["contact@bvfactory.dev", "contact.bvfactory@gmail.com"];
+
+function buildAdminNotificationHtml(
+    type: AdminNotificationType,
+    subject: string,
+    details: Record<string, string>
+): string {
+    const config = NOTIFICATION_CONFIG[type];
+    const now = new Date();
+    const dateStr = now.toLocaleDateString("fr-FR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+
+    const detailRows = Object.entries(details)
+        .map(
+            ([key, value]) => `
+        <tr>
+            <td style="padding: 8px 12px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #888; border-bottom: 1px solid #e5e5e5; width: 140px; vertical-align: top;">${key}</td>
+            <td style="padding: 8px 12px; font-size: 13px; border-bottom: 1px solid #e5e5e5; word-break: break-word;">${value}</td>
+        </tr>`
+        )
+        .join("");
+
+    return `
+    <div style="font-family: 'Courier New', monospace; max-width: 600px; margin: 0 auto; color: #111; background-color: #fafafa; padding: 0;">
+
+        <!-- Header -->
+        <div style="background-color: #0a0a0a; padding: 30px 24px; text-align: center;">
+            <h1 style="color: #fff; margin: 0; font-size: 18px; letter-spacing: 2px; text-transform: uppercase;">BVFactory</h1>
+            <p style="color: #14b8a6; margin: 8px 0 0; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;">Show Control Division</p>
+        </div>
+
+        <!-- Badge -->
+        <div style="background-color: ${config.color}; padding: 12px 24px; text-align: center;">
+            <p style="color: #fff; margin: 0; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; font-weight: bold;">${config.label}</p>
+        </div>
+
+        <div style="padding: 24px;">
+
+            <!-- Date -->
+            <p style="font-size: 11px; color: #888; margin: 0 0 16px 0;">${dateStr}</p>
+
+            <!-- Details -->
+            <div style="background: #fff; border: 1px solid #e5e5e5; border-radius: 4px; padding: 0; margin: 0 0 20px 0;">
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    ${detailRows}
+                </table>
+            </div>
+
+            <!-- Footer -->
+            <p style="font-size: 11px; color: #888; border-top: 1px solid #ddd; padding-top: 16px; margin-top: 24px; line-height: 1.6;">
+                BVFactory &mdash; Show Control Division<br/>
+                <a href="https://bvfactory.dev" style="color: #888;">bvfactory.dev</a><br/>
+                Notification automatique &mdash; ne pas repondre a cet email.
+            </p>
+        </div>
+    </div>`;
+}
+
+export async function sendAdminNotification(
+    type: AdminNotificationType,
+    subject: string,
+    details: Record<string, string>
+): Promise<void> {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) return;
+
+    const resend = new Resend(apiKey);
+    const config = NOTIFICATION_CONFIG[type];
+    const fullSubject = `[BVFactory] ${config.label} — ${subject}`;
+
+    try {
+        await resend.emails.send({
+            from: "BVFactory Alertes <noreply@bvfactory.dev>",
+            to: ADMIN_EMAILS,
+            subject: fullSubject,
+            html: buildAdminNotificationHtml(type, subject, details),
+        });
+    } catch (error) {
+        console.error(`Failed to send admin notification (${type}):`, error);
+    }
+}
+
 function formatPrice(cents: number, currency: string): string {
     return new Intl.NumberFormat("en-US", {
         style: "currency",
