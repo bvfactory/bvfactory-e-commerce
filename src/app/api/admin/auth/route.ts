@@ -4,6 +4,7 @@ import {
   createSessionToken,
   COOKIE_NAME,
 } from "@/lib/admin-auth";
+import { sendAdminNotification } from "@/lib/email";
 
 const SESSION_DURATION_S = 24 * 60 * 60;
 
@@ -61,6 +62,15 @@ export async function POST(request: Request) {
     if (!password || !(await verifyPassword(password))) {
       // Deliberate delay to slow brute force (200-500ms random)
       await new Promise((r) => setTimeout(r, 200 + Math.random() * 300));
+
+      // Notify admin of failed login attempt
+      sendAdminNotification("admin_login_failed", `Tentative echouee depuis ${ip}`, {
+          "Adresse IP": ip,
+          "Date": new Date().toLocaleDateString("fr-FR", {
+              year: "numeric", month: "long", day: "numeric",
+              hour: "2-digit", minute: "2-digit",
+          }),
+      });
 
       return securityHeaders(
         NextResponse.json({ error: "Mot de passe invalide" }, { status: 401 })
