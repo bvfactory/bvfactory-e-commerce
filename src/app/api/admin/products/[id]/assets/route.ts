@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { validateAdminRequest } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { MOCK_PRODUCTS } from "@/data/products";
 
 const BUCKET = "product-assets";
 const MAX_SCREENSHOT_SIZE = 5 * 1024 * 1024;
@@ -14,9 +14,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const { id } = await params;
-  if (!MOCK_PRODUCTS.find((p) => p.id === id)) {
-    return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
-  }
 
   const formData = await request.formData();
   const type = formData.get("type") as string;
@@ -89,6 +86,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: "Erreur lors de la sauvegarde" }, { status: 500 });
   }
 
+  revalidatePath("/plugins");
+  revalidatePath(`/plugins/${id}`);
+
   return NextResponse.json({ url: publicUrl, storagePath });
 }
 
@@ -131,6 +131,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   if (pathMatch) {
     await supabase.storage.from(BUCKET).remove([pathMatch[1]]);
   }
+
+  revalidatePath("/plugins");
+  revalidatePath(`/plugins/${id}`);
 
   return NextResponse.json({ success: true });
 }

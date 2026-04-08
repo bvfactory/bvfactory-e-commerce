@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateAdminRequest } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { MOCK_PRODUCTS } from "@/data/products";
 
 const BUCKET_NAME = "plugins";
 
@@ -13,6 +12,12 @@ export async function GET(request: NextRequest) {
 
     const supabase = createAdminClient();
 
+    // Get all products from DB
+    const { data: products } = await supabase
+        .from("product_settings")
+        .select("product_id, content");
+
+    // Get all files in the plugins bucket
     const { data: files, error } = await supabase.storage
         .from(BUCKET_NAME)
         .list();
@@ -21,12 +26,14 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const plugins = MOCK_PRODUCTS.map((product) => {
-        const file = files?.find((f) => f.name === product.pluginFileName);
+    const plugins = (products ?? []).map((p) => {
+        const content = (p.content as Record<string, unknown>) ?? {};
+        const pluginFileName = (content.pluginFileName as string) || null;
+        const file = pluginFileName ? files?.find((f) => f.name === pluginFileName) : null;
         return {
-            productId: product.id,
-            productName: product.name,
-            pluginFileName: product.pluginFileName || null,
+            productId: p.product_id,
+            productName: (content.name as string) || p.product_id,
+            pluginFileName,
             uploaded: !!file,
             fileSize: file?.metadata?.size || null,
             updatedAt: file?.updated_at || null,
@@ -53,10 +60,19 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    const product = MOCK_PRODUCTS.find((p) => p.id === productId);
-    if (!product?.pluginFileName) {
+    const supabase = createAdminClient();
+
+    // Get pluginFileName from DB
+    const { data: product } = await supabase
+        .from("product_settings")
+        .select("content")
+        .eq("product_id", productId)
+        .maybeSingle();
+
+    const pluginFileName = (product?.content as Record<string, unknown>)?.pluginFileName as string | undefined;
+    if (!pluginFileName) {
         return NextResponse.json(
-            { error: "Unknown product or no pluginFileName configured" },
+            { error: "Produit introuvable ou pas de nom de fichier plugin configuré" },
             { status: 400 }
         );
     }
@@ -68,12 +84,11 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    const supabase = createAdminClient();
     const buffer = Buffer.from(await file.arrayBuffer());
 
     const { error: uploadError } = await supabase.storage
         .from(BUCKET_NAME)
-        .upload(product.pluginFileName, buffer, {
+        .upload(pluginFileName, buffer, {
             upsert: true,
             contentType: "application/octet-stream",
         });
@@ -86,7 +101,7 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    return NextResponse.json({ success: true, fileName: product.pluginFileName });
+    return NextResponse.json({ success: true, fileName: pluginFileName });
 }
 
 export async function DELETE(request: NextRequest) {
@@ -97,19 +112,25 @@ export async function DELETE(request: NextRequest) {
 
     const { productId } = await request.json();
 
-    const product = MOCK_PRODUCTS.find((p) => p.id === productId);
-    if (!product?.pluginFileName) {
+    const supabase = createAdminClient();
+
+    const { data: product } = await supabase
+        .from("product_settings")
+        .select("content")
+        .eq("product_id", productId)
+        .maybeSingle();
+
+    const pluginFileName = (product?.content as Record<string, unknown>)?.pluginFileName as string | undefined;
+    if (!pluginFileName) {
         return NextResponse.json(
-            { error: "Unknown product or no pluginFileName configured" },
+            { error: "Produit introuvable ou pas de nom de fichier plugin configuré" },
             { status: 400 }
         );
     }
 
-    const supabase = createAdminClient();
-
     const { error } = await supabase.storage
         .from(BUCKET_NAME)
-        .remove([product.pluginFileName]);
+        .remove([pluginFileName]);
 
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });

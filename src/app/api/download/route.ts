@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { MOCK_PRODUCTS } from "@/data/products";
 
 const BUCKET_NAME = "plugins";
 
@@ -56,9 +55,15 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Find the plugin file name
-        const product = MOCK_PRODUCTS.find((p) => p.id === productId);
-        if (!product?.pluginFileName) {
+        // Get pluginFileName from DB
+        const { data: product } = await supabase
+            .from("product_settings")
+            .select("content")
+            .eq("product_id", productId)
+            .maybeSingle();
+
+        const pluginFileName = (product?.content as Record<string, unknown>)?.pluginFileName as string | undefined;
+        if (!pluginFileName) {
             return NextResponse.json(
                 { error: "No plugin file available for this product" },
                 { status: 404 }
@@ -68,7 +73,7 @@ export async function POST(req: NextRequest) {
         // Generate a signed URL (valid for 60 seconds)
         const { data: signedUrl, error: storageError } = await supabase.storage
             .from(BUCKET_NAME)
-            .createSignedUrl(product.pluginFileName, 60);
+            .createSignedUrl(pluginFileName, 60);
 
         if (storageError || !signedUrl) {
             console.error("Storage error:", storageError);

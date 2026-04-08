@@ -8,9 +8,10 @@ import Link from "next/link";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { ArrowRight, Search, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { ProductType, PRODUCT_CATEGORIES, getProductIcon } from "@/data/products";
+import { PRODUCT_CATEGORIES, getProductIcon } from "@/data/products";
+import { ProductWithPromo } from "@/lib/product-settings";
 
-export default function PluginsListClient({ products }: { products: ProductType[] }) {
+export default function PluginsListClient({ products }: { products: ProductWithPromo[] }) {
     const { formatPrice, isLoading } = useCurrency();
     const [activeCategory, setActiveCategory] = useState("all");
     const [search, setSearch] = useState("");
@@ -172,10 +173,22 @@ export default function PluginsListClient({ products }: { products: ProductType[
                                                 {/* Footer */}
                                                 <div className="flex items-center justify-between pt-6 border-t border-white/5 mt-auto">
                                                     <div>
-                                                        <p className={`text-2xl font-bold font-mono ${product.price_cents === 0 ? 'text-teal-400' : 'text-white'}`}>
-                                                            {isLoading ? "..." : formatPrice(product.price_cents)}
+                                                        <div className="flex items-baseline gap-2">
+                                                            <p className={`text-2xl font-bold font-mono ${product.price_cents === 0 ? 'text-teal-400' : 'text-white'}`}>
+                                                                {isLoading ? "..." : formatPrice(product.price_cents)}
+                                                            </p>
+                                                            {product.promo_active && product.original_price_cents !== product.price_cents && (
+                                                                <p className="text-sm font-mono text-slate-500 line-through">
+                                                                    {isLoading ? "" : formatPrice(product.original_price_cents)}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">
+                                                            {product.price_cents === 0 ? "Free License" : "Lifetime License"}
+                                                            {product.promo_active && product.promo_label && (
+                                                                <span className="ml-2 text-teal-400">{product.promo_label}</span>
+                                                            )}
                                                         </p>
-                                                        <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">{product.price_cents === 0 ? "Free License" : "Lifetime License"}</p>
                                                     </div>
                                                     <div className="flex items-center gap-1.5 text-teal-500 text-xs font-mono uppercase tracking-wider opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                         View <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />

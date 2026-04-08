@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { MOCK_PRODUCTS } from "@/data/products";
 import { getFullProduct, getAllFullProducts } from "@/lib/product-settings";
 import { notFound } from "next/navigation";
 import ProductPageClient from "./ProductPageClient";
@@ -42,11 +41,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
 }
 
-export function generateStaticParams() {
-    return MOCK_PRODUCTS.map((product) => ({
-        id: product.id,
-    }));
-}
+// Allow on-demand revalidation from admin API
+export const revalidate = 0;
 
 export default async function ProductPage({ params }: Props) {
     const { id } = await params;

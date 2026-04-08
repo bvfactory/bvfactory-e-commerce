@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { MOCK_PRODUCTS, ProductType } from "@/data/products";
+import { ProductType } from "@/data/products";
 
 export interface ProductSettings {
   product_id: string;
@@ -20,23 +20,68 @@ export interface ProductWithSettings {
   promo_label: string | null;
 }
 
+export interface ProductWithPromo extends ProductType {
+  original_price_cents: number;
+  promo_percent: number | null;
+  promo_active: boolean;
+  promo_label: string | null;
+}
+
+/** Default template for new products */
+const DEFAULT_PRODUCT: Omit<ProductType, "id"> = {
+  name: "Nouveau produit",
+  tagline: "",
+  description: "",
+  longDescription: "",
+  price_cents: 0,
+  iconName: "Layers",
+  category: "control",
+  features: [],
+  specs: {},
+  compatibility: { minQsysVersion: "9.0", supportedCores: ["Any Q-SYS Core"] },
+  versionHistory: [],
+  faq: [],
+};
+
+function rowToProduct(row: Record<string, unknown>): ProductWithPromo {
+  const content = (row.content as Record<string, unknown>) ?? {};
+  const product = { ...DEFAULT_PRODUCT, id: row.product_id as string, ...content } as ProductType;
+
+  const basePriceCents = (row.price_cents as number) ?? 0;
+  const promoActive = (row.promo_active as boolean) ?? false;
+  const promoPercent = (row.promo_percent as number) ?? null;
+
+  let effectivePrice = basePriceCents;
+  if (promoActive && promoPercent && promoPercent > 0) {
+    effectivePrice = Math.round(basePriceCents * (1 - promoPercent / 100));
+  }
+  product.price_cents = effectivePrice;
+
+  return {
+    ...product,
+    original_price_cents: basePriceCents,
+    promo_percent: promoPercent,
+    promo_active: promoActive,
+    promo_label: (row.promo_label as string) ?? null,
+  };
+}
+
 /**
  * Get the effective price for a product (with promo applied).
  * Used server-side at checkout to prevent price tampering.
  */
 export async function getEffectivePrice(productId: string): Promise<number> {
-  const product = MOCK_PRODUCTS.find((p) => p.id === productId);
-  if (!product) throw new Error(`Unknown product: ${productId}`);
-
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("product_settings")
     .select("price_cents, promo_percent, promo_active")
     .eq("product_id", productId)
-    .single();
+    .maybeSingle();
 
-  const basePriceCents = data?.price_cents ?? product.price_cents;
-  const promoPercent = data?.promo_active && data?.promo_percent ? data.promo_percent : 0;
+  if (!data) throw new Error(`Unknown product: ${productId}`);
+
+  const basePriceCents = data.price_cents ?? 0;
+  const promoPercent = data.promo_active && data.promo_percent ? data.promo_percent : 0;
 
   if (promoPercent > 0) {
     return Math.round(basePriceCents * (1 - promoPercent / 100));
@@ -53,78 +98,43 @@ export async function getAllProductsWithSettings(): Promise<ProductWithSettings[
     .from("product_settings")
     .select("*");
 
-  const settingsMap = new Map<string, ProductSettings>();
-  if (settings) {
-    for (const s of settings) {
-      settingsMap.set(s.product_id, s);
-    }
-  }
+  if (!settings) return [];
 
-  return MOCK_PRODUCTS.map((product) => {
-    const s = settingsMap.get(product.id);
+  return settings.map((s) => {
+    const content = (s.content as Record<string, unknown>) ?? {};
     return {
-      id: product.id,
-      name: product.name,
-      category: product.category,
-      default_price_cents: product.price_cents,
-      price_cents: s?.price_cents ?? product.price_cents,
-      promo_percent: s?.promo_percent ?? null,
-      promo_active: s?.promo_active ?? false,
-      promo_label: s?.promo_label ?? null,
+      id: s.product_id,
+      name: (content.name as string) ?? "Sans nom",
+      category: (content.category as string) ?? "control",
+      default_price_cents: s.price_cents ?? 0,
+      price_cents: s.price_cents ?? 0,
+      promo_percent: s.promo_percent ?? null,
+      promo_active: s.promo_active ?? false,
+      promo_label: s.promo_label ?? null,
     };
   });
 }
 
-function deepMergeProduct(base: ProductType, overrides: Record<string, unknown>): ProductType {
-  const result = { ...base };
-  for (const [key, value] of Object.entries(overrides)) {
-    if (value === null || value === undefined) continue;
-    if (key === "compatibility" && typeof value === "object") {
-      result.compatibility = { ...base.compatibility, ...(value as Record<string, unknown>) } as ProductType["compatibility"];
-    } else if (key === "specs" && typeof value === "object") {
-      result.specs = { ...base.specs, ...(value as Record<string, string>) };
-    } else {
-      (result as Record<string, unknown>)[key] = value;
-    }
-  }
-  return result;
-}
-
-export async function getFullProduct(productId: string): Promise<ProductType> {
-  const mock = MOCK_PRODUCTS.find((p) => p.id === productId);
-  if (!mock) throw new Error(`Unknown product: ${productId}`);
-
+export async function getFullProduct(productId: string): Promise<ProductWithPromo> {
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("product_settings")
-    .select("price_cents, promo_percent, promo_active, promo_label, content")
+    .select("*")
     .eq("product_id", productId)
     .maybeSingle();
 
-  if (!data) return mock;
-  const merged = data.content ? deepMergeProduct(mock, data.content as Record<string, unknown>) : { ...mock };
-  if (data.price_cents != null) merged.price_cents = data.price_cents;
-  return merged;
+  if (!data) throw new Error(`Unknown product: ${productId}`);
+
+  return rowToProduct(data);
 }
 
-export async function getAllFullProducts(): Promise<ProductType[]> {
+export async function getAllFullProducts(): Promise<ProductWithPromo[]> {
   const supabase = createAdminClient();
   const { data: settings } = await supabase
     .from("product_settings")
     .select("*");
 
-  const settingsMap = new Map<string, Record<string, unknown>>();
-  if (settings) {
-    for (const s of settings) {
-      settingsMap.set(s.product_id, s);
-    }
-  }
+  if (!settings) return [];
 
-  return MOCK_PRODUCTS.map((product) => {
-    const s = settingsMap.get(product.id);
-    if (!s) return product;
-    const merged = s.content ? deepMergeProduct(product, s.content as Record<string, unknown>) : { ...product };
-    if (s.price_cents != null) merged.price_cents = s.price_cents as number;
-    return merged;
-  });
+  return settings.map((s) => rowToProduct(s));
 }

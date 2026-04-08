@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ProductType, VersionHistory, FaqItem, getProductIcon } from "@/data/products";
@@ -54,10 +54,12 @@ function formatPrice(cents: number): string {
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const [product, setProduct] = useState<ProductType | null>(null);
   const [settings, setSettings] = useState<ProductSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [deletingProduct, setDeletingProduct] = useState(false);
   const [pluginInfo, setPluginInfo] = useState<{
     uploaded: boolean;
     fileSize: number | null;
@@ -116,6 +118,24 @@ export default function ProductDetailPage() {
     );
   }
 
+  async function handleDeleteProduct() {
+    if (!confirm(`Supprimer "${product?.name}" ? Cette action est irréversible et supprimera aussi les fichiers associés.`)) return;
+    setDeletingProduct(true);
+    try {
+      const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Erreur lors de la suppression");
+        return;
+      }
+      router.push("/admin/plugins");
+    } catch {
+      alert("Erreur réseau");
+    } finally {
+      setDeletingProduct(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center gap-2 text-muted-foreground py-24">
@@ -152,14 +172,26 @@ export default function ProductDetailPage() {
       </Link>
 
       {/* Page title */}
-      <div className="flex items-center gap-3">
-        <div className="text-primary">
-          {getProductIcon(product.iconName, "h-6 w-6")}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="text-primary">
+            {getProductIcon(product.iconName, "h-6 w-6")}
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">{product.name}</h1>
+          <Badge variant="outline" className="capitalize text-xs">
+            {product.category}
+          </Badge>
         </div>
-        <h1 className="text-2xl font-bold text-foreground">{product.name}</h1>
-        <Badge variant="outline" className="capitalize text-xs">
-          {product.category}
-        </Badge>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={handleDeleteProduct}
+          disabled={deletingProduct}
+          className="gap-2"
+        >
+          {deletingProduct ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          Supprimer le produit
+        </Button>
       </div>
 
       {/* Section 1: Prix & Promotions */}
@@ -1631,24 +1663,40 @@ function PluginFileSection({
       const formData = new FormData();
       formData.append("productId", product.id);
       formData.append("file", file);
-      await fetch("/api/admin/plugins", {
+      const res = await fetch("/api/admin/plugins", {
         method: "POST",
         body: formData,
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(`Erreur: ${data.error || "Échec de l'upload"}`);
+        return;
+      }
       await onRefetch();
+    } catch (err) {
+      alert(`Erreur réseau: ${err instanceof Error ? err.message : "Échec de l'upload"}`);
     } finally {
       setUploadingPlugin(false);
-      e.target.value = "";
+      if (e.target) e.target.value = "";
     }
   }
 
   async function handleDeletePlugin() {
-    await fetch("/api/admin/plugins", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId: product.id }),
-    });
-    await onRefetch();
+    try {
+      const res = await fetch("/api/admin/plugins", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: product.id }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(`Erreur: ${data.error || "Échec de la suppression"}`);
+        return;
+      }
+      await onRefetch();
+    } catch (err) {
+      alert(`Erreur réseau: ${err instanceof Error ? err.message : "Échec"}`);
+    }
   }
 
   return (

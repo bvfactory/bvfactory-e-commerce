@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { ProductType, getProductIcon } from "@/data/products";
+import { ProductWithPromo } from "@/lib/product-settings";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -12,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { AddToCartModal } from "@/components/CheckoutModal";
 import Image from "next/image";
 
-export default function ProductPageClient({ product, relatedProducts }: { product: ProductType; relatedProducts: ProductType[] }) {
+export default function ProductPageClient({ product, relatedProducts }: { product: ProductWithPromo; relatedProducts: ProductWithPromo[] }) {
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [showVideo, setShowVideo] = useState(false);
@@ -358,11 +359,26 @@ export default function ProductPageClient({ product, relatedProducts }: { produc
                             >
                                 <div className="mb-6">
                                     <p className="text-sm font-mono text-slate-400 uppercase tracking-widest mb-1">{product.price_cents === 0 ? "Free License" : "Lifetime License"}</p>
-                                    <div className="flex items-end gap-2">
+                                    <div className="flex items-end gap-3">
                                         <span className={`text-4xl font-bold font-mono ${product.price_cents === 0 ? 'text-teal-400' : 'text-white'}`}>
                                             {isLoading ? "..." : formatPrice(product.price_cents)}
                                         </span>
+                                        {product.promo_active && product.original_price_cents !== product.price_cents && (
+                                            <span className="text-xl font-mono text-slate-500 line-through">
+                                                {isLoading ? "" : formatPrice(product.original_price_cents)}
+                                            </span>
+                                        )}
                                     </div>
+                                    {product.promo_active && product.promo_label && (
+                                        <span className="inline-block mt-2 px-3 py-1 text-xs font-bold font-mono uppercase tracking-widest bg-teal-500/20 text-teal-400 rounded-full border border-teal-500/30">
+                                            {product.promo_label}
+                                        </span>
+                                    )}
+                                    {product.promo_active && !product.promo_label && product.promo_percent && (
+                                        <span className="inline-block mt-2 px-3 py-1 text-xs font-bold font-mono uppercase tracking-widest bg-teal-500/20 text-teal-400 rounded-full border border-teal-500/30">
+                                            -{product.promo_percent}%
+                                        </span>
+                                    )}
                                 </div>
 
                                 <Button

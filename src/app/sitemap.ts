@@ -1,10 +1,12 @@
 import { MetadataRoute } from "next";
-import { MOCK_PRODUCTS } from "@/data/products";
+import { getAllFullProducts } from "@/lib/product-settings";
 
 const baseUrl = "https://bvfactory.dev";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-    const productPages = MOCK_PRODUCTS.map((product) => ({
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+    const products = await getAllFullProducts();
+
+    const productPages = products.map((product) => ({
         url: `${baseUrl}/plugins/${product.id}`,
         lastModified: new Date(),
         changeFrequency: "monthly" as const,

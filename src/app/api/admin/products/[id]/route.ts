@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { validateAdminRequest } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { MOCK_PRODUCTS } from "@/data/products";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await validateAdminRequest(request))) {
@@ -9,11 +9,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 
   const { id } = await params;
-  const product = MOCK_PRODUCTS.find((p) => p.id === id);
-  if (!product) {
-    return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
-  }
-
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("product_settings")
@@ -21,9 +16,35 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .eq("product_id", id)
     .maybeSingle();
 
+  if (!data) {
+    return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
+  }
+
+  const content = (data.content as Record<string, unknown>) ?? {};
+  const product = {
+    id,
+    name: content.name ?? "Nouveau produit",
+    tagline: content.tagline ?? "",
+    description: content.description ?? "",
+    longDescription: content.longDescription ?? "",
+    price_cents: data.price_cents ?? 0,
+    iconName: content.iconName ?? "Layers",
+    category: content.category ?? "control",
+    features: content.features ?? [],
+    specs: content.specs ?? {},
+    compatibility: content.compatibility ?? { minQsysVersion: "9.0", supportedCores: ["Any Q-SYS Core"] },
+    versionHistory: content.versionHistory ?? [],
+    faq: content.faq ?? [],
+    pluginFileName: content.pluginFileName ?? undefined,
+    manualUrl: content.manualUrl ?? undefined,
+    videoUrl: content.videoUrl ?? undefined,
+    screenshots: content.screenshots ?? undefined,
+    compatibleBrands: content.compatibleBrands ?? undefined,
+  };
+
   return NextResponse.json({
     product,
-    settings: data || null,
+    settings: data,
   });
 }
 
@@ -33,11 +54,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 
   const { id } = await params;
-  const product = MOCK_PRODUCTS.find((p) => p.id === id);
-  if (!product) {
-    return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
-  }
-
   const body = await request.json();
   const { price_cents, promo_percent, promo_active, promo_label, content } = body;
 
@@ -93,5 +109,55 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json({ error: "Erreur lors de la mise à jour" }, { status: 500 });
   }
 
+  revalidatePath("/plugins");
+  revalidatePath(`/plugins/${id}`);
+
   return NextResponse.json({ settings: data });
+}
+
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!(await validateAdminRequest(request))) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const supabase = createAdminClient();
+
+  const { data: existing } = await supabase
+    .from("product_settings")
+    .select("product_id")
+    .eq("product_id", id)
+    .maybeSingle();
+
+  if (!existing) {
+    return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
+  }
+
+  // Clean up storage assets
+  const folders = [`screenshots/${id}`, `manuals/${id}`];
+  for (const folder of folders) {
+    const { data: files } = await supabase.storage.from("product-assets").list(folder);
+    if (files && files.length > 0) {
+      await supabase.storage.from("product-assets").remove(files.map((f) => `${folder}/${f.name}`));
+    }
+  }
+
+  const { data: pluginFiles } = await supabase.storage.from("plugins").list(id);
+  if (pluginFiles && pluginFiles.length > 0) {
+    await supabase.storage.from("plugins").remove(pluginFiles.map((f) => `${id}/${f.name}`));
+  }
+
+  const { error } = await supabase
+    .from("product_settings")
+    .delete()
+    .eq("product_id", id);
+
+  if (error) {
+    console.error("Error deleting product:", error);
+    return NextResponse.json({ error: "Erreur lors de la suppression" }, { status: 500 });
+  }
+
+  revalidatePath("/plugins");
+
+  return NextResponse.json({ deleted: true });
 }

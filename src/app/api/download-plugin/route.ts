@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { MOCK_PRODUCTS } from "@/data/products";
 
 const BUCKET_NAME = "plugins";
 
@@ -14,20 +13,27 @@ export async function GET(req: NextRequest) {
         );
     }
 
-    const product = MOCK_PRODUCTS.find((p) => p.id === productId);
-    if (!product?.pluginFileName) {
+    const supabase = createAdminClient();
+
+    // Get pluginFileName from DB
+    const { data: product } = await supabase
+        .from("product_settings")
+        .select("content")
+        .eq("product_id", productId)
+        .maybeSingle();
+
+    const pluginFileName = (product?.content as Record<string, unknown>)?.pluginFileName as string | undefined;
+    if (!pluginFileName) {
         return NextResponse.json(
             { error: "No plugin file available for this product" },
             { status: 404 }
         );
     }
 
-    const supabase = createAdminClient();
-
     const { data: signedUrl, error: storageError } = await supabase.storage
         .from(BUCKET_NAME)
-        .createSignedUrl(product.pluginFileName, 60, {
-            download: product.pluginFileName,
+        .createSignedUrl(pluginFileName, 60, {
+            download: pluginFileName,
         });
 
     if (storageError || !signedUrl) {
