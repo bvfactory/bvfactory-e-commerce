@@ -13,10 +13,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-interface OrderItem {
-  id: string;
-  name: string;
-  price_cents: number;
+interface RawOrderItem {
+  product: {
+    id: string;
+    name: string;
+    price_cents: number;
+  };
   coreId: string;
 }
 
@@ -24,7 +26,7 @@ interface RecentOrder {
   id: string;
   customer_email: string;
   status: string;
-  items: OrderItem[];
+  items: RawOrderItem[];
   created_at: string;
   discount_code: string | null;
   discount_percent: number | null;
@@ -56,7 +58,7 @@ function formatDate(iso: string): string {
 }
 
 function computeOrderTotal(order: RecentOrder): number {
-  const subtotal = order.items.reduce((sum, item) => sum + (item.price_cents ?? 0), 0);
+  const subtotal = order.items.reduce((sum, item) => sum + (item.product?.price_cents ?? 0), 0);
   return order.discount_percent
     ? Math.round(subtotal * (1 - order.discount_percent / 100))
     : subtotal;
@@ -171,7 +173,7 @@ export default function AdminDashboardPage() {
                       <StatusBadge status={order.status} />
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {order.items.map((item) => item.name).join(", ")}
+                      {order.items.map((item) => item.product?.name ?? "Inconnu").join(", ")}
                     </TableCell>
                     <TableCell className="text-right font-mono font-medium">
                       {formatCents(computeOrderTotal(order))}

@@ -10,29 +10,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { StatusBadge } from "@/components/admin/StatusBadge";
-import { Search, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  Check,
+  CreditCard,
+  ExternalLink,
+  Key,
+  Package,
+  Search,
+  ShoppingCart,
+  Clock,
+} from "lucide-react";
 
-interface OrderItem {
-  id: string;
-  name: string;
-  price_cents: number;
+// ── Types ──────────────────────────────────────────────────────────
+
+/** Raw item shape as stored in the orders JSONB column */
+interface RawOrderItem {
+  product: {
+    id: string;
+    name: string;
+    price_cents: number;
+    description?: string;
+    iconName?: string;
+  };
   coreId: string;
+  licenseKey?: string;
 }
 
 interface Order {
   id: string;
   customer_email: string;
   status: string;
-  items: OrderItem[];
+  items: RawOrderItem[];
   stripe_session_id: string | null;
   activation_code: string | null;
   discount_code: string | null;
@@ -41,8 +54,10 @@ interface Order {
   updated_at: string;
 }
 
+// ── Constants ──────────────────────────────────────────────────────
+
 const STATUS_LABELS: Record<string, string> = {
-  all: "Tous les statuts",
+  all: "Tous",
   paid: "Payée",
   pending: "En attente",
   failed: "Échouée",
@@ -51,6 +66,9 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUSES = ["all", "paid", "pending", "failed", "refunded"] as const;
 const LIMIT = 25;
+const STALE_PENDING_HOURS = 1;
+
+// ── Helpers ────────────────────────────────────────────────────────
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("fr-FR", {
@@ -62,20 +80,89 @@ function formatDate(iso: string): string {
   });
 }
 
-function computeTotal(items: OrderItem[], discountPercent: number | null): number {
-  const subtotal = items.reduce((sum, item) => sum + item.price_cents, 0);
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "À l'instant";
+  if (mins < 60) return `il y a ${mins} min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `il y a ${hours}h`;
+  const days = Math.floor(hours / 24);
+  return `il y a ${days}j`;
+}
+
+function computeTotal(items: RawOrderItem[], discountPercent: number | null): number {
+  const subtotal = items.reduce((sum, item) => sum + (item.product?.price_cents ?? 0), 0);
   if (discountPercent && discountPercent > 0) {
-    return subtotal * (1 - discountPercent / 100);
+    return Math.round(subtotal * (1 - discountPercent / 100));
   }
   return subtotal;
 }
 
 function formatCents(cents: number): string {
+  if (isNaN(cents)) return "—";
   return (cents / 100).toLocaleString("fr-FR", {
     style: "currency",
     currency: "EUR",
   });
 }
+
+function getAnomalies(order: Order, items: RawOrderItem[]): string[] {
+  const issues: string[] = [];
+
+  // Pending order older than threshold
+  if (order.status === "pending") {
+    const age = Date.now() - new Date(order.created_at).getTime();
+    if (age > STALE_PENDING_HOURS * 3600000) {
+      issues.push("Commande en attente depuis plus d'1 heure");
+    }
+  }
+
+  // Failed order
+  if (order.status === "failed") {
+    issues.push("Le paiement a échoué");
+  }
+
+  // Empty items
+  if (items.length === 0) {
+    issues.push("Aucun produit dans la commande");
+  }
+
+  // Paid but no activation code
+  if (order.status === "paid" && !order.activation_code) {
+    issues.push("Payée mais pas de code d'activation");
+  }
+
+  // Items with missing product data
+  const broken = items.filter((i) => !i.product?.name);
+  if (broken.length > 0) {
+    issues.push(`${broken.length} produit(s) avec données manquantes`);
+  }
+
+  return issues;
+}
+
+// ── Clipboard button ───────────────────────────────────────────────
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }}
+      className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+      title="Copier"
+    >
+      {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+    </button>
+  );
+}
+
+// ── Main component ─────────────────────────────────────────────────
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -127,15 +214,31 @@ export default function OrdersPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
 
+  // Stats
+  const anomalyCount = orders.filter((o) => {
+    const items: RawOrderItem[] = Array.isArray(o.items) ? o.items : [];
+    return getAnomalies(o, items).length > 0;
+  }).length;
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Commandes</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Gérez et consultez toutes les commandes
-        </p>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Commandes</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {total} commande{total !== 1 ? "s" : ""} au total
+          </p>
+        </div>
+        {anomalyCount > 0 && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 text-sm font-medium">
+            <AlertTriangle className="h-4 w-4" />
+            {anomalyCount} anomalie{anomalyCount > 1 ? "s" : ""}
+          </div>
+        )}
       </div>
 
+      {/* Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative sm:max-w-xs w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -166,168 +269,257 @@ export default function OrdersPage() {
         </Select>
       </div>
 
-      <div className="rounded-xl border border-border/50 overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead>Date</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Produits</TableHead>
-              <TableHead>Réduction</TableHead>
-              <TableHead className="text-right">Total</TableHead>
-              <TableHead className="w-8" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-12">
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
-                    Chargement...
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : orders.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
-                  Aucune commande trouvée.
-                </TableCell>
-              </TableRow>
-            ) : (
-              orders.map((order) => {
-                const items: OrderItem[] = Array.isArray(order.items) ? order.items : [];
-                const isExpanded = expandedId === order.id;
-                const orderTotal = computeTotal(items, order.discount_percent);
-
-                return (
-                  <Fragment key={order.id}>
-                    <TableRow
-                      className="cursor-pointer transition-colors"
-                      onClick={() => setExpandedId(isExpanded ? null : order.id)}
-                    >
-                      <TableCell className="whitespace-nowrap text-muted-foreground">
-                        {formatDate(order.created_at)}
-                      </TableCell>
-                      <TableCell className="font-medium max-w-[200px] truncate">
-                        {order.customer_email}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={order.status} />
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {items.length} — {items.map((i) => i.name).join(", ")}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {order.discount_code
-                          ? `${order.discount_code} (-${order.discount_percent}%)`
-                          : "—"}
-                      </TableCell>
-                      <TableCell className="text-right font-mono font-medium">
-                        {formatCents(orderTotal)}
-                      </TableCell>
-                      <TableCell>
-                        {isExpanded ? (
-                          <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-
-                    {isExpanded && (
-                      <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={7} className="bg-muted/30 p-0">
-                          <div className="px-6 py-4 space-y-3 text-sm">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
-                                  ID Commande
-                                </p>
-                                <p className="font-mono text-foreground text-xs">{order.id}</p>
-                              </div>
-
-                              {order.activation_code && (
-                                <div>
-                                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
-                                    Code d&apos;activation
-                                  </p>
-                                  <p className="font-mono text-foreground text-xs">
-                                    {order.activation_code}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-
-                            <div>
-                              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                                Produits
-                              </p>
-                              <div className="space-y-1.5">
-                                {items.map((item, idx) => (
-                                  <div key={idx} className="flex items-center justify-between rounded-lg bg-background/50 px-3 py-2">
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-medium text-foreground text-sm">{item.name}</span>
-                                      {item.coreId && (
-                                        <span className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                                          {item.coreId}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <span className="font-mono text-sm text-muted-foreground">
-                                      {formatCents(item.price_cents)}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            {order.stripe_session_id && (
-                              <div>
-                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
-                                  Session Stripe
-                                </p>
-                                <p className="font-mono text-xs text-muted-foreground break-all">
-                                  {order.stripe_session_id}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </Fragment>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {total} commande{total !== 1 ? "s" : ""} — Page {page} sur {totalPages}
-        </p>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            Précédent
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Suivant
-          </Button>
+      {/* Order list */}
+      {loading ? (
+        <div className="flex items-center justify-center gap-2 text-muted-foreground py-16">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
+          Chargement...
         </div>
-      </div>
+      ) : orders.length === 0 ? (
+        <div className="text-center text-muted-foreground py-16">
+          <ShoppingCart className="h-8 w-8 mx-auto mb-3 opacity-40" />
+          Aucune commande trouvée.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {orders.map((order) => {
+            const items: RawOrderItem[] = Array.isArray(order.items) ? order.items : [];
+            const isExpanded = expandedId === order.id;
+            const orderTotal = computeTotal(items, order.discount_percent);
+            const anomalies = getAnomalies(order, items);
+            const hasAnomaly = anomalies.length > 0;
+            const productNames = items
+              .map((i) => i.product?.name ?? "Produit inconnu")
+              .join(", ");
+
+            return (
+              <Fragment key={order.id}>
+                <div
+                  className={`
+                    rounded-xl border transition-all cursor-pointer
+                    ${hasAnomaly ? "border-amber-500/30 bg-amber-500/[0.02]" : "border-border/50 bg-card/30"}
+                    ${isExpanded ? "ring-1 ring-primary/20" : "hover:bg-card/60"}
+                  `}
+                  onClick={() => setExpandedId(isExpanded ? null : order.id)}
+                >
+                  {/* Main row */}
+                  <div className="flex items-center gap-4 px-5 py-4">
+                    {/* Status dot + date */}
+                    <div className="flex-shrink-0 w-36">
+                      <StatusBadge status={order.status} />
+                      <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {relativeTime(order.created_at)}
+                      </p>
+                    </div>
+
+                    {/* Customer + products */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-foreground text-sm truncate">
+                        {order.customer_email}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <Package className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                        <p className="text-xs text-muted-foreground truncate">
+                          {items.length} produit{items.length !== 1 ? "s" : ""} — {productNames}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Discount */}
+                    {order.discount_code && (
+                      <div className="flex-shrink-0 hidden sm:block">
+                        <span className="text-xs font-mono px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                          -{order.discount_percent}%
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Anomaly indicator */}
+                    {hasAnomaly && (
+                      <div className="flex-shrink-0">
+                        <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      </div>
+                    )}
+
+                    {/* Total */}
+                    <div className="flex-shrink-0 text-right w-24">
+                      <p className={`font-mono font-semibold text-sm ${orderTotal === 0 ? "text-muted-foreground" : "text-foreground"}`}>
+                        {formatCents(orderTotal)}
+                      </p>
+                    </div>
+
+                    {/* Expand arrow */}
+                    <div className="flex-shrink-0">
+                      {isExpanded ? (
+                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Expanded details */}
+                  {isExpanded && (
+                    <div className="border-t border-border/30 px-5 py-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+                      {/* Anomalies alert */}
+                      {hasAnomaly && (
+                        <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-4 py-3 space-y-1">
+                          {anomalies.map((a, i) => (
+                            <p key={i} className="text-sm text-amber-500 flex items-center gap-2">
+                              <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+                              {a}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Meta grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                            ID Commande
+                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-mono text-xs text-foreground truncate">{order.id}</p>
+                            <CopyButton text={order.id} />
+                          </div>
+                        </div>
+
+                        <div>
+                          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                            Date
+                          </p>
+                          <p className="text-xs text-foreground">{formatDate(order.created_at)}</p>
+                        </div>
+
+                        {order.activation_code && (
+                          <div>
+                            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                              Code d&apos;activation
+                            </p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-mono text-xs text-foreground font-semibold">
+                                {order.activation_code}
+                              </p>
+                              <CopyButton text={order.activation_code} />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Products detail */}
+                      <div>
+                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                          Détail des produits
+                        </p>
+                        <div className="space-y-1.5">
+                          {items.map((item, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between rounded-lg bg-background/60 border border-border/30 px-4 py-3"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                  <Package className="h-4 w-4 text-primary" />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-medium text-foreground text-sm truncate">
+                                    {item.product?.name ?? "Produit inconnu"}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    {item.coreId && (
+                                      <span className="text-[10px] font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">
+                                        Core: {item.coreId}
+                                      </span>
+                                    )}
+                                    {item.licenseKey && (
+                                      <span className="text-[10px] font-mono text-emerald-500/80 flex items-center gap-0.5">
+                                        <Key className="h-2.5 w-2.5" />
+                                        Licence générée
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <span className="font-mono text-sm font-medium text-foreground flex-shrink-0 ml-3">
+                                {formatCents(item.product?.price_cents ?? 0)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Subtotal / discount / total */}
+                        {order.discount_code && (
+                          <div className="mt-3 pt-3 border-t border-border/30 space-y-1 text-right">
+                            <p className="text-xs text-muted-foreground">
+                              Sous-total :{" "}
+                              <span className="font-mono">
+                                {formatCents(items.reduce((s, i) => s + (i.product?.price_cents ?? 0), 0))}
+                              </span>
+                            </p>
+                            <p className="text-xs text-emerald-500">
+                              Réduction {order.discount_code} :{" "}
+                              <span className="font-mono">-{order.discount_percent}%</span>
+                            </p>
+                            <p className="text-sm font-semibold text-foreground">
+                              Total :{" "}
+                              <span className="font-mono">{formatCents(orderTotal)}</span>
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Stripe info */}
+                      {order.stripe_session_id && (
+                        <div>
+                          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                            Stripe
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                            <p className="font-mono text-[11px] text-muted-foreground truncate">
+                              {order.stripe_session_id}
+                            </p>
+                            <CopyButton text={order.stripe_session_id} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </Fragment>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-sm text-muted-foreground">
+            Page {page} sur {totalPages}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Précédent
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Suivant
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
