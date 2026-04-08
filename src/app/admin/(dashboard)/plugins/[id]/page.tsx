@@ -25,7 +25,6 @@ import {
   List,
   Loader2,
   Plus,
-  RotateCcw,
   Save,
   Settings,
   Check,
@@ -323,7 +322,6 @@ function PricingSection({
   const [promoPercent, setPromoPercent] = useState(displayPromoPercent);
   const [promoLabel, setPromoLabel] = useState(displayPromoLabel);
   const [saving, setSaving] = useState(false);
-  const [resetting, setResetting] = useState(false);
   const [saved, setSaved] = useState(false);
 
   // Sync state when settings change after refetch
@@ -356,25 +354,6 @@ function PricingSection({
       setTimeout(() => setSaved(false), 2000);
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleReset() {
-    setResetting(true);
-    try {
-      await fetch(`/api/admin/products/${product.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          price_cents: null,
-          promo_percent: null,
-          promo_active: false,
-          promo_label: null,
-        }),
-      });
-      await onRefetch();
-    } finally {
-      setResetting(false);
     }
   }
 
@@ -486,19 +465,6 @@ function PricingSection({
                 Enregistré !
               </span>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleReset}
-              disabled={resetting}
-            >
-              {resetting ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <RotateCcw className="w-4 h-4 mr-2" />
-              )}
-              Réinitialiser le prix
-            </Button>
           </div>
         </div>
       )}
@@ -532,7 +498,6 @@ function GeneralInfoSection({
   );
   const [videoUrl, setVideoUrl] = useState(content.videoUrl ?? "");
   const [saving, setSaving] = useState(false);
-  const [resetting, setResetting] = useState(false);
   const [saved, setSaved] = useState(false);
 
   // Sync state when settings change after refetch
@@ -547,46 +512,23 @@ function GeneralInfoSection({
   async function handleSave() {
     setSaving(true);
     try {
-      const contentPayload: Record<string, string | null> = {};
-      if (tagline !== product.tagline) contentPayload.tagline = tagline || null;
-      if (description !== product.description)
-        contentPayload.description = description || null;
-      if (longDescription !== product.longDescription)
-        contentPayload.longDescription = longDescription || null;
-      if (videoUrl !== (product.videoUrl ?? ""))
-        contentPayload.videoUrl = videoUrl || null;
-
       await fetch(`/api/admin/products/${product.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: contentPayload }),
+        body: JSON.stringify({
+          content: {
+            tagline: tagline || "",
+            description: description || "",
+            longDescription: longDescription || "",
+            videoUrl: videoUrl || "",
+          },
+        }),
       });
       await onRefetch();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleReset() {
-    setResetting(true);
-    try {
-      await fetch(`/api/admin/products/${product.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: {
-            tagline: null,
-            description: null,
-            longDescription: null,
-            videoUrl: null,
-          },
-        }),
-      });
-      await onRefetch();
-    } finally {
-      setResetting(false);
     }
   }
 
@@ -670,19 +612,6 @@ function GeneralInfoSection({
                 Enregistré !
               </span>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleReset}
-              disabled={resetting}
-            >
-              {resetting ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <RotateCcw className="w-4 h-4 mr-2" />
-              )}
-              Réinitialiser
-            </Button>
           </div>
         </div>
       )}
@@ -752,10 +681,6 @@ function FeaturesSection({
     } finally {
       setSaving(false);
     }
-  }
-
-  function handleReset() {
-    setFeatures([...product.features]);
   }
 
   return (
@@ -838,10 +763,6 @@ function FeaturesSection({
                 Enregistré !
               </span>
             )}
-            <Button variant="ghost" size="sm" onClick={handleReset}>
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Réinitialiser
-            </Button>
           </div>
         </div>
       )}
@@ -907,10 +828,6 @@ function SpecsSection({
     } finally {
       setSaving(false);
     }
-  }
-
-  function handleReset() {
-    setSpecs(toArray(product.specs));
   }
 
   return (
@@ -982,10 +899,6 @@ function SpecsSection({
                 Enregistré !
               </span>
             )}
-            <Button variant="ghost" size="sm" onClick={handleReset}>
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Réinitialiser
-            </Button>
           </div>
         </div>
       )}
@@ -1047,7 +960,7 @@ function CompatibilitySection({
                 .split(",")
                 .map((s) => s.trim())
                 .filter(Boolean),
-              os: compatibility.os || undefined,
+              os: compatibility.os || "",
             },
           },
         }),
@@ -1058,14 +971,6 @@ function CompatibilitySection({
     } finally {
       setSaving(false);
     }
-  }
-
-  function handleReset() {
-    setCompatibility({
-      minQsysVersion: product.compatibility.minQsysVersion,
-      supportedCores: product.compatibility.supportedCores.join(", "),
-      os: product.compatibility.os ?? "",
-    });
   }
 
   return (
@@ -1149,10 +1054,6 @@ function CompatibilitySection({
                 Enregistré !
               </span>
             )}
-            <Button variant="ghost" size="sm" onClick={handleReset}>
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Réinitialiser
-            </Button>
           </div>
         </div>
       )}
@@ -1221,11 +1122,6 @@ function BrandsSection({
     } finally {
       setSaving(false);
     }
-  }
-
-  function handleReset() {
-    const b = product.compatibleBrands ?? [];
-    setBrands(b.map((br) => ({ ...br })));
   }
 
   return (
@@ -1305,10 +1201,6 @@ function BrandsSection({
                 Enregistré !
               </span>
             )}
-            <Button variant="ghost" size="sm" onClick={handleReset}>
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Réinitialiser
-            </Button>
           </div>
         </div>
       )}
@@ -1335,7 +1227,6 @@ function ScreenshotsSection({
 
   const [screenshots, setScreenshots] = useState<string[]>(initScreenshots);
   const [uploadingScreenshots, setUploadingScreenshots] = useState(false);
-  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     const c = (settings?.content ?? {}) as Record<string, unknown>;
@@ -1375,20 +1266,6 @@ function ScreenshotsSection({
       body: JSON.stringify({ type: "screenshot", url }),
     });
     await onRefetch();
-  }
-
-  async function handleReset() {
-    setResetting(true);
-    try {
-      await fetch(`/api/admin/products/${product.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: { screenshots: null } }),
-      });
-      await onRefetch();
-    } finally {
-      setResetting(false);
-    }
   }
 
   return (
@@ -1455,22 +1332,6 @@ function ScreenshotsSection({
             />
           </label>
 
-          {/* Reset */}
-          <div className="flex items-center gap-3 pt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleReset}
-              disabled={resetting}
-            >
-              {resetting ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <RotateCcw className="w-4 h-4 mr-2" />
-              )}
-              Réinitialiser
-            </Button>
-          </div>
         </div>
       )}
     </div>
@@ -1893,12 +1754,6 @@ function ChangelogSection({
     }
   }
 
-  function handleReset() {
-    setVersionHistory([...(product.versionHistory ?? [])]);
-    setEditingVersion(null);
-    setAddingVersion(false);
-  }
-
   return (
     <div className="border border-border/50 rounded-xl bg-card/50 overflow-hidden">
       <button
@@ -2066,10 +1921,6 @@ function ChangelogSection({
                 Enregistré !
               </span>
             )}
-            <Button variant="ghost" size="sm" onClick={handleReset}>
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Réinitialiser
-            </Button>
           </div>
         </div>
       )}
@@ -2197,12 +2048,6 @@ function FaqSection({
     } finally {
       setSavingFaq(false);
     }
-  }
-
-  function handleReset() {
-    setFaq([...(product.faq ?? [])]);
-    setEditingFaq(null);
-    setAddingFaq(false);
   }
 
   return (
@@ -2344,10 +2189,6 @@ function FaqSection({
                 Enregistré !
               </span>
             )}
-            <Button variant="ghost" size="sm" onClick={handleReset}>
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Réinitialiser
-            </Button>
           </div>
         </div>
       )}

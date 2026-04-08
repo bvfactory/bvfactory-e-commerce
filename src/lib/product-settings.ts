@@ -7,6 +7,7 @@ export interface ProductSettings {
   promo_percent: number | null;
   promo_active: boolean;
   promo_label: string | null;
+  algorithm_id: string | null;
 }
 
 export interface ProductWithSettings {
