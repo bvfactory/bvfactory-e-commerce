@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { sendAdminNotification } from "@/lib/email";
 import { verifyLicenseKey } from "@/lib/license";
 
 // In-memory rate limiter (per-IP, resets on deploy)
@@ -78,11 +80,35 @@ export async function POST(req: Request) {
 
         if (isValid) {
             // Mark first activation time
-            await supabase
+            const { data: activatedRows } = await supabase
                 .from("licenses")
                 .update({ activated_at: new Date().toISOString() })
                 .eq("license_key", licenseKey)
-                .is("activated_at", null);
+                .is("activated_at", null)
+                .select("product_id, core_id, order_id");
+
+            // Notify admin on first activation only
+            if (activatedRows && activatedRows.length > 0) {
+                const activated = activatedRows[0];
+
+                // Use admin client to read order (RLS: service_role only)
+                const adminSupabase = createAdminClient();
+                const { data: order } = await adminSupabase
+                    .from("orders")
+                    .select("customer_email")
+                    .eq("id", activated.order_id)
+                    .single();
+
+                sendAdminNotification("license_activated", `${productId} sur ${coreId}`, {
+                    "Produit": productId,
+                    "Core ID": coreId,
+                    ...(order?.customer_email ? { "Client": order.customer_email } : {}),
+                    "Date": new Date().toLocaleDateString("fr-FR", {
+                        year: "numeric", month: "long", day: "numeric",
+                        hour: "2-digit", minute: "2-digit",
+                    }),
+                });
+            }
         }
 
         return NextResponse.json({ valid: isValid, status: license.status });
