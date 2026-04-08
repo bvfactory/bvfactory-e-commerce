@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { generateLicenseKey, generateActivationCode } from "@/lib/license";
 import { sendOrderConfirmation } from "@/lib/email";
 import { getEffectivePrice } from "@/lib/product-settings";
@@ -7,7 +7,7 @@ import Stripe from "stripe";
 
 export async function POST(req: Request) {
     try {
-        const { items, email, currency, rate, discountCode } = await req.json();
+        const { items, email, currency, discountCode } = await req.json();
 
         if (!items || !items.length || !email) {
             return NextResponse.json({ error: "Champs manquants" }, { status: 400 });
@@ -20,17 +20,24 @@ export async function POST(req: Request) {
             }
         }
 
-        const supabase = await createClient();
+        const supabase = createAdminClient();
 
         const finalCurrency = currency || "EUR";
-        const finalRate = rate || 1;
+        // Server-side exchange rate — never trust client-provided rates
+        const EXCHANGE_RATES: Record<string, number> = {
+            EUR: 1, USD: 1.05, GBP: 0.85, CAD: 1.45, AUD: 1.65, JPY: 160.5,
+        };
+        const finalRate = EXCHANGE_RATES[finalCurrency.toUpperCase()] ?? 1;
 
         let appliedDiscountPercent = 0;
 
         if (discountCode) {
+            // Read-only check for discount validity (no increment yet).
+            // For free orders: atomic try_use_discount is called in handleFreeOrder.
+            // For paid orders: increment happens in the Stripe webhook after payment.
             const { data: dData, error: dError } = await supabase
                 .from("discount_codes")
-                .select("*")
+                .select("percent_off, active, expires_at, max_uses, current_uses")
                 .eq("code", discountCode.toUpperCase().trim())
                 .eq("active", true)
                 .single();
@@ -79,11 +86,14 @@ export async function POST(req: Request) {
         const effectivelyFree = allFree || appliedDiscountPercent === 100;
 
         if (effectivelyFree) {
-            // Increment discount usage if applicable
+            // For free orders, atomically validate and consume the discount
             if (appliedDiscountPercent > 0 && discountCode) {
-                await supabase.rpc('increment_discount_usage', {
+                const { data: used } = await supabase.rpc('try_use_discount', {
                     d_code: discountCode.toUpperCase().trim()
                 });
+                if (!used || used.length === 0) {
+                    return NextResponse.json({ error: "Code de réduction invalide ou épuisé" }, { status: 400 });
+                }
             }
             return await handleFreeOrder(supabase, order, verifiedItems, email);
         }
@@ -92,8 +102,8 @@ export async function POST(req: Request) {
         const stripeSecret = process.env.STRIPE_SECRET_KEY;
 
         if (!stripeSecret) {
-            console.warn("STRIPE_SECRET_KEY missing, simulating Checkout success.");
-            return NextResponse.json({ url: `/api/sandbox-payment?orderId=${order.id}` });
+            console.error("STRIPE_SECRET_KEY is not configured");
+            return NextResponse.json({ error: "Payment system not configured" }, { status: 500 });
         }
 
         const stripe = new Stripe(stripeSecret, {
@@ -133,10 +143,6 @@ export async function POST(req: Request) {
                 name: `Discount: ${discountCode.toUpperCase()}`,
             });
             sessionConfig.discounts = [{ coupon: coupon.id }];
-
-            await supabase.rpc('increment_discount_usage', {
-                d_code: discountCode.toUpperCase().trim()
-            });
         }
 
         const session = await stripe.checkout.sessions.create(sessionConfig);
@@ -165,16 +171,12 @@ async function handleFreeOrder(supabase: any, order: any, items: FreeOrderItem[]
     const activationCode = generateActivationCode();
 
     // Generate licenses for each free item
-    const itemsWithLicenses = items.map((item) => {
-        const { licenseKey } = generateLicenseKey(item.product.id, item.coreId);
-        return { ...item, licenseKey };
-    });
+    const itemsWithLicenses: FreeOrderItem[] = [];
 
-    // Insert individual license records
-    for (const item of itemsWithLicenses) {
-        const { licenseKey, salt, keyHash, algorithmVersion } = generateLicenseKey(item.product.id, item.coreId);
-        // Use the freshly generated key (not the one from map above) so salt/hash are consistent
-        item.licenseKey = licenseKey;
+    for (const item of items) {
+        const { licenseKey, salt, keyHash, algorithmVersion } = await generateLicenseKey(item.product.id, item.coreId);
+
+        itemsWithLicenses.push({ ...item });
 
         await supabase.from("licenses").insert({
             order_id: order.id,

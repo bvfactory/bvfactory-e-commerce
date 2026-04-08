@@ -24,9 +24,12 @@ export async function GET(request: NextRequest) {
     .range(offset, offset + limit - 1);
 
   if (search) {
-    query = query.or(
-      `core_id.ilike.%${search}%,product_id.ilike.%${search}%`
-    );
+    const sanitized = search.replace(/[%,.*()]/g, "");
+    if (sanitized) {
+      query = query.or(
+        `core_id.ilike.%${sanitized}%,product_id.ilike.%${sanitized}%`
+      );
+    }
   }
 
   if (status) {

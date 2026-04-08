@@ -1,4 +1,4 @@
-import { createHmac, randomBytes } from "crypto";
+import { createHmac, randomBytes, createHash } from "crypto";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -16,6 +16,8 @@ export interface LicenseResult {
  */
 export interface LicenseAlgorithm {
     readonly name: string;
+    readonly label: string;
+    readonly description: string;
     generate(productId: string, coreId: string): LicenseResult;
     verify(licenseKey: string, productId: string, storedKeyHash: string): boolean;
 }
@@ -24,10 +26,10 @@ export interface LicenseAlgorithm {
 
 function getMasterSecret(): string {
     const secret = process.env.LICENSE_MASTER_SECRET;
-    if (!secret && process.env.NODE_ENV === "production") {
-        throw new Error("LICENSE_MASTER_SECRET environment variable is required in production.");
+    if (!secret) {
+        throw new Error("LICENSE_MASTER_SECRET environment variable is required.");
     }
-    return secret || "dev-fallback-secret-not-for-production";
+    return secret;
 }
 
 function deriveProductSecret(productId: string): string {
@@ -45,10 +47,12 @@ function timingSafeEqual(a: Buffer, b: Buffer): boolean {
     return result === 0;
 }
 
-// ─── Default algorithm (current HMAC-SHA256) ─────────────────────────────────
+// ─── Algorithm: HMAC-SHA256 v1 (default) ────────────────────────────────────
 
 export class HmacSha256Algorithm implements LicenseAlgorithm {
     readonly name = "hmac-sha256-v1";
+    readonly label = "HMAC-SHA256 v1";
+    readonly description = "Algorithme par défaut. Clé 32 caractères hex, préfixe BVFA.";
 
     generate(productId: string, coreId: string): LicenseResult {
         const salt = randomBytes(16).toString("hex");
@@ -84,24 +88,134 @@ export class HmacSha256Algorithm implements LicenseAlgorithm {
     }
 }
 
-// ─── Registry ────────────────────────────────────────────────────────────────
+// ─── Algorithm: SHA-512 short key ───────────────────────────────────────────
 
-const DEFAULT_ALGORITHM: LicenseAlgorithm = new HmacSha256Algorithm();
+export class Sha512ShortAlgorithm implements LicenseAlgorithm {
+    readonly name = "sha512-short-v1";
+    readonly label = "SHA-512 Court";
+    readonly description = "Clé courte 16 caractères, idéale pour saisie manuelle. Préfixe BVF.";
 
-const algorithmRegistry = new Map<string, LicenseAlgorithm>();
+    generate(productId: string, coreId: string): LicenseResult {
+        const salt = randomBytes(16).toString("hex");
+        const productSecret = deriveProductSecret(productId);
+
+        const rawHash = createHash("sha512")
+            .update(`${productSecret}:${coreId.toUpperCase()}:${salt}`)
+            .digest("hex");
+
+        const keyBody = rawHash.substring(0, 16).toUpperCase();
+        const licenseKey = `BVF-${keyBody.match(/.{4}/g)!.join("-")}`;
+
+        const keyHash = createHmac("sha256", productSecret)
+            .update(`verify:${licenseKey}`)
+            .digest("hex");
+
+        return { licenseKey, salt, keyHash, algorithmVersion: this.name };
+    }
+
+    verify(licenseKey: string, productId: string, storedKeyHash: string): boolean {
+        const productSecret = deriveProductSecret(productId);
+
+        const computedHash = createHmac("sha256", productSecret)
+            .update(`verify:${licenseKey}`)
+            .digest("hex");
+
+        if (computedHash.length !== storedKeyHash.length) return false;
+
+        const a = Buffer.from(computedHash, "hex");
+        const b = Buffer.from(storedKeyHash, "hex");
+
+        return timingSafeEqual(a, b);
+    }
+}
+
+// ─── Algorithm: Numeric key (for hardware input) ────────────────────────────
+
+export class NumericKeyAlgorithm implements LicenseAlgorithm {
+    readonly name = "numeric-v1";
+    readonly label = "Numérique";
+    readonly description = "Clé entièrement numérique (20 chiffres), pour saisie sur écrans tactiles.";
+
+    generate(productId: string, coreId: string): LicenseResult {
+        const salt = randomBytes(16).toString("hex");
+        const productSecret = deriveProductSecret(productId);
+
+        const rawHash = createHmac("sha256", productSecret)
+            .update(`${coreId.toUpperCase()}:${salt}`)
+            .digest("hex");
+
+        // Convert hex to decimal digits by taking pairs and modding
+        let digits = "";
+        for (let i = 0; i < rawHash.length && digits.length < 20; i += 2) {
+            const byte = parseInt(rawHash.substring(i, i + 2), 16);
+            digits += (byte % 10).toString();
+        }
+        digits = digits.substring(0, 20);
+
+        const licenseKey = `BVF-${digits.match(/.{4}/g)!.join("-")}`;
+
+        const keyHash = createHmac("sha256", productSecret)
+            .update(`verify:${licenseKey}`)
+            .digest("hex");
+
+        return { licenseKey, salt, keyHash, algorithmVersion: this.name };
+    }
+
+    verify(licenseKey: string, productId: string, storedKeyHash: string): boolean {
+        const productSecret = deriveProductSecret(productId);
+
+        const computedHash = createHmac("sha256", productSecret)
+            .update(`verify:${licenseKey}`)
+            .digest("hex");
+
+        if (computedHash.length !== storedKeyHash.length) return false;
+
+        const a = Buffer.from(computedHash, "hex");
+        const b = Buffer.from(storedKeyHash, "hex");
+
+        return timingSafeEqual(a, b);
+    }
+}
+
+// ─── Registry (by algorithm name) ───────────────────────────────────────────
+
+const algorithmsByName = new Map<string, LicenseAlgorithm>();
+
+function register(algo: LicenseAlgorithm) {
+    algorithmsByName.set(algo.name, algo);
+}
+
+// Register all built-in algorithms
+register(new HmacSha256Algorithm());
+register(new Sha512ShortAlgorithm());
+register(new NumericKeyAlgorithm());
+
+/** Default algorithm used when a product has no specific assignment. */
+export const DEFAULT_ALGORITHM_NAME = "hmac-sha256-v1";
 
 /**
- * Register a custom license algorithm for a specific product.
+ * Register a custom license algorithm by its name.
  * Call at module scope so registration happens before any generation/verification.
  */
-export function registerAlgorithm(productId: string, algorithm: LicenseAlgorithm): void {
-    algorithmRegistry.set(productId, algorithm);
+export function registerAlgorithm(algorithm: LicenseAlgorithm): void {
+    algorithmsByName.set(algorithm.name, algorithm);
 }
 
 /**
- * Get the license algorithm for a product.
- * Returns the registered algorithm or the default HMAC-SHA256.
+ * Get a license algorithm by its name.
+ * Returns the default HMAC-SHA256 if the name is unknown.
  */
-export function getAlgorithm(productId: string): LicenseAlgorithm {
-    return algorithmRegistry.get(productId) ?? DEFAULT_ALGORITHM;
+export function getAlgorithmByName(name: string): LicenseAlgorithm {
+    return algorithmsByName.get(name) ?? algorithmsByName.get(DEFAULT_ALGORITHM_NAME)!;
+}
+
+/**
+ * List all registered algorithms (for admin UI).
+ */
+export function listAlgorithms(): { name: string; label: string; description: string }[] {
+    return Array.from(algorithmsByName.values()).map((a) => ({
+        name: a.name,
+        label: a.label,
+        description: a.description,
+    }));
 }

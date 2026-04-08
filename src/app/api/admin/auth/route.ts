@@ -14,7 +14,7 @@ const WINDOW_MS = 15 * 60 * 1000;
 
 function getClientIP(request: Request): string {
   return (
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ||
     request.headers.get("x-real-ip") ||
     "unknown"
   );

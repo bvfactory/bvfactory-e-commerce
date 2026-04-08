@@ -22,6 +22,7 @@ import {
   FileText,
   HardDrive,
   ImagePlus,
+  Key,
   List,
   Loader2,
   Plus,
@@ -44,7 +45,14 @@ interface ProductSettings {
   promo_percent: number | null;
   promo_active: boolean | null;
   promo_label: string | null;
+  algorithm_id: string | null;
   content: Record<string, string | null> | null;
+}
+
+interface AlgorithmOption {
+  name: string;
+  label: string;
+  description: string;
 }
 
 function formatPrice(cents: number): string {
@@ -195,6 +203,15 @@ export default function ProductDetailPage() {
 
       {/* Section 1: Prix & Promotions */}
       <PricingSection
+        product={product}
+        settings={settings}
+        openSections={openSections}
+        toggleSection={toggleSection}
+        onRefetch={fetchProduct}
+      />
+
+      {/* Section 1b: Algorithme de licence */}
+      <LicenseAlgorithmSection
         product={product}
         settings={settings}
         openSections={openSections}
@@ -448,6 +465,128 @@ function PricingSection({
               </span>
             )}
           </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-3 pt-2">
+            <Button onClick={handleSave} disabled={saving} size="sm">
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Enregistrer
+            </Button>
+            {saved && (
+              <span className="text-sm text-emerald-500 flex items-center gap-1">
+                <Check className="w-4 h-4" />
+                Enregistré !
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section 1b: Algorithme de licence
+// ---------------------------------------------------------------------------
+
+function LicenseAlgorithmSection({
+  product,
+  settings,
+  openSections,
+  toggleSection,
+  onRefetch,
+}: {
+  product: ProductType;
+  settings: ProductSettings | null;
+  openSections: string[];
+  toggleSection: (id: string) => void;
+  onRefetch: () => Promise<void>;
+}) {
+  const [algorithms, setAlgorithms] = useState<AlgorithmOption[]>([]);
+  const [selectedAlgo, setSelectedAlgo] = useState(settings?.algorithm_id || "hmac-sha256-v1");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setSelectedAlgo(settings?.algorithm_id || "hmac-sha256-v1");
+  }, [settings]);
+
+  useEffect(() => {
+    fetch("/api/admin/license-algorithms")
+      .then((r) => r.json())
+      .then((d) => setAlgorithms(d.algorithms || []))
+      .catch(() => {});
+  }, []);
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      await fetch(`/api/admin/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ algorithm_id: selectedAlgo }),
+      });
+      await onRefetch();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const currentAlgo = algorithms.find((a) => a.name === selectedAlgo);
+
+  return (
+    <div className="border border-border/50 rounded-xl bg-card/50 overflow-hidden">
+      <button
+        onClick={() => toggleSection("license-algo")}
+        className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+      >
+        <h2 className="font-semibold text-foreground flex items-center gap-2">
+          <Key className="w-4 h-4 text-primary" />
+          Algorithme de licence
+        </h2>
+        <ChevronDown
+          className={cn(
+            "w-4 h-4 text-muted-foreground transition-transform",
+            openSections.includes("license-algo") && "rotate-180"
+          )}
+        />
+      </button>
+      {openSections.includes("license-algo") && (
+        <div className="p-5 pt-0 border-t border-border/50 space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Choisissez l&apos;algorithme utilisé pour générer les clés de licence de ce produit.
+            Les licences déjà générées restent valides (vérifiées avec leur algorithme d&apos;origine).
+          </p>
+
+          {/* Algorithm selector */}
+          <div className="space-y-2">
+            <Label htmlFor="algorithm-select">Algorithme</Label>
+            <select
+              id="algorithm-select"
+              value={selectedAlgo}
+              onChange={(e) => setSelectedAlgo(e.target.value)}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              {algorithms.map((algo) => (
+                <option key={algo.name} value={algo.name}>
+                  {algo.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Description of selected algorithm */}
+          {currentAlgo && (
+            <div className="text-sm text-muted-foreground bg-muted/30 rounded-lg p-3">
+              {currentAlgo.description}
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex items-center gap-3 pt-2">

@@ -65,40 +65,59 @@ CREATE POLICY "Products are viewable by everyone"
   ON products FOR SELECT USING (true);
 
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
--- Allow anon to insert orders (checkout flow)
 CREATE POLICY "Allow anon insert orders"
   ON orders FOR INSERT WITH CHECK (true);
--- Allow anon to read own order by activation_code (activation portal)
-CREATE POLICY "Allow read by activation_code"
-  ON orders FOR SELECT USING (true);
--- Allow service role to update orders (webhook)
-CREATE POLICY "Allow update orders"
-  ON orders FOR UPDATE USING (true);
+CREATE POLICY "Allow read orders via service role"
+  ON orders FOR SELECT USING (auth.role() = 'service_role');
+CREATE POLICY "Allow update orders via service role"
+  ON orders FOR UPDATE USING (auth.role() = 'service_role');
 
 ALTER TABLE licenses ENABLE ROW LEVEL SECURITY;
--- Licenses are only readable server-side (service role) for verification
 CREATE POLICY "Licenses readable via service role"
-  ON licenses FOR SELECT USING (true);
+  ON licenses FOR SELECT USING (auth.role() = 'service_role');
 CREATE POLICY "Licenses insertable via service role"
-  ON licenses FOR INSERT WITH CHECK (true);
+  ON licenses FOR INSERT WITH CHECK (auth.role() = 'service_role');
 CREATE POLICY "Licenses updatable via service role"
-  ON licenses FOR UPDATE USING (true);
+  ON licenses FOR UPDATE USING (auth.role() = 'service_role');
 
 ALTER TABLE discount_codes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Discount codes are readable"
   ON discount_codes FOR SELECT USING (true);
+CREATE POLICY "Discount codes modifiable via service role"
+  ON discount_codes FOR INSERT WITH CHECK (auth.role() = 'service_role');
+CREATE POLICY "Discount codes updatable via service role"
+  ON discount_codes FOR UPDATE USING (auth.role() = 'service_role');
+CREATE POLICY "Discount codes deletable via service role"
+  ON discount_codes FOR DELETE USING (auth.role() = 'service_role');
 
 -- =============================================
 -- RPC Functions
 -- =============================================
 
--- Atomically increment discount code usage
+-- Atomically increment discount code usage (legacy, kept for compatibility)
 CREATE OR REPLACE FUNCTION increment_discount_usage(d_code TEXT)
 RETURNS VOID AS $$
 BEGIN
   UPDATE discount_codes
   SET current_uses = current_uses + 1
   WHERE code = d_code;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Atomically validate AND increment discount usage in one operation.
+-- Returns the discount row if valid, empty set if invalid/exhausted.
+-- This prevents TOCTOU race conditions on limited-use codes.
+CREATE OR REPLACE FUNCTION try_use_discount(d_code TEXT)
+RETURNS TABLE(id UUID, code TEXT, percent_off INTEGER) AS $$
+BEGIN
+  RETURN QUERY
+  UPDATE discount_codes
+  SET current_uses = current_uses + 1
+  WHERE discount_codes.code = d_code
+    AND active = true
+    AND (expires_at IS NULL OR expires_at >= NOW())
+    AND (max_uses IS NULL OR current_uses < max_uses)
+  RETURNING discount_codes.id, discount_codes.code, discount_codes.percent_off;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -122,6 +141,7 @@ CREATE TABLE product_settings (
   promo_percent INTEGER CHECK (promo_percent IS NULL OR (promo_percent >= 0 AND promo_percent <= 100)),
   promo_active BOOLEAN DEFAULT false,
   promo_label TEXT,
+  algorithm_id TEXT DEFAULT 'hmac-sha256-v1',
   content JSONB DEFAULT '{}'::jsonb,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -130,7 +150,11 @@ ALTER TABLE product_settings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Product settings readable by everyone"
   ON product_settings FOR SELECT USING (true);
 CREATE POLICY "Product settings modifiable via service role"
-  ON product_settings FOR ALL USING (true);
+  ON product_settings FOR INSERT WITH CHECK (auth.role() = 'service_role');
+CREATE POLICY "Product settings updatable via service role"
+  ON product_settings FOR UPDATE USING (auth.role() = 'service_role');
+CREATE POLICY "Product settings deletable via service role"
+  ON product_settings FOR DELETE USING (auth.role() = 'service_role');
 
 -- Admin panel indexes
 CREATE INDEX idx_orders_customer_email ON orders(customer_email);

@@ -6,7 +6,6 @@ import { Key, ShieldCheck, Search, Loader2, Cpu, CheckCircle2, Download } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -46,27 +45,26 @@ function ActivationPortalInner() {
         setError("");
 
         try {
-            const supabase = createClient();
+            const res = await fetch("/api/activation", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ activationCode: searchCode.toUpperCase().trim() }),
+            });
 
-            // Only fetch if status is 'paid' to ensure security
-            const { data, error: fetchError } = await supabase
-                .from("orders")
-                .select("items, status")
-                .eq("activation_code", searchCode.toUpperCase().trim())
-                .single();
-
-            if (fetchError || !data) {
-                setError("Activation Code not found. Please verify your input.");
+            if (!res.ok) {
+                const data = await res.json();
+                if (res.status === 404) {
+                    setError("Activation Code not found. Please verify your input.");
+                } else if (res.status === 403) {
+                    setError("This order has not been fully processed or paid yet.");
+                } else {
+                    setError(data.error || "An error occurred retrieving your licenses.");
+                }
                 setLicenses(null);
                 return;
             }
 
-            if (data.status !== "paid") {
-                setError("This order has not been fully processed or paid yet.");
-                setLicenses(null);
-                return;
-            }
-
+            const data = await res.json();
             setLicenses(data.items as LicenseItem[]);
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "An error occurred retrieving your licenses.");

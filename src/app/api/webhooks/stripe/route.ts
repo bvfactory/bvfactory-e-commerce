@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { generateLicenseKey, generateActivationCode } from "@/lib/license";
 import { sendOrderConfirmation } from "@/lib/email";
 
@@ -21,10 +21,10 @@ export async function POST(req: Request) {
         let event: Stripe.Event;
 
         if (!secret || !signature) {
-            console.warn("STRIPE_WEBHOOK_SECRET or signature missing, simulating fallback parsed event in sandbox.");
-            // Sandbox manual parsing for testing without hitting webhooks locally if needed
-            event = JSON.parse(rawBody) as Stripe.Event;
-        } else {
+            return NextResponse.json({ error: "Missing webhook secret or signature" }, { status: 401 });
+        }
+
+        {
             const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
                 apiVersion: '2026-02-25.clover'
             });
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
                 return NextResponse.json({ error: "Invalid metadata" }, { status: 400 });
             }
 
-            const supabase = await createClient();
+            const supabase = createAdminClient();
 
             // Find the order
             const { data: order, error } = await supabase
@@ -73,12 +73,9 @@ export async function POST(req: Request) {
                 const coreId = item.coreId || "UNKNOWN";
                 const productId = item.product?.id || "UNKNOWN";
 
-                const { licenseKey, salt, keyHash, algorithmVersion } = generateLicenseKey(productId, coreId);
+                const { licenseKey, salt, keyHash, algorithmVersion } = await generateLicenseKey(productId, coreId);
 
-                itemsWithLicenses.push({
-                    ...item,
-                    licenseKey,
-                });
+                itemsWithLicenses.push({ ...item });
 
                 // Insert into licenses table
                 await supabase.from("licenses").insert({
@@ -105,6 +102,13 @@ export async function POST(req: Request) {
                 })
                 .eq("id", order.id);
 
+            // Atomically validate and increment discount usage now that payment is confirmed
+            if (order.discount_code) {
+                await supabase.rpc('try_use_discount', {
+                    d_code: order.discount_code
+                });
+            }
+
             // Send confirmation email with invoice
             await sendOrderConfirmation({
                 to: order.customer_email,
@@ -120,7 +124,7 @@ export async function POST(req: Request) {
                 discountPercent: order.discount_percent,
             });
 
-            return NextResponse.json({ success: true, licensedItemsCount: itemsWithLicenses.length });
+            return NextResponse.json({ success: true });
         }
 
         return NextResponse.json({ message: "Event ignored" }, { status: 200 });

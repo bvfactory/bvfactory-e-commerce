@@ -14,7 +14,6 @@ function SuccessSequence() {
     const { clearCart } = useCart();
 
     const [step, setStep] = useState<"generating" | "delivered">("generating");
-    const [activationCode, setActivationCode] = useState<string | null>(null);
 
     const [hashMask] = useState<string>(() =>
         Array.from({ length: 400 }).map(() => Math.random().toString(36).substring(2, 3)).join('')
@@ -33,8 +32,8 @@ function SuccessSequence() {
                 const res = await fetch(`/api/order-status?id=${orderId}`);
                 const data = await res.json();
 
-                if (data.status === "paid" && data.activation_code) {
-                    setActivationCode(data.activation_code);
+                if (data.ready) {
+                    // Activation code is delivered via email — don't expose it in the UI
                     setStep("delivered");
                     clearInterval(pollInterval);
                 }
@@ -49,8 +48,7 @@ function SuccessSequence() {
         const timeout = setTimeout(() => {
             clearInterval(pollInterval);
             if (step === "generating") {
-                // Keep showing generating, but the user should check email
-                setStep("delivered"); // Force delivery state with email instructions
+                setStep("delivered");
             }
         }, 30000);
 
@@ -171,19 +169,11 @@ function SuccessSequence() {
                             </div>
 
                             <div className="flex flex-col gap-4">
-                                {activationCode ? (
-                                    <Link href={`/activation?code=${activationCode}`} className="w-full">
-                                        <Button className="w-full h-12 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold uppercase tracking-widest text-sm transition-colors shadow-[0_0_20px_rgba(245,158,11,0.4)] cursor-pointer">
-                                            Access Activation Portal
-                                        </Button>
-                                    </Link>
-                                ) : orderId ? (
-                                    <Link href={`/activation`} className="w-full">
-                                        <Button className="w-full h-12 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold uppercase tracking-widest text-sm transition-colors shadow-[0_0_20px_rgba(245,158,11,0.4)] cursor-pointer">
-                                            Activation Portal (Check Email)
-                                        </Button>
-                                    </Link>
-                                ) : null}
+                                <Link href="/activation" className="w-full">
+                                    <Button className="w-full h-12 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold uppercase tracking-widest text-sm transition-colors shadow-[0_0_20px_rgba(245,158,11,0.4)] cursor-pointer">
+                                        Access Activation Portal
+                                    </Button>
+                                </Link>
                                 <Link href="/" className="w-full">
                                     <Button className="w-full h-12 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-50 font-mono uppercase tracking-widest text-xs transition-colors cursor-pointer">
                                         Return to Store
@@ -191,15 +181,9 @@ function SuccessSequence() {
                                 </Link>
                             </div>
 
-                            {activationCode ? (
-                                <p className="text-center font-mono text-[14px] text-teal-400 font-bold uppercase tracking-widest mt-6">
-                                    CODE: {activationCode}
-                                </p>
-                            ) : orderId ? (
-                                <p className="text-center font-mono text-[10px] text-white/30 uppercase tracking-widest mt-6">
-                                    Trace_ID: {orderId}
-                                </p>
-                            ) : null}
+                            <p className="text-center font-mono text-[10px] text-white/40 uppercase tracking-widest mt-6">
+                                Your activation code has been sent to your email
+                            </p>
 
                         </div>
                     </motion.div>

@@ -31,7 +31,7 @@ function isRateLimited(ip: string): boolean {
 export async function POST(req: Request) {
     try {
         // Rate limiting
-        const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+        const ip = req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()
             || req.headers.get("x-real-ip")
             || "unknown";
 
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
         // Look up the license by key and verify it matches the claimed core+product
         const { data: license, error } = await supabase
             .from("licenses")
-            .select("key_hash, product_id, core_id, status")
+            .select("key_hash, product_id, core_id, status, algorithm_version")
             .eq("license_key", licenseKey)
             .eq("product_id", productId)
             .eq("core_id", coreId.toUpperCase())
@@ -73,8 +73,8 @@ export async function POST(req: Request) {
             );
         }
 
-        // Cryptographic verification — recompute HMAC and compare
-        const isValid = verifyLicenseKey(licenseKey, productId, license.key_hash);
+        // Cryptographic verification — use the algorithm that generated this license
+        const isValid = verifyLicenseKey(licenseKey, productId, license.key_hash, license.algorithm_version);
 
         if (isValid) {
             // Mark first activation time

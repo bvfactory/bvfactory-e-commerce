@@ -73,7 +73,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { id, ...fields } = body;
+  const { id } = body;
 
   if (!id) {
     return NextResponse.json(
@@ -82,11 +82,26 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
+  // Allowlist: only permit safe fields to be updated
+  const allowed: Record<string, unknown> = {};
+  if (body.code !== undefined) allowed.code = typeof body.code === "string" ? body.code.toUpperCase() : body.code;
+  if (body.percent_off !== undefined) allowed.percent_off = body.percent_off;
+  if (body.active !== undefined) allowed.active = body.active;
+  if (body.expires_at !== undefined) allowed.expires_at = body.expires_at;
+  if (body.max_uses !== undefined) allowed.max_uses = body.max_uses;
+
+  if (Object.keys(allowed).length === 0) {
+    return NextResponse.json(
+      { error: "No valid fields to update." },
+      { status: 400 }
+    );
+  }
+
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("discount_codes")
-    .update(fields)
+    .update(allowed)
     .eq("id", id)
     .select()
     .single();
