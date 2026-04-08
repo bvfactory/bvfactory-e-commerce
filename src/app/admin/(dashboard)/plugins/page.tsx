@@ -78,19 +78,19 @@ export default function PluginsPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || "Erreur lors de la cr\u00e9ation");
+        alert(data.error || "Erreur lors de la création");
         return;
       }
       router.push(`/admin/plugins/${data.product_id}`);
     } catch {
-      alert("Erreur r\u00e9seau");
+      alert("Erreur réseau");
     } finally {
       setCreating(false);
     }
   }
 
   async function handleDelete(productId: string, productName: string) {
-    if (!confirm(`Supprimer "${productName}" ? Cette action est irr\u00e9versible.`)) return;
+    if (!confirm(`Supprimer "${productName}" ? Cette action est irréversible.`)) return;
     setDeleting(productId);
     try {
       const res = await fetch(`/api/admin/products/${productId}`, { method: "DELETE" });
@@ -101,7 +101,7 @@ export default function PluginsPage() {
       }
       fetchData();
     } catch {
-      alert("Erreur r\u00e9seau");
+      alert("Erreur réseau");
     } finally {
       setDeleting(null);
     }
@@ -113,7 +113,7 @@ export default function PluginsPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Gestion des produits</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Consultez et g\u00e9rez vos plugins Q-SYS
+            Consultez et gérez vos plugins Q-SYS
           </p>
         </div>
         <Button
@@ -127,7 +127,7 @@ export default function PluginsPage() {
 
       {showCreateForm && (
         <div className="border border-border/50 rounded-xl bg-card/50 p-5 space-y-3">
-          <h3 className="font-semibold text-foreground">Cr\u00e9er un nouveau produit</h3>
+          <h3 className="font-semibold text-foreground">Créer un nouveau produit</h3>
           <div className="flex gap-3">
             <Input
               placeholder="Nom du produit"
@@ -137,7 +137,7 @@ export default function PluginsPage() {
               disabled={creating}
             />
             <Button onClick={handleCreate} disabled={creating || !newProductName.trim()}>
-              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Cr\u00e9er"}
+              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Créer"}
             </Button>
           </div>
         </div>
@@ -190,7 +190,7 @@ export default function PluginsPage() {
                     {uploaded ? (
                       <span className="inline-flex items-center gap-1 text-emerald-500 font-medium">
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        Upload\u00e9
+                        Uploadé
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-amber-500 font-medium">
@@ -217,7 +217,7 @@ export default function PluginsPage() {
                       href={`/admin/plugins/${p.product_id}`}
                       className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
                     >
-                      G\u00e9rer
+                      Gérer
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   </div>
