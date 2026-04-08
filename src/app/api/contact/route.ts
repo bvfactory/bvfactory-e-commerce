@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sendAdminNotification } from "@/lib/email";
 
 export async function POST(req: Request) {
     try {
@@ -47,6 +48,14 @@ export async function POST(req: Request) {
             // Fallback: log to console in dev
             console.log("📬 Contact Form Submission:", { name, email, subject, message });
         }
+
+        // Notify admin
+        sendAdminNotification("contact_received", subject, {
+            "Nom": name,
+            "Email": email,
+            "Sujet": subject,
+            "Message": message.length > 500 ? message.substring(0, 500) + "..." : message,
+        });
 
         return NextResponse.json({ success: true });
     } catch (error) {
