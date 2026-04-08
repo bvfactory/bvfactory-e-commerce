@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateLicenseKey, generateActivationCode } from "@/lib/license";
-import { sendOrderConfirmation } from "@/lib/email";
+import { sendOrderConfirmation, sendAdminNotification } from "@/lib/email";
 
 interface WebhookCartItem {
     id: string;
@@ -107,6 +107,11 @@ export async function POST(req: Request) {
                 await supabase.rpc('try_use_discount', {
                     d_code: order.discount_code
                 });
+                sendAdminNotification("discount_used", `${order.discount_code}`, {
+                    "Code": order.discount_code,
+                    "Reduction": `${order.discount_percent}%`,
+                    "Client": order.customer_email,
+                });
             }
 
             // Send confirmation email with invoice
@@ -122,6 +127,18 @@ export async function POST(req: Request) {
                 currency: "EUR",
                 discountCode: order.discount_code,
                 discountPercent: order.discount_percent,
+            });
+
+            // Notify admin
+            const totalCents = itemsWithLicenses.reduce((sum, i) => sum + (i.product?.price_cents || 0), 0);
+            const discountCents = order.discount_percent ? Math.round((totalCents * order.discount_percent) / 100) : 0;
+            const finalCents = totalCents - discountCents;
+            sendAdminNotification("order_paid", `${(finalCents / 100).toFixed(2)}EUR de ${order.customer_email}`, {
+                "Commande": order.id.substring(0, 8) + "...",
+                "Client": order.customer_email,
+                "Montant": `${(finalCents / 100).toFixed(2)} EUR`,
+                "Produits": itemsWithLicenses.map(i => `${i.product.name} (${i.coreId})`).join(", "),
+                ...(order.discount_code ? { "Code promo": `${order.discount_code} (-${order.discount_percent}%)` } : {}),
             });
 
             return NextResponse.json({ success: true });
