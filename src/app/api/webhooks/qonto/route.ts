@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateLicenseKey, generateActivationCode } from "@/lib/license";
 import { Resend } from "resend";
+import { sendAdminNotification } from "@/lib/email";
 
 export async function POST(req: Request) {
     try {
@@ -114,6 +115,14 @@ export async function POST(req: Request) {
                     `
                 });
             }
+
+            // Notify admin
+            sendAdminNotification("order_paid", `Qonto — ${order.customer_email}`, {
+                "Commande": order.id.substring(0, 8) + "...",
+                "Client": order.customer_email,
+                "Core ID": order.core_id || "N/A",
+                "Paiement": "Qonto (virement)",
+            });
 
             return NextResponse.json({ success: true });
         }
