@@ -166,8 +166,12 @@ export async function POST(req: Request) {
         return NextResponse.json({ url: session.url });
 
     } catch (error) {
-        console.error("Checkout error:", error instanceof Error ? error.message : error);
-        return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("Checkout error:", message, error instanceof Error ? error.stack : "");
+        return NextResponse.json(
+            { error: process.env.NODE_ENV === "development" ? message : "Erreur interne du serveur" },
+            { status: 500 }
+        );
     }
 }
 
