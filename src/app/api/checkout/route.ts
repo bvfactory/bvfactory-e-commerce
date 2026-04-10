@@ -7,11 +7,6 @@ import Stripe from "stripe";
 
 export async function POST(req: Request) {
     try {
-        console.log("[checkout] env check:", {
-            LIGHTFORGE_LICENSE_SECRET: !!process.env.LIGHTFORGE_LICENSE_SECRET,
-            LICENSE_MASTER_SECRET: !!process.env.LICENSE_MASTER_SECRET,
-            STRIPE_SECRET_KEY: !!process.env.STRIPE_SECRET_KEY,
-        });
         const { items, email, currency, discountCode } = await req.json();
 
         if (!items || !items.length || !email) {
@@ -173,7 +168,10 @@ export async function POST(req: Request) {
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         console.error("Checkout error:", message, error instanceof Error ? error.stack : "");
-        return NextResponse.json({ error: message }, { status: 500 });
+        return NextResponse.json(
+            { error: process.env.NODE_ENV === "development" ? message : "Erreur interne du serveur" },
+            { status: 500 }
+        );
     }
 }
 
