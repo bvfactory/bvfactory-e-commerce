@@ -183,6 +183,13 @@
 .animate-gradient-shift { animation: gradient-shift 8s ease infinite; background-size: 200% 200%; }
 .animate-grain { animation: grain 8s steps(10) infinite; }
 .animate-status-blink { animation: status-blink 2s ease-in-out infinite; }
+.animate-marquee { animation: marquee 30s linear infinite; }
+.animate-marquee:hover { animation-play-state: paused; }
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
 
 /* Glassmorphism utilities */
 .glass-panel {

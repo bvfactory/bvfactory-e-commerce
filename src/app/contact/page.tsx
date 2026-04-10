@@ -127,7 +127,7 @@ export default function ContactPage() {
                                         <Input
                                             id="contact-name"
                                             type="text"
-                                            placeholder="John Doe"
+                                            placeholder="Tony Stark"
                                             value={name}
                                             onChange={(e) => setName(e.target.value)}
                                             required
@@ -143,7 +143,7 @@ export default function ContactPage() {
                                         <Input
                                             id="contact-email"
                                             type="email"
-                                            placeholder="admin@system.com"
+                                            placeholder="tony@starkindustries.com"
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             required
@@ -177,7 +177,7 @@ export default function ContactPage() {
                                         </label>
                                         <textarea
                                             id="contact-message"
-                                            placeholder="Describe your inquiry..."
+                                            placeholder="I need 42 moving heads to sync with a media server by Friday..."
                                             value={message}
                                             onChange={(e) => setMessage(e.target.value)}
                                             required

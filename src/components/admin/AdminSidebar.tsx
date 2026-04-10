@@ -8,6 +8,7 @@ import {
   KeyRound,
   Tags,
   HardDrive,
+  Users,
   LogOut,
   ChevronRight,
 } from "lucide-react";
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/admin/licenses", label: "Licences", icon: KeyRound },
   { href: "/admin/discounts", label: "Codes promo", icon: Tags },
   { href: "/admin/plugins", label: "Plugins", icon: HardDrive },
+  { href: "/admin/clients", label: "Clients", icon: Users },
 ];
 
 export function AdminSidebar() {

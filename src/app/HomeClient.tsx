@@ -13,6 +13,7 @@ import { Footer } from "@/components/Footer";
 
 import { ProductType, getProductIcon } from "@/data/products";
 import { VideoShowcase } from "@/components/VideoShowcase";
+import { TrustedBy, type TrustedClient } from "@/components/TrustedBy";
 
 const HOMEPAGE_FAQ = [
   {
@@ -37,7 +38,7 @@ const HOMEPAGE_FAQ = [
   },
 ];
 
-export default function HomeClient({ products }: { products: ProductType[] }) {
+export default function HomeClient({ products, trustedClients = [] }: { products: ProductType[]; trustedClients?: TrustedClient[] }) {
   const { formatPrice, isLoading } = useCurrency();
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -182,6 +183,9 @@ export default function HomeClient({ products }: { products: ProductType[] }) {
 
       {/* === VIDEO SHOWCASE === */}
       <VideoShowcase />
+
+      {/* === TRUSTED BY === */}
+      <TrustedBy clients={trustedClients} />
 
       {/* === PLUGINS GRID === */}
       <section id="plugins" className="relative z-10 py-20 px-6">
