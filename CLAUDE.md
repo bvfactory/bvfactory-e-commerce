@@ -23,6 +23,7 @@ Toutes ces variables doivent exister sur le projet Vercel **contactbvfactory** (
 - `STRIPE_WEBHOOK_SECRET` — Secret webhook Stripe
 - `LICENSE_MASTER_SECRET` — Secret pour la génération de licences (HMAC-SHA256)
 - `LIGHTFORGE_LICENSE_SECRET` — Secret pour l'algo LightForge FNV-1a (doit correspondre au plugin Q-SYS)
+- `TIMEFORGE_LICENSE_SECRET` — Secret pour l'algo TimeForge FNV-1a (seed: `TFrgTimeForge2026!X`, doit correspondre au plugin Q-SYS)
 - `RESEND_API_KEY` — Clé API Resend
 - `ADMIN_PASSWORD` — Mot de passe admin
 - `ADMIN_SESSION_SECRET` — Secret session admin

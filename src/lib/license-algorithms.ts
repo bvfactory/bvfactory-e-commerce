@@ -322,6 +322,127 @@ export class LightForgeFnv1aAlgorithm implements LicenseAlgorithm {
     }
 }
 
+// ─── Algorithm: TimeForge FNV-1a (deterministic, Q-SYS compatible) ──────────
+
+export class TimeForgeFnv1aAlgorithm implements LicenseAlgorithm {
+    readonly name = "timeforge-fnv1a-v1";
+    readonly label = "TimeForge FNV-1a";
+    readonly description =
+        "Algorithme déterministe compatible Q-SYS TimeForge. Clé TFGE-XXXX-XXXX-XXXX.";
+
+    private getSecret(): string {
+        const secret = process.env.TIMEFORGE_LICENSE_SECRET;
+        if (!secret) {
+            throw new Error(
+                "TIMEFORGE_LICENSE_SECRET environment variable is required."
+            );
+        }
+        return secret;
+    }
+
+    private mul32(a: number, b: number): number {
+        const aLo = a % 65536;
+        const aHi = (a - aLo) / 65536;
+        const bLo = b % 65536;
+        const bHi = (b - bLo) / 65536;
+        const mid = (aHi * bLo + aLo * bHi) % 65536;
+        return (mid * 65536 + aLo * bLo) % 4294967296;
+    }
+
+    private xorLowByte(h: number, b: number): number {
+        let hm = h % 256;
+        let bm = b % 256;
+        let xor8 = 0;
+        let p = 1;
+        for (let bit = 0; bit < 8; bit++) {
+            const ha = hm % 2;
+            const ba = bm % 2;
+            if (ha !== ba) xor8 += p;
+            hm = Math.floor(hm / 2);
+            bm = Math.floor(bm / 2);
+            p *= 2;
+        }
+        return (h - (h % 256)) + xor8;
+    }
+
+    private licHash(id: string, secret: string): number {
+        let h = 2166136261;
+        const data =
+            secret +
+            "|" +
+            id +
+            "|" +
+            id.length.toString(16).toUpperCase().padStart(2, "0") +
+            "|" +
+            secret;
+
+        for (let i = 0; i < data.length; i++) {
+            h = this.xorLowByte(h, data.charCodeAt(i));
+            h = this.mul32(h, 16777619);
+        }
+
+        const r2 = (h >>> 0).toString(16).toUpperCase().padStart(8, "0");
+        for (let i = 0; i < r2.length; i++) {
+            h = this.xorLowByte(h, r2.charCodeAt(i));
+            h = this.mul32(h, 16777619);
+        }
+
+        return h >>> 0;
+    }
+
+    private formatLicKey(hash: number, secret: string): string {
+        const h2 = this.licHash(
+            (hash >>> 0).toString(16).toUpperCase().padStart(8, "0"),
+            "s2:" + secret
+        );
+        const h3 = this.licHash(
+            (h2 >>> 0).toString(16).toUpperCase().padStart(8, "0"),
+            "s3:" + secret
+        );
+        const p1 = (hash % 65536).toString(16).toUpperCase().padStart(4, "0");
+        const p2 = (h2 % 65536).toString(16).toUpperCase().padStart(4, "0");
+        const p3 = (h3 % 65536).toString(16).toUpperCase().padStart(4, "0");
+        return `TFGE-${p1}-${p2}-${p3}`;
+    }
+
+    generate(productId: string, coreId: string): LicenseResult {
+        const secret = this.getSecret();
+        const h1 = this.licHash(coreId, secret);
+        const licenseKey = this.formatLicKey(h1, secret);
+
+        const productSecret = deriveProductSecret(productId);
+        const keyHash = createHmac("sha256", productSecret)
+            .update(`verify:${licenseKey}`)
+            .digest("hex");
+
+        return {
+            licenseKey,
+            salt: "",
+            keyHash,
+            algorithmVersion: this.name,
+        };
+    }
+
+    verify(
+        licenseKey: string,
+        productId: string,
+        storedKeyHash: string
+    ): boolean {
+        const productSecret = deriveProductSecret(productId);
+
+        const computedHash = createHmac("sha256", productSecret)
+            .update(`verify:${licenseKey}`)
+            .digest("hex");
+
+        if (computedHash.length !== storedKeyHash.length) return false;
+
+        const a = Buffer.from(computedHash, "hex");
+        const b = Buffer.from(storedKeyHash, "hex");
+
+        return timingSafeEqual(a, b);
+    }
+}
+
 // ─── Registry (by algorithm name) ───────────────────────────────────────────
 
 const algorithmsByName = new Map<string, LicenseAlgorithm>();
@@ -335,6 +456,7 @@ register(new HmacSha256Algorithm());
 register(new Sha512ShortAlgorithm());
 register(new NumericKeyAlgorithm());
 register(new LightForgeFnv1aAlgorithm());
+register(new TimeForgeFnv1aAlgorithm());
 
 /** Default algorithm used when a product has no specific assignment. */
 export const DEFAULT_ALGORITHM_NAME = "hmac-sha256-v1";

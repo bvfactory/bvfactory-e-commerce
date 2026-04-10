@@ -1,4 +1,4 @@
-import { Flame, Clapperboard, Monitor, Globe, Tv, Thermometer, Layers, Film, Music, Lightbulb } from "lucide-react";
+import { Flame, Clapperboard, Monitor, Globe, Tv, Thermometer, Layers, Film, Music, Lightbulb, Timer } from "lucide-react";
 
 export interface VersionHistory {
     version: string;
@@ -23,7 +23,7 @@ export interface ProductType {
     description: string;
     longDescription: string;
     price_cents: number;
-    iconName: "Flame" | "Clapperboard" | "Monitor" | "Globe" | "Tv" | "Thermometer" | "Layers" | "Film" | "Music" | "Lightbulb";
+    iconName: "Flame" | "Clapperboard" | "Monitor" | "Globe" | "Tv" | "Thermometer" | "Layers" | "Film" | "Music" | "Lightbulb" | "Timer";
     category: "lighting" | "routing" | "show-control" | "control" | "audio" | "video" | "uci";
     compatibleBrands?: CompatibleBrand[];
     features: string[];
@@ -875,6 +875,93 @@ export const MOCK_PRODUCTS: ProductType[] = [
                 answer: "Each light has a reachability indicator. If a fixture is unreachable, the indicator updates on the next poll cycle. The plugin continues controlling all other lights without interruption."
             }
         ]
+    },
+    {
+        id: "timeforge",
+        pluginFileName: "timeforge.qplugx",
+        name: "TIMEFORGE",
+        tagline: "Master time — timecode, timers, scheduling, astronomy.",
+        description: "Professional timecode generator, astronomical clock, multi-mode timers, and event scheduler for Q-SYS. Art-Net TC, MTC, LTC output — all in one plugin.",
+        longDescription: "TimeForge is a professional time management plugin for Q-SYS that combines four essential modules in a single component: a frame-accurate timecode generator, an astronomical clock, multi-mode timers, and an event scheduler.\n\nThe timecode generator supports all standard frame rates (23.976 to 30 fps) plus non-standard rates up to 1000 fps on the internal bus. Output simultaneously via Art-Net Timecode, MTC (RTP-MIDI/AppleMIDI), and LTC audio — with up to 16 cue points positioned on the timeline for frame-accurate triggering.\n\nThe astronomical clock computes sunrise, sunset, civil/nautical/astronomical dawn and dusk using NOAA solar algorithms. Configure your latitude, longitude, UTC offset, and DST mode — then trigger events on solar positions with per-event offsets up to ±120 minutes.\n\nSixteen independent timers run in countdown, countup, or recurring mode at 10 Hz update rate. The scheduler adds 16 daily, weekly, or date-specific event slots with anti-double-trigger protection. Every control is exposed as a Q-SYS pin for integration with ShowMind, UCI, GPIO, or any external system.\n\nAll timing is anchored to a monotonic high-resolution clock (Timer.Now) with automatic fallback — zero drift, no accumulated errors, frame-accurate precision across all modules.",
+        price_cents: 25000,
+        iconName: "Timer",
+        category: "show-control",
+        features: [
+            "Timecode Generator — Frame-accurate SMPTE timecode with full transport (play, pause, stop, loop, seek). Supports 23.976 to 30 fps standard rates plus 50–1000 fps on internal bus.",
+            "Multi-Protocol Output — Simultaneous Art-Net Timecode (UDP 6454), MTC via RTP-MIDI/AppleMIDI, and LTC audio via Q-SYS SMPTE LTC Encoder. Unicast or broadcast.",
+            "Cue Points — 16 configurable cue points positioned at HH:MM:SS:FF on the timecode timeline. Momentary trigger on traversal with 30-event history.",
+            "Astronomical Clock — Real-time solar position calculations (NOAA/Jean Meeus). Sunrise, sunset, civil/nautical/astronomical dawn & dusk, solar noon, day length.",
+            "Solar Triggers — 5 programmable astronomical events (sunrise, sunset, civil dawn/dusk, solar noon) with ±120 minute offsets. Configurable lat/lon, UTC, and DST.",
+            "Timers — 16 independent timers in countdown, countup, or recurring mode. 10 Hz refresh, lap tracking, next-trigger wall-clock display.",
+            "Scheduler — 16 daily, weekly, or date-specific event slots. Per-event enable, anti-double-trigger protection, 50-event history.",
+            "Export/Import — Full JSON configuration backup (.tfconfig). Auto-restore after reboot with preserved playback state."
+        ],
+        specs: {
+            "Modules": "4 (Timecode, Astronomical Clock, Timers, Scheduler)",
+            "Frame Rates": "23.976, 24, 25, 29.97 DF, 30 (standard) — 50, 59.94, 60, 100, 120, 240, 1000 fps (internal bus)",
+            "Protocols": "Art-Net Timecode (UDP 6454), MTC (RTP-MIDI, ports 5004-5005), LTC (SMPTE audio)",
+            "Cue Points": "16 with HH:MM:SS:FF positioning",
+            "Timers": "16 independent (Countdown / Countup / Recurring)",
+            "Scheduler Slots": "16 (Daily / Weekly / Date)",
+            "Solar Algorithm": "NOAA (Jean Meeus) with atmospheric refraction",
+            "UI Refresh": "5 Hz (timecode), 10 Hz (timers), 1 Hz (clock/scheduler)",
+            "Precision": "Monotonic Timer.Now() — microsecond resolution, zero drift",
+            "File Size": "~4,800 lines, single Lua file, no dependencies",
+            "License Type": "Node-locked (Core ID)"
+        },
+        compatibility: {
+            minQsysVersion: "9.0",
+            supportedCores: ["Any Q-SYS Core"],
+            os: "Q-SYS Designer 9.x+"
+        },
+        versionHistory: [
+            {
+                version: "v1.0.0",
+                date: "2026-04-10",
+                changes: [
+                    "Initial release",
+                    "Timecode generator with Art-Net TC, MTC, and LTC output",
+                    "16 cue points with frame-accurate triggering",
+                    "Astronomical clock with NOAA solar calculations",
+                    "5 solar event triggers with ±120 min offsets",
+                    "16 independent multi-mode timers at 10 Hz",
+                    "16-slot scheduler (daily, weekly, date)",
+                    "JSON export/import with auto-restore"
+                ]
+            }
+        ],
+        manualUrl: "#",
+        videoUrl: undefined,
+        screenshots: [
+            "https://images.unsplash.com/photo-1501139083538-0139583c060f?auto=format&fit=crop&q=80&w=2070",
+            "https://images.unsplash.com/photo-1495364141860-b0d03eccd065?auto=format&fit=crop&q=80&w=2070"
+        ],
+        faq: [
+            {
+                question: "Can I output Art-Net Timecode, MTC, and LTC simultaneously?",
+                answer: "Yes. All three protocols run in parallel from the same timecode source. Art-Net goes via UDP 6454, MTC via RTP-MIDI (AppleMIDI), and LTC via a Q-SYS SMPTE LTC Encoder component."
+            },
+            {
+                question: "Do I need a license to test in Q-SYS Designer emulation?",
+                answer: "No. TimeForge runs with full functionality in emulation mode. A license is only required when deployed to a physical Q-SYS Core."
+            },
+            {
+                question: "How accurate is the timecode?",
+                answer: "Frame-accurate. TimeForge uses a monotonic high-resolution clock (Timer.Now) with temporal anchoring — no drift, no accumulated errors, microsecond precision."
+            },
+            {
+                question: "What are non-standard frame rates (50, 60, 100+ fps)?",
+                answer: "These rates are available on the internal TC bus for synchronization between BV Factory plugins. Standard Art-Net TC, MTC, and LTC protocols only support rates up to 30 fps per their specifications."
+            },
+            {
+                question: "How does the astronomical clock work without internet?",
+                answer: "All solar calculations are performed locally using the NOAA algorithm (Jean Meeus). You configure latitude, longitude, and UTC offset — no internet or GPS required."
+            },
+            {
+                question: "Can I trigger ShowMind cues from TimeForge events?",
+                answer: "Yes. Every trigger output (cue points, solar events, timer expirations, scheduler events) is exposed as a Q-SYS pin. Wire them directly to ShowMind or any other control system."
+            }
+        ]
     }
 ];
 
@@ -901,6 +988,8 @@ export const getProductIcon = (iconName: string, className: string = "") => {
             return <Music className={className} />;
         case "Lightbulb":
             return <Lightbulb className={className} />;
+        case "Timer":
+            return <Timer className={className} />;
         default:
             return <Lightbulb className={className} />;
     }
