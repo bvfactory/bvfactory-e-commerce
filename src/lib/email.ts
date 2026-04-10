@@ -287,7 +287,7 @@ export async function sendOrderConfirmation(params: OrderEmailParams): Promise<v
     const isFree = params.items.every((i) => i.priceCents === 0) ||
         params.discountPercent === 100;
 
-    await resend.emails.send({
+    const result = await resend.emails.send({
         from: "BVFactory <licences@bvfactory.dev>",
         to: params.to,
         subject: isFree
@@ -295,4 +295,8 @@ export async function sendOrderConfirmation(params: OrderEmailParams): Promise<v
             : `Order Confirmed - Invoice ${generateInvoiceNumber(params.orderId, new Date())} - BVFactory`,
         html: buildEmailHtml(params),
     });
+    console.log("[email] Resend response:", JSON.stringify(result));
+    if (result.error) {
+        throw new Error(`Resend error: ${result.error.message}`);
+    }
 }

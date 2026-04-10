@@ -216,20 +216,24 @@ async function handleFreeOrder(supabase: any, order: any, items: FreeOrderItem[]
         })
         .eq("id", order.id);
 
-    // Send confirmation email with invoice (non-blocking — order succeeds even if email fails)
-    sendOrderConfirmation({
-        to: email,
-        orderId: order.id,
-        activationCode,
-        items: itemsWithLicenses.map((i) => ({
-            productName: i.product.name,
-            coreId: i.coreId,
-            priceCents: i.product.price_cents,
-        })),
-        currency: "EUR",
-        discountCode: order.discount_code,
-        discountPercent: order.discount_percent,
-    }).catch((err) => console.error("Failed to send order confirmation email:", err));
+    // Send confirmation email with invoice
+    try {
+        await sendOrderConfirmation({
+            to: email,
+            orderId: order.id,
+            activationCode,
+            items: itemsWithLicenses.map((i) => ({
+                productName: i.product.name,
+                coreId: i.coreId,
+                priceCents: i.product.price_cents,
+            })),
+            currency: "EUR",
+            discountCode: order.discount_code,
+            discountPercent: order.discount_percent,
+        });
+    } catch (emailErr) {
+        console.error("Email send failed:", emailErr);
+    }
 
     // Redirect to success page directly (no Stripe)
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
