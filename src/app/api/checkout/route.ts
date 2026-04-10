@@ -7,6 +7,11 @@ import Stripe from "stripe";
 
 export async function POST(req: Request) {
     try {
+        console.log("[checkout] env check:", {
+            LIGHTFORGE_LICENSE_SECRET: !!process.env.LIGHTFORGE_LICENSE_SECRET,
+            LICENSE_MASTER_SECRET: !!process.env.LICENSE_MASTER_SECRET,
+            STRIPE_SECRET_KEY: !!process.env.STRIPE_SECRET_KEY,
+        });
         const { items, email, currency, discountCode } = await req.json();
 
         if (!items || !items.length || !email) {
