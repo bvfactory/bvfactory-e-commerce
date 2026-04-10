@@ -3,13 +3,13 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { motion } from "framer-motion";
-import { Wrench, Target, Layers, Users } from "lucide-react";
+import { Wrench, Target, Layers, Users, MapPin, Mail } from "lucide-react";
 
 const principles = [
     {
         icon: <Wrench className="w-5 h-5" />,
         title: "Built from the field",
-        text: "Every feature comes from real deployments, real deadlines, and real challenges encountered on-site.",
+        text: "Every feature started on a job site. Real deadline, real problems, real client waiting.",
     },
     {
         icon: <Target className="w-5 h-5" />,
@@ -19,12 +19,12 @@ const principles = [
     {
         icon: <Layers className="w-5 h-5" />,
         title: "The connecting layer",
-        text: "Our tools sit between powerful systems and simplify how they talk to each other.",
+        text: "Our tools sit between your systems and handle the messy part: making them talk to each other.",
     },
     {
         icon: <Users className="w-5 h-5" />,
         title: "For integrators, by integrators",
-        text: "We build the tools we always wished existed — then we ship them.",
+        text: "We needed these tools. Nobody made them. So we did.",
     },
 ];
 
@@ -81,15 +81,15 @@ export default function AboutPage() {
                         className="space-y-8 mb-20 md:mb-28"
                     >
                         <p className="text-lg md:text-xl text-slate-300 leading-relaxed font-light">
-                            Our software is designed for the real world of audiovisual systems, live environments, and permanent installations. It comes from years of hands-on experience designing and deploying complex AV solutions where reliability, flexibility, and simplicity are critical.
+                            We make software for audiovisual systems. Live shows, permanent installations, the kind of setups where something going wrong on opening night isn't an option. We've spent years designing and deploying these systems, and the software comes directly from that work.
                         </p>
 
                         <p className="text-base md:text-lg text-slate-400 leading-relaxed">
-                            Working daily with show control systems, media servers, lighting protocols, and networked AV platforms, we repeatedly encountered the same challenge: powerful systems exist, but connecting them together in a simple, reliable way often requires excessive custom scripting and workarounds.
+                            Show control, media servers, lighting, networked AV: the individual pieces are good. But getting them to work together reliably? That usually means custom scripts, workarounds, and hoping nothing breaks when the client changes their mind at 4pm.
                         </p>
 
                         <p className="text-base md:text-lg text-slate-400 leading-relaxed">
-                            That is why we created our suite of plugins and tools.
+                            So we built plugins and tools that handle the connections.
                         </p>
 
                         {/* Mission statement */}
@@ -98,7 +98,7 @@ export default function AboutPage() {
                                 Mission
                             </div>
                             <p className="text-xl md:text-2xl font-semibold text-white leading-snug tracking-tight">
-                                Make advanced show control and system integration{" "}
+                                Make show control and system integration{" "}
                                 <span className="text-teal-400">easier</span>,{" "}
                                 <span className="text-cyan-400">faster</span>, and{" "}
                                 <span className="text-blue-400">more reliable</span>.
@@ -106,11 +106,11 @@ export default function AboutPage() {
                         </div>
 
                         <p className="text-base md:text-lg text-slate-400 leading-relaxed">
-                            Our products are built to integrate seamlessly with professional AV ecosystems and help integrators, designers, and operators create powerful experiences without unnecessary complexity.
+                            They plug into the AV systems you already use and cut out the glue code that slows everyone down.
                         </p>
 
                         <p className="text-base md:text-lg text-slate-400 leading-relaxed">
-                            From lighting playback and show sequencing to media server control and automation, our tools are designed to become the central layer that connects technologies and simplifies operation.
+                            Lighting playback, show sequencing, media server control, automation. Our tools sit in the middle and make everything talk to each other.
                         </p>
                     </motion.div>
 
@@ -123,7 +123,7 @@ export default function AboutPage() {
                     >
                         <div className="w-12 h-[2px] bg-gradient-to-r from-teal-500 to-blue-500 mx-auto mb-8" />
                         <blockquote className="text-2xl md:text-3xl font-bold text-white tracking-tight leading-snug max-w-2xl mx-auto">
-                            &ldquo;If it doesn&rsquo;t solve a real problem in the field, it doesn&rsquo;t belong in the product.&rdquo;
+                            "If it doesn't solve a real problem in the field, it doesn't belong in the product."
                         </blockquote>
                         <div className="w-12 h-[2px] bg-gradient-to-r from-teal-500 to-blue-500 mx-auto mt-8" />
                     </motion.div>
@@ -155,6 +155,63 @@ export default function AboutPage() {
                                     <p className="text-sm text-slate-400 leading-relaxed">{p.text}</p>
                                 </motion.div>
                             ))}
+                        </div>
+                    </motion.div>
+
+                    {/* Contact & location */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.55 }}
+                        className="mt-20 md:mt-28"
+                    >
+                        <h2 className="text-[11px] font-mono uppercase tracking-[0.2em] text-teal-400 mb-8">
+                            Find us
+                        </h2>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Address card */}
+                            <div className="p-6 rounded-xl border border-white/5 bg-white/[0.02] flex flex-col justify-center gap-5">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-teal-500/10 text-teal-400 shrink-0 mt-0.5">
+                                        <MapPin className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-white uppercase tracking-wide mb-2">Address</p>
+                                        <p className="text-sm text-slate-400 leading-relaxed">
+                                            BV Factory<br />
+                                            16 rue des Caill&egrave;res<br />
+                                            44330 Le Pallet<br />
+                                            France
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-teal-500/10 text-teal-400 shrink-0 mt-0.5">
+                                        <Mail className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-white uppercase tracking-wide mb-2">Email</p>
+                                        <a
+                                            href="mailto:contact@bvfactory.dev"
+                                            className="text-sm text-teal-400 hover:text-teal-300 transition-colors"
+                                        >
+                                            contact@bvfactory.dev
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Map */}
+                            <div className="rounded-xl border border-white/5 overflow-hidden aspect-[4/3] md:aspect-auto md:min-h-[280px]">
+                                <iframe
+                                    title="BV Factory location"
+                                    src="https://www.openstreetmap.org/export/embed.html?bbox=-1.3738%2C47.1460%2C-1.3538%2C47.1560&layer=mapnik&marker=47.1510%2C-1.3638"
+                                    className="w-full h-full border-0 grayscale brightness-75 contrast-125 invert"
+                                    loading="lazy"
+                                    allowFullScreen
+                                />
+                            </div>
                         </div>
                     </motion.div>
 
