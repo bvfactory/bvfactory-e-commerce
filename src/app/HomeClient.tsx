@@ -295,14 +295,13 @@ export default function HomeClient({ products }: { products: ProductType[] }) {
                 <Shield className="w-8 h-8 text-teal-400" />
               </div>
               <h3 className="text-2xl md:text-3xl font-bold text-white mb-4 tracking-tight">
-                Enterprise-Ready Security
+                Simple, sans abonnement
               </h3>
               <p className="text-slate-400 leading-relaxed max-w-xl mx-auto mb-8">
-                Every license is cryptographically bound to your Q-SYS Core hardware ID.
-                Payments processed securely via Stripe with full webhook verification.
+                Achetez votre plugin, recevez votre clé de licence par email, activez-le sur votre Core Q-SYS. C&apos;est tout.
               </p>
               <div className="flex flex-wrap justify-center gap-6">
-                {["Node-Locked Licenses", "Stripe Checkout", "Instant Activation", "Lifetime Updates"].map((item) => (
+                {["Paiement sécurisé", "Licence à vie", "Activation instantanée", "Mises à jour incluses"].map((item) => (
                   <div key={item} className="flex items-center gap-2 text-sm text-slate-300">
                     <div className="w-1.5 h-1.5 rounded-full bg-teal-500" />
                     {item}

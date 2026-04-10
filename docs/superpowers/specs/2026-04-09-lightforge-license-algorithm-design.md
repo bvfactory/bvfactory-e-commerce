@@ -21,7 +21,7 @@ The algorithm is **deterministic** — a given Core ID always produces the same 
 
 ### Core Functions (TypeScript ports of Lua originals)
 
-#### `mul32(a, b)` — Safe 32-bit multiply
+#### `mul32(a, b1)` — Safe 32-bit multiply
 
 Multiplies two numbers modulo 2^32 using 16-bit decomposition to avoid floating-point overflow. Direct port of the Lua version.
 
