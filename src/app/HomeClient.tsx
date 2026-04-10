@@ -25,15 +25,15 @@ const HOMEPAGE_FAQ = [
   },
   {
     question: "How quickly will I receive my license after payment?",
-    answer: "Instantly. License keys are generated automatically upon successful payment verification via Stripe. You'll receive an email with your activation code within seconds."
+    answer: "Instantly. After payment, you'll receive an activation code by email. Enter it in our Activation Portal to retrieve your license keys."
   },
   {
     question: "Can I transfer a license to a different Core?",
-    answer: "Licenses are bound to a specific Core ID at the time of purchase. If you need to transfer a license, contact our support team and we'll assist you with the migration process."
+    answer: "No. Each license is permanently bound to the Core ID provided at the time of activation and cannot be transferred."
   },
   {
     question: "What Q-SYS versions are supported?",
-    answer: "Each plugin has specific Q-SYS version requirements listed on its product page. Generally, our plugins support Q-SYS 8.0 and above. Cores running Q-SYS 9.0+ may require updated plugin versions."
+    answer: "All plugins are tested on Q-SYS Designer 10.0 and above. They should be compatible with 9.0+, but we recommend running 10.0+ for the best experience."
   },
 ];
 
@@ -151,8 +151,8 @@ export default function HomeClient({ products }: { products: ProductType[] }) {
             transition={{ delay: 0.4 }}
             className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-light leading-relaxed mb-12"
           >
-            Enterprise-grade audio processing, intelligent routing, and show automation
-            modules built for the Q-SYS ecosystem.
+            Lighting, video, show control, and third-party device integration
+            — all running natively inside Q-SYS.
           </motion.p>
 
           {/* CTA buttons */}
@@ -295,13 +295,13 @@ export default function HomeClient({ products }: { products: ProductType[] }) {
                 <Shield className="w-8 h-8 text-teal-400" />
               </div>
               <h3 className="text-2xl md:text-3xl font-bold text-white mb-4 tracking-tight">
-                Simple, sans abonnement
+                Simple. No Subscription.
               </h3>
               <p className="text-slate-400 leading-relaxed max-w-xl mx-auto mb-8">
-                Achetez votre plugin, recevez votre clé de licence par email, activez-le sur votre Core Q-SYS. C&apos;est tout.
+                Buy your plugin, activate your code in our portal, deploy to your Q-SYS Core. That&apos;s it.
               </p>
               <div className="flex flex-wrap justify-center gap-6">
-                {["Paiement sécurisé", "Licence à vie", "Activation instantanée", "Mises à jour incluses"].map((item) => (
+                {["Secure Payment", "Lifetime License", "Instant Activation", "Free Updates"].map((item) => (
                   <div key={item} className="flex items-center gap-2 text-sm text-slate-300">
                     <div className="w-1.5 h-1.5 rounded-full bg-teal-500" />
                     {item}
