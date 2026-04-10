@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import Link from "next/link";
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { ArrowRight, ChevronDown, HelpCircle, Shield } from "lucide-react";
+import { ArrowRight, ChevronDown, HelpCircle, Shield, Rocket, Wrench, Sparkles } from "lucide-react";
 import { BVFactoryLogo } from "@/components/BVFactoryLogo";
 import { useState, useEffect } from "react";
 import { Footer } from "@/components/Footer";
@@ -266,6 +266,52 @@ export default function HomeClient({ products, trustedClients = [] }: { products
                 </Link>
               </motion.div>
             ))}
+
+            {/* Coming Soon teaser card */}
+            <motion.div variants={item}>
+              <div className="relative rounded-2xl overflow-hidden p-[1px] h-full group">
+                {/* Animated gradient border */}
+                <div className="absolute inset-0 bg-gradient-to-br from-teal-500/20 via-purple-500/20 to-blue-500/20 rounded-2xl animate-pulse" />
+
+                <div className="relative bg-[#0a1628]/90 rounded-2xl p-8 h-full flex flex-col items-center justify-center text-center min-h-[380px] backdrop-blur-sm">
+                  {/* Decorative background glow */}
+                  <div className="absolute inset-0 overflow-hidden rounded-2xl">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-teal-500/5 blur-3xl rounded-full" />
+                  </div>
+
+                  {/* Animated icons */}
+                  <div className="relative flex items-center gap-3 mb-6">
+                    <div className="inline-flex p-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/5">
+                      <Wrench className="w-5 h-5 text-slate-500" />
+                    </div>
+                    <div className="inline-flex p-4 rounded-2xl bg-gradient-to-br from-teal-900/50 to-slate-900 border border-teal-500/20">
+                      <Rocket className="w-7 h-7 text-teal-400" />
+                    </div>
+                    <div className="inline-flex p-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/5">
+                      <Sparkles className="w-5 h-5 text-slate-500" />
+                    </div>
+                  </div>
+
+                  {/* Text content */}
+                  <h3 className="text-lg font-bold text-white mb-2 tracking-tight">
+                    More Modules in the Works
+                  </h3>
+                  <p className="text-[11px] font-mono text-teal-500/80 uppercase tracking-widest mb-4">
+                    Coming Soon
+                  </p>
+                  <p className="text-sm text-slate-400 leading-relaxed max-w-[260px]">
+                    We&apos;re actively building new Q-SYS modules. Stay tuned — much more is on the way.
+                  </p>
+
+                  {/* Animated dots */}
+                  <div className="flex gap-1.5 mt-6">
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal-500/40 animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal-500/40 animate-pulse [animation-delay:0.2s]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal-500/40 animate-pulse [animation-delay:0.4s]" />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         </div>
       </section>
