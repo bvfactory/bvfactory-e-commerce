@@ -7,7 +7,8 @@ import { getProductIcon } from "@/data/products";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, XCircle, ArrowRight, HardDrive, Loader2, Plus, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { CheckCircle2, XCircle, ArrowRight, HardDrive, Loader2, Plus, Trash2, EyeOff } from "lucide-react";
 
 interface PluginInfo {
   productId: string;
@@ -22,6 +23,7 @@ interface DbProduct {
   product_id: string;
   price_cents: number | null;
   content: Record<string, unknown> | null;
+  active: boolean;
 }
 
 function formatPrice(priceCents: number): string {
@@ -86,6 +88,23 @@ export default function PluginsPage() {
       alert("Erreur réseau");
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function handleToggleActive(productId: string, newActive: boolean) {
+    try {
+      await fetch(`/api/admin/products/${productId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active: newActive }),
+      });
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.product_id === productId ? { ...p, active: newActive } : p
+        )
+      );
+    } catch {
+      alert("Erreur réseau");
     }
   }
 
@@ -166,18 +185,35 @@ export default function PluginsPage() {
             return (
               <div
                 key={p.product_id}
-                className="border border-border/50 rounded-xl bg-card/50 p-5 space-y-3"
+                className={`border rounded-xl p-5 space-y-3 transition-opacity ${
+                  p.active
+                    ? "border-border/50 bg-card/50"
+                    : "border-border/30 bg-card/20 opacity-60"
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="text-primary">
+                    <div className={p.active ? "text-primary" : "text-muted-foreground"}>
                       {getProductIcon(iconName, "h-5 w-5")}
                     </div>
                     <span className="font-semibold text-foreground">{name}</span>
+                    {!p.active && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-500 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">
+                        <EyeOff className="h-3 w-3" />
+                        Masqué
+                      </span>
+                    )}
                   </div>
-                  <Badge variant="outline" className="capitalize text-xs">
-                    {category}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={p.active}
+                      onCheckedChange={(checked) => handleToggleActive(p.product_id, checked)}
+                      aria-label={p.active ? "Désactiver le produit" : "Activer le produit"}
+                    />
+                    <Badge variant="outline" className="capitalize text-xs">
+                      {category}
+                    </Badge>
+                  </div>
                 </div>
 
                 <div className="text-sm text-muted-foreground">

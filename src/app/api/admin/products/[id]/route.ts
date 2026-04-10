@@ -55,7 +55,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const { id } = await params;
   const body = await request.json();
-  const { price_cents, promo_percent, promo_active, promo_label, algorithm_id, content } = body;
+  const { price_cents, promo_percent, promo_active, promo_label, algorithm_id, active, content } = body;
 
   if (price_cents !== undefined && (typeof price_cents !== "number" || price_cents < 0)) {
     return NextResponse.json({ error: "Prix invalide" }, { status: 400 });
@@ -78,6 +78,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (promo_active !== undefined) updateData.promo_active = promo_active;
   if (promo_label !== undefined) updateData.promo_label = promo_label;
   if (algorithm_id !== undefined) updateData.algorithm_id = algorithm_id;
+  if (active !== undefined) updateData.active = active;
 
   if (content !== undefined) {
     const { data: existing } = await supabase

@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("product_settings")
-    .select("product_id, price_cents, content");
+    .select("product_id, price_cents, content, active");
 
   if (error) {
     console.error("Error fetching products:", error);

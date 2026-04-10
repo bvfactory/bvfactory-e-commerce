@@ -8,6 +8,7 @@ export interface ProductSettings {
   promo_active: boolean;
   promo_label: string | null;
   algorithm_id: string | null;
+  active: boolean;
 }
 
 export interface ProductWithSettings {
@@ -116,13 +117,16 @@ export async function getAllProductsWithSettings(): Promise<ProductWithSettings[
   });
 }
 
-export async function getFullProduct(productId: string): Promise<ProductWithPromo> {
+export async function getFullProduct(productId: string, includeInactive = false): Promise<ProductWithPromo> {
   const supabase = createAdminClient();
-  const { data } = await supabase
+  const query = supabase
     .from("product_settings")
     .select("*")
-    .eq("product_id", productId)
-    .maybeSingle();
+    .eq("product_id", productId);
+
+  if (!includeInactive) query.eq("active", true);
+
+  const { data } = await query.maybeSingle();
 
   if (!data) throw new Error(`Unknown product: ${productId}`);
 
@@ -133,7 +137,8 @@ export async function getAllFullProducts(): Promise<ProductWithPromo[]> {
   const supabase = createAdminClient();
   const { data: settings } = await supabase
     .from("product_settings")
-    .select("*");
+    .select("*")
+    .eq("active", true);
 
   if (!settings) return [];
 

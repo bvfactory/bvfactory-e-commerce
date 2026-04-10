@@ -46,6 +46,7 @@ interface ProductSettings {
   promo_active: boolean | null;
   promo_label: string | null;
   algorithm_id: string | null;
+  active: boolean | null;
   content: Record<string, string | null> | null;
 }
 
@@ -125,6 +126,19 @@ export default function ProductDetailPage() {
     );
   }
 
+  async function handleToggleActive(newActive: boolean) {
+    try {
+      await fetch(`/api/admin/products/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active: newActive }),
+      });
+      await fetchProduct();
+    } catch {
+      alert("Erreur réseau");
+    }
+  }
+
   async function handleDeleteProduct() {
     if (!confirm(`Supprimer "${product?.name}" ? Cette action est irréversible et supprimera aussi les fichiers associés.`)) return;
     setDeletingProduct(true);
@@ -178,6 +192,19 @@ export default function ProductDetailPage() {
         Retour aux produits
       </Link>
 
+      {/* Inactive banner */}
+      {settings?.active === false && (
+        <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-4 py-3 flex items-center justify-between">
+          <p className="text-sm text-amber-500 font-medium">
+            Ce produit est masqué du site. Activez-le pour le rendre visible.
+          </p>
+          <Switch
+            checked={false}
+            onCheckedChange={(checked) => handleToggleActive(checked)}
+          />
+        </div>
+      )}
+
       {/* Page title */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -188,6 +215,16 @@ export default function ProductDetailPage() {
           <Badge variant="outline" className="capitalize text-xs">
             {product.category}
           </Badge>
+          <div className="flex items-center gap-2 ml-2">
+            <Label htmlFor="product-active" className="text-xs text-muted-foreground">
+              {settings?.active !== false ? "Actif" : "Masqué"}
+            </Label>
+            <Switch
+              id="product-active"
+              checked={settings?.active !== false}
+              onCheckedChange={(checked) => handleToggleActive(checked)}
+            />
+          </div>
         </div>
         <Button
           variant="destructive"
