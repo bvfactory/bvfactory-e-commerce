@@ -61,8 +61,8 @@ function generateKey(coreID) {
 const testCases = [
     "EMULATION",
     "ABC123",
-    "CORE-1234-5678-ABCD",
-    "QSC-Q-SYS-CORE-110F",
+    "*1AB2CDEFG3HI4J5",
+    "*9XY8ZKLM7NP2Q3",
     "X",
     "A".repeat(64),
 ];

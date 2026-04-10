@@ -15,8 +15,8 @@ export async function POST(req: Request) {
 
         // Server-side validation
         for (const item of items) {
-            if (!item.coreId || !item.coreId.match(/^[A-Z0-9-]{8,}$/i)) {
-                return NextResponse.json({ error: `Format de Q-SYS Core ID invalide pour ${item.product.name}.` }, { status: 400 });
+            if (!item.coreId || !item.coreId.match(/^\*[A-Z0-9]{10,}$/i)) {
+                return NextResponse.json({ error: `Format de Q-SYS Core ID invalide pour ${item.product.name}. Format attendu : *1AB2CDEFG3HI4J5` }, { status: 400 });
             }
         }
 
@@ -216,8 +216,8 @@ async function handleFreeOrder(supabase: any, order: any, items: FreeOrderItem[]
         })
         .eq("id", order.id);
 
-    // Send confirmation email with invoice
-    await sendOrderConfirmation({
+    // Send confirmation email with invoice (non-blocking — order succeeds even if email fails)
+    sendOrderConfirmation({
         to: email,
         orderId: order.id,
         activationCode,
@@ -229,7 +229,7 @@ async function handleFreeOrder(supabase: any, order: any, items: FreeOrderItem[]
         currency: "EUR",
         discountCode: order.discount_code,
         discountPercent: order.discount_percent,
-    });
+    }).catch((err) => console.error("Failed to send order confirmation email:", err));
 
     // Redirect to success page directly (no Stripe)
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";

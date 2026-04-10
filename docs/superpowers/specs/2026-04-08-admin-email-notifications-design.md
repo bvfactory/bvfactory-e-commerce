@@ -50,7 +50,7 @@ Format : `[BVFactory] {LABEL} — {résumé}`
 | `order_paid` | `[BVFactory] NOUVELLE COMMANDE — 150,00€ de client@example.com` |
 | `order_free` | `[BVFactory] LICENCE GRATUITE — Plugin X pour client@example.com` |
 | `contact_received` | `[BVFactory] NOUVEAU MESSAGE — Sujet du message` |
-| `license_activated` | `[BVFactory] LICENCE ACTIVÉE — Plugin X sur Core ABC-123` |
+| `license_activated` | `[BVFactory] LICENCE ACTIVÉE — Plugin X sur Core *1AB2CDEFG3HI4J5` |
 | `admin_login_failed` | `[BVFactory] ALERTE SÉCURITÉ — Tentative échouée depuis 192.168.1.1` |
 | `discount_used` | `[BVFactory] CODE PROMO UTILISÉ — SUMMER25 (3/10 utilisations)` |
 

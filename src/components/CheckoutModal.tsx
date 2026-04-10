@@ -31,8 +31,8 @@ export function AddToCartModal({ product, isOpen, onClose }: AddToCartModalProps
             return;
         }
 
-        if (!coreId.match(/^[A-Z0-9-]{8,}$/i)) {
-            toast.error("Invalid Q-SYS Core ID format.");
+        if (!coreId.match(/^\*[A-Z0-9]{10,}$/i)) {
+            toast.error("Invalid Q-SYS Core ID format. Expected format: *1AB2CDEFG3HI4J5");
             return;
         }
 
@@ -76,7 +76,7 @@ export function AddToCartModal({ product, isOpen, onClose }: AddToCartModalProps
                             <Input
                                 id="coreId"
                                 type="text"
-                                placeholder="Q-CORE-123456-78901"
+                                placeholder="*1AB2CDEFG3HI4J5"
                                 value={coreId}
                                 onChange={(e) => setCoreId(e.target.value)}
                                 required
