@@ -250,7 +250,7 @@ export default function ProductPageClient({ product, relatedProducts }: { produc
                                                     src={src}
                                                     alt={`${product.name} screenshot ${idx + 1}`}
                                                     fill
-                                                    className="object-cover transition-transform duration-700 group-hover:scale-110 blur-[2px] group-hover:blur-none"
+                                                    className="object-cover transition-transform duration-700 group-hover:scale-110"
                                                 />
                                             </button>
                                         ))}

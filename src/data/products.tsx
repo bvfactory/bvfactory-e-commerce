@@ -102,7 +102,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
         manualUrl: "#",
         videoUrl: undefined,
         screenshots: [
-            "https://images.unsplash.com/photo-1504501650895-2441b2e52940?auto=format&fit=crop&q=80&w=2070",
+            "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&q=80&w=2070",
             "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=2070"
         ],
         faq: [
@@ -522,7 +522,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
         videoUrl: undefined,
         screenshots: [
             "https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&q=80&w=2070",
-            "https://images.unsplash.com/photo-1631545806609-35ffa7734532?auto=format&fit=crop&q=80&w=2070"
+            "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=2070"
         ],
         faq: [
             {
@@ -764,7 +764,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
         manualUrl: "#",
         videoUrl: undefined,
         screenshots: [
-            "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?auto=format&fit=crop&q=80&w=2032",
+            "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&q=80&w=2070",
             "https://images.unsplash.com/photo-1571330735066-03aaa9429d89?auto=format&fit=crop&q=80&w=2070"
         ],
         faq: [
@@ -850,7 +850,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
         manualUrl: "#",
         videoUrl: undefined,
         screenshots: [
-            "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?auto=format&fit=crop&q=80&w=2032",
+            "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&q=80&w=2070",
             "https://images.unsplash.com/photo-1565814636199-ae8133055c1c?auto=format&fit=crop&q=80&w=2070"
         ],
         faq: [
