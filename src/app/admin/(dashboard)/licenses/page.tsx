@@ -121,24 +121,24 @@ export default function LicensesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Licences</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h1 className="text-2xl font-bold text-white tracking-tight">Licences</h1>
+        <p className="text-[11px] font-mono text-slate-500 uppercase tracking-[0.2em] mt-1">
           Gérez les licences actives et révoquées
         </p>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative max-w-sm w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
           <Input
             placeholder="Rechercher par Core ID ou Produit..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="pl-9 bg-[#0a1628] border-white/10 text-white font-mono text-xs placeholder:text-slate-600 focus-visible:ring-teal-500"
           />
         </div>
         <Select value={status} onValueChange={(v) => setStatus(v ?? "all")}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] bg-[#0a1628] border-white/10 text-slate-300 font-mono text-xs">
             <SelectValue placeholder="Statut" />
           </SelectTrigger>
           <SelectContent>
@@ -151,59 +151,62 @@ export default function LicensesPage() {
         </Select>
       </div>
 
-      <div className="rounded-xl border border-border/50 overflow-hidden">
+      <div className="glass-panel rounded-2xl overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead>Date</TableHead>
-              <TableHead>Produit</TableHead>
-              <TableHead>Core ID</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Commande</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+            <TableRow className="hover:bg-transparent border-b border-white/5">
+              <TableHead className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.15em]">Date</TableHead>
+              <TableHead className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.15em]">Produit</TableHead>
+              <TableHead className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.15em]">Core ID</TableHead>
+              <TableHead className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.15em]">Statut</TableHead>
+              <TableHead className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.15em]">Commande</TableHead>
+              <TableHead className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.15em] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-12">
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
-                    Chargement...
+                  <div className="flex items-center justify-center gap-2 text-slate-500">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-700 border-t-teal-400" />
+                    <span className="font-mono text-xs">Chargement...</span>
                   </div>
                 </TableCell>
               </TableRow>
             ) : licenses.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
-                  Aucune licence trouvée.
+                <TableCell colSpan={6}>
+                  <div className="glass-panel rounded-2xl p-12 text-center">
+                    <span className="text-slate-500 font-mono text-sm">Aucune licence trouvée.</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
               licenses.map((license) => (
-                <TableRow key={license.id}>
-                  <TableCell className="text-muted-foreground">
+                <TableRow key={license.id} className="hover:bg-white/[0.02]">
+                  <TableCell className="text-sm text-slate-400">
                     {formatDate(license.created_at)}
                   </TableCell>
                   <TableCell>
-                    <span className="inline-flex items-center rounded-md bg-muted/50 px-2 py-0.5 font-mono text-xs font-medium text-foreground">
+                    <span className="text-[11px] font-mono text-teal-400 bg-teal-500/10 border border-teal-500/20 px-2 py-0.5 rounded">
                       {license.product_id}
                     </span>
                   </TableCell>
-                  <TableCell className="font-mono text-sm text-muted-foreground">
+                  <TableCell className="font-mono text-[11px] text-slate-400">
                     {license.core_id}
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={license.status} />
                   </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground" title={license.order_id}>
+                  <TableCell className="font-mono text-[11px] text-slate-500" title={license.order_id}>
                     {truncateUUID(license.order_id)}
                   </TableCell>
                   <TableCell className="text-right">
                     {license.status === "active" && (
                       <Button
-                        variant="destructive"
+                        variant="outline"
                         size="sm"
+                        className="text-red-400 border-red-500/20 hover:bg-red-500/10"
                         onClick={() => setRevokeTarget(license)}
                       >
                         Révoquer
@@ -218,7 +221,7 @@ export default function LicensesPage() {
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-[11px] font-mono text-slate-500">
           {total} licence{total !== 1 ? "s" : ""} au total
         </p>
         <div className="flex gap-2">
@@ -227,6 +230,7 @@ export default function LicensesPage() {
             size="sm"
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
+            className="bg-[#0a1628] border-white/10 text-slate-300 hover:bg-white/5 hover:text-white text-[11px] font-mono"
           >
             Précédent
           </Button>
@@ -235,6 +239,7 @@ export default function LicensesPage() {
             size="sm"
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
+            className="bg-[#0a1628] border-white/10 text-slate-300 hover:bg-white/5 hover:text-white text-[11px] font-mono"
           >
             Suivant
           </Button>
@@ -242,20 +247,20 @@ export default function LicensesPage() {
       </div>
 
       <Dialog open={!!revokeTarget} onOpenChange={(open) => !open && setRevokeTarget(null)}>
-        <DialogContent>
+        <DialogContent className="glass-panel-light bg-[#0a1628] border-white/10">
           <DialogHeader>
-            <DialogTitle>Révoquer la licence</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-white">Révoquer la licence</DialogTitle>
+            <DialogDescription className="text-slate-400">
               Êtes-vous sûr de vouloir révoquer la licence pour le Core ID{" "}
-              <span className="font-mono font-semibold">{revokeTarget?.core_id}</span> ?
+              <span className="font-mono font-semibold text-white">{revokeTarget?.core_id}</span> ?
               Cette action est irréversible.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRevokeTarget(null)}>
+            <Button variant="outline" onClick={() => setRevokeTarget(null)} className="bg-[#0a1628] border-white/10 text-slate-300 hover:bg-white/5 hover:text-white">
               Annuler
             </Button>
-            <Button variant="destructive" onClick={handleRevoke} disabled={revoking}>
+            <Button variant="outline" onClick={handleRevoke} disabled={revoking} className="text-red-400 border-red-500/20 hover:bg-red-500/10">
               {revoking ? "Révocation..." : "Révoquer"}
             </Button>
           </DialogFooter>

@@ -4,8 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getProductIcon } from "@/data/products";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { CheckCircle2, XCircle, ArrowRight, HardDrive, Loader2, Plus, Trash2, EyeOff } from "lucide-react";
@@ -130,45 +128,53 @@ export default function PluginsPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Gestion des produits</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-slate-500 mb-2">Catalogue</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Gestion des produits</h1>
+          <p className="text-sm text-slate-400 mt-1">
             Consultez et gérez vos plugins Q-SYS
           </p>
         </div>
-        <Button
+        <button
           onClick={() => setShowCreateForm(!showCreateForm)}
-          className="gap-2"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-teal-500 to-blue-600 text-white font-mono text-xs uppercase tracking-widest border-0 hover:brightness-110 transition"
         >
           <Plus className="h-4 w-4" />
           Nouveau produit
-        </Button>
+        </button>
       </div>
 
       {showCreateForm && (
-        <div className="border border-border/50 rounded-xl bg-card/50 p-5 space-y-3">
-          <h3 className="font-semibold text-foreground">Créer un nouveau produit</h3>
-          <div className="flex gap-3">
-            <Input
-              placeholder="Nom du produit"
-              value={newProductName}
-              onChange={(e) => setNewProductName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-              disabled={creating}
-            />
-            <Button onClick={handleCreate} disabled={creating || !newProductName.trim()}>
-              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Créer"}
-            </Button>
+        <div className="glass-panel rounded-2xl p-[1px]">
+          <div className="relative bg-[#0a1628] rounded-2xl p-5 space-y-3">
+            <h3 className="font-semibold text-white tracking-tight">Créer un nouveau produit</h3>
+            <div className="flex gap-3">
+              <Input
+                placeholder="Nom du produit"
+                value={newProductName}
+                onChange={(e) => setNewProductName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                disabled={creating}
+                className="bg-[#0a1628] border-white/10 text-white font-mono text-xs placeholder:text-slate-600"
+              />
+              <button
+                onClick={handleCreate}
+                disabled={creating || !newProductName.trim()}
+                className="inline-flex items-center px-4 py-2 rounded-lg bg-gradient-to-r from-teal-500 to-blue-600 text-white font-mono text-xs uppercase tracking-widest border-0 hover:brightness-110 transition disabled:opacity-50"
+              >
+                {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Créer"}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2 text-muted-foreground py-12">
+        <div className="flex items-center justify-center gap-2 text-slate-500 py-12">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Chargement...
+          <span className="font-mono text-xs">Chargement...</span>
         </div>
       ) : products.length === 0 ? (
-        <div className="text-center text-muted-foreground py-12">
+        <div className="text-center text-slate-500 py-12 font-mono text-sm">
           Aucun produit. Cliquez sur &quot;Nouveau produit&quot; pour commencer.
         </div>
       ) : (
@@ -185,77 +191,77 @@ export default function PluginsPage() {
             return (
               <div
                 key={p.product_id}
-                className={`border rounded-xl p-5 space-y-3 transition-opacity ${
-                  p.active
-                    ? "border-border/50 bg-card/50"
-                    : "border-border/30 bg-card/20 opacity-60"
+                className={`glass-panel rounded-2xl p-[1px] transition-opacity ${
+                  !p.active ? "opacity-50" : ""
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={p.active ? "text-primary" : "text-muted-foreground"}>
-                      {getProductIcon(iconName, "h-5 w-5")}
-                    </div>
-                    <span className="font-semibold text-foreground">{name}</span>
-                    {!p.active && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-500 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">
-                        <EyeOff className="h-3 w-3" />
-                        Masqué
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={p.active}
-                      onCheckedChange={(checked) => handleToggleActive(p.product_id, checked)}
-                      aria-label={p.active ? "Désactiver le produit" : "Activer le produit"}
-                    />
-                    <Badge variant="outline" className="capitalize text-xs">
-                      {category}
-                    </Badge>
-                  </div>
-                </div>
-
-                <div className="text-sm text-muted-foreground">
-                  Prix : {formatPrice(priceCents)}
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-sm">
-                    <HardDrive className="h-3.5 w-3.5 text-muted-foreground" />
-                    {uploaded ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-500 font-medium">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        Uploadé
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-amber-500 font-medium">
-                        <XCircle className="h-3.5 w-3.5" />
-                        Manquant
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => handleDelete(p.product_id, name)}
-                      disabled={deleting === p.product_id}
-                      className="inline-flex items-center gap-1 text-sm font-medium text-destructive hover:underline disabled:opacity-50"
-                    >
-                      {deleting === p.product_id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-3.5 w-3.5" />
+                <div className="relative bg-[#0a1628] rounded-2xl p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={p.active ? "text-teal-400" : "text-slate-600"}>
+                        {getProductIcon(iconName, "h-5 w-5")}
+                      </div>
+                      <span className="font-semibold text-white tracking-tight">{name}</span>
+                      {!p.active && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-500 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">
+                          <EyeOff className="h-3 w-3" />
+                          Masqué
+                        </span>
                       )}
-                      Supprimer
-                    </button>
-                    <Link
-                      href={`/admin/plugins/${p.product_id}`}
-                      className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-                    >
-                      Gérer
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={p.active}
+                        onCheckedChange={(checked) => handleToggleActive(p.product_id, checked)}
+                        aria-label={p.active ? "Désactiver le produit" : "Activer le produit"}
+                      />
+                      <span className="text-[10px] font-mono text-slate-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full capitalize">
+                        {category}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-sm text-slate-400 font-mono">
+                    Prix : {formatPrice(priceCents)}
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-sm">
+                      <HardDrive className="h-3.5 w-3.5 text-slate-600" />
+                      {uploaded ? (
+                        <span className="inline-flex items-center gap-1 text-emerald-500 font-medium font-mono text-xs">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Uploadé
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-amber-500 font-medium font-mono text-xs">
+                          <XCircle className="h-3.5 w-3.5" />
+                          Manquant
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => handleDelete(p.product_id, name)}
+                        disabled={deleting === p.product_id}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-red-400 hover:underline disabled:opacity-50"
+                      >
+                        {deleting === p.product_id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
+                        Supprimer
+                      </button>
+                      <Link
+                        href={`/admin/plugins/${p.product_id}`}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-teal-400 hover:underline"
+                      >
+                        Gérer
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>

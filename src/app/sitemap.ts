@@ -1,6 +1,8 @@
 import { MetadataRoute } from "next";
 import { getAllFullProducts } from "@/lib/product-settings";
 
+export const dynamic = "force-dynamic";
+
 const baseUrl = "https://bvfactory.dev";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

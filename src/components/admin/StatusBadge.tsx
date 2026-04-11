@@ -2,45 +2,45 @@ import { cn } from "@/lib/utils";
 
 const statusConfig: Record<string, { bg: string; text: string; dot: string; label: string }> = {
   paid: {
-    bg: "bg-emerald-500/10 dark:bg-emerald-500/15",
-    text: "text-emerald-600 dark:text-emerald-400",
-    dot: "bg-emerald-500",
+    bg: "bg-emerald-500/10 border border-emerald-500/20",
+    text: "text-emerald-400",
+    dot: "bg-emerald-400",
     label: "Payée",
   },
   active: {
-    bg: "bg-emerald-500/10 dark:bg-emerald-500/15",
-    text: "text-emerald-600 dark:text-emerald-400",
-    dot: "bg-emerald-500",
+    bg: "bg-emerald-500/10 border border-emerald-500/20",
+    text: "text-emerald-400",
+    dot: "bg-emerald-400",
     label: "Active",
   },
   pending: {
-    bg: "bg-amber-500/10 dark:bg-amber-500/15",
-    text: "text-amber-600 dark:text-amber-400",
-    dot: "bg-amber-500 animate-pulse",
+    bg: "bg-amber-500/10 border border-amber-500/20",
+    text: "text-amber-400",
+    dot: "bg-amber-400 animate-pulse",
     label: "En attente",
   },
   failed: {
-    bg: "bg-red-500/10 dark:bg-red-500/15",
-    text: "text-red-600 dark:text-red-400",
-    dot: "bg-red-500",
+    bg: "bg-red-500/10 border border-red-500/20",
+    text: "text-red-400",
+    dot: "bg-red-400",
     label: "Échouée",
   },
   refunded: {
-    bg: "bg-sky-500/10 dark:bg-sky-500/15",
-    text: "text-sky-600 dark:text-sky-400",
-    dot: "bg-sky-500",
+    bg: "bg-sky-500/10 border border-sky-500/20",
+    text: "text-sky-400",
+    dot: "bg-sky-400",
     label: "Remboursée",
   },
   revoked: {
-    bg: "bg-red-500/10 dark:bg-red-500/15",
-    text: "text-red-600 dark:text-red-400",
-    dot: "bg-red-500",
+    bg: "bg-red-500/10 border border-red-500/20",
+    text: "text-red-400",
+    dot: "bg-red-400",
     label: "Révoquée",
   },
   expired: {
-    bg: "bg-muted",
-    text: "text-muted-foreground",
-    dot: "bg-muted-foreground/50",
+    bg: "bg-slate-500/10 border border-slate-500/20",
+    text: "text-slate-400",
+    dot: "bg-slate-500",
     label: "Expirée",
   },
 };
@@ -52,16 +52,16 @@ interface StatusBadgeProps {
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
   const config = statusConfig[status] || {
-    bg: "bg-muted",
-    text: "text-muted-foreground",
-    dot: "bg-muted-foreground/50",
+    bg: "bg-slate-500/10 border border-slate-500/20",
+    text: "text-slate-400",
+    dot: "bg-slate-500",
     label: status,
   };
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-mono font-medium tracking-wide",
         config.bg,
         config.text,
         className

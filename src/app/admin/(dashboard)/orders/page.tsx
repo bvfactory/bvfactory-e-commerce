@@ -155,7 +155,7 @@ function CopyButton({ text }: { text: string }) {
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }}
-      className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+      className="inline-flex items-center gap-1 text-slate-500 hover:text-white transition-colors duration-300"
       title="Copier"
     >
       {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
@@ -246,8 +246,8 @@ export default function OrdersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Commandes</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold text-white tracking-tight">Commandes</h1>
+          <p className="text-[11px] font-mono text-slate-500 uppercase tracking-[0.2em] mt-1">
             {total} commande{total !== 1 ? "s" : ""} au total
           </p>
         </div>
@@ -262,12 +262,12 @@ export default function OrdersPage() {
       {/* Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative sm:max-w-xs w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
           <Input
             placeholder="Rechercher par email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="pl-9 bg-[#0a1628] border-white/10 text-white font-mono text-xs placeholder:text-slate-600 focus-visible:ring-teal-500"
           />
         </div>
         <Select
@@ -292,12 +292,12 @@ export default function OrdersPage() {
 
       {/* Order list */}
       {loading ? (
-        <div className="flex items-center justify-center gap-2 text-muted-foreground py-16">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
+        <div className="flex items-center justify-center gap-2 text-slate-500 py-16 font-mono text-xs">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/10 border-t-teal-500" />
           Chargement...
         </div>
       ) : orders.length === 0 ? (
-        <div className="text-center text-muted-foreground py-16">
+        <div className="text-center text-slate-500 py-16 font-mono text-xs">
           <ShoppingCart className="h-8 w-8 mx-auto mb-3 opacity-40" />
           Aucune commande trouvée.
         </div>
@@ -317,9 +317,9 @@ export default function OrdersPage() {
               <Fragment key={order.id}>
                 <div
                   className={`
-                    rounded-xl border transition-all cursor-pointer
-                    ${hasAnomaly ? "border-amber-500/30 bg-amber-500/[0.02]" : "border-border/50 bg-card/30"}
-                    ${isExpanded ? "ring-1 ring-primary/20" : "hover:bg-card/60"}
+                    rounded-xl transition-all duration-300 cursor-pointer
+                    ${hasAnomaly ? "glass-panel border-amber-500/30 bg-amber-500/[0.02]" : "glass-panel"}
+                    ${isExpanded ? "ring-1 ring-teal-500/20" : "hover:bg-white/[0.03]"}
                   `}
                   onClick={() => setExpandedId(isExpanded ? null : order.id)}
                 >
@@ -328,7 +328,7 @@ export default function OrdersPage() {
                     {/* Status dot + date */}
                     <div className="flex-shrink-0 w-36">
                       <StatusBadge status={order.status} />
-                      <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1">
+                      <p className="text-[11px] font-mono text-slate-500 mt-1.5 flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {relativeTime(order.created_at)}
                       </p>
@@ -336,12 +336,12 @@ export default function OrdersPage() {
 
                     {/* Customer + products */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground text-sm truncate">
+                      <p className="font-medium text-white text-sm truncate">
                         {order.customer_email}
                       </p>
                       <div className="flex items-center gap-1.5 mt-1">
-                        <Package className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                        <p className="text-xs text-muted-foreground truncate">
+                        <Package className="h-3 w-3 text-slate-500 flex-shrink-0" />
+                        <p className="text-[11px] font-mono text-slate-500 truncate">
                           {items.length} produit{items.length !== 1 ? "s" : ""} — {productNames}
                         </p>
                       </div>
@@ -365,7 +365,7 @@ export default function OrdersPage() {
 
                     {/* Total */}
                     <div className="flex-shrink-0 text-right w-24">
-                      <p className={`font-mono font-semibold text-sm ${orderTotal === 0 ? "text-muted-foreground" : "text-foreground"}`}>
+                      <p className={`font-mono font-semibold text-sm ${orderTotal === 0 ? "text-slate-600" : "text-white"}`}>
                         {formatCents(orderTotal)}
                       </p>
                     </div>
@@ -373,16 +373,16 @@ export default function OrdersPage() {
                     {/* Expand arrow */}
                     <div className="flex-shrink-0">
                       {isExpanded ? (
-                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                        <ChevronUp className="h-4 w-4 text-slate-500" />
                       ) : (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        <ChevronDown className="h-4 w-4 text-slate-500" />
                       )}
                     </div>
                   </div>
 
                   {/* Expanded details */}
                   {isExpanded && (
-                    <div className="border-t border-border/30 px-5 py-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+                    <div className="border-t border-white/5 px-5 py-4 space-y-4 bg-white/[0.03]" onClick={(e) => e.stopPropagation()}>
                       {/* Anomalies alert */}
                       {hasAnomaly && (
                         <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-4 py-3 space-y-1">
@@ -398,29 +398,29 @@ export default function OrdersPage() {
                       {/* Meta grid */}
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                          <p className="text-[11px] font-mono text-slate-500 uppercase tracking-[0.2em] mb-1">
                             ID Commande
                           </p>
                           <div className="flex items-center gap-1.5">
-                            <p className="font-mono text-xs text-foreground truncate">{order.id}</p>
+                            <p className="font-mono text-xs text-white truncate">{order.id}</p>
                             <CopyButton text={order.id} />
                           </div>
                         </div>
 
                         <div>
-                          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                          <p className="text-[11px] font-mono text-slate-500 uppercase tracking-[0.2em] mb-1">
                             Date
                           </p>
-                          <p className="text-xs text-foreground">{formatDate(order.created_at)}</p>
+                          <p className="text-[11px] font-mono text-slate-400">{formatDate(order.created_at)}</p>
                         </div>
 
                         {order.activation_code && (
                           <div>
-                            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                            <p className="text-[11px] font-mono text-slate-500 uppercase tracking-[0.2em] mb-1">
                               Code d&apos;activation
                             </p>
                             <div className="flex items-center gap-1.5">
-                              <p className="font-mono text-xs text-foreground font-semibold">
+                              <p className="font-mono text-xs text-white font-semibold">
                                 {order.activation_code}
                               </p>
                               <CopyButton text={order.activation_code} />
@@ -431,26 +431,26 @@ export default function OrdersPage() {
 
                       {/* Products detail */}
                       <div>
-                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                        <p className="text-[11px] font-mono text-slate-500 uppercase tracking-[0.2em] mb-2">
                           Détail des produits
                         </p>
                         <div className="space-y-1.5">
                           {items.map((item, idx) => (
                             <div
                               key={idx}
-                              className="flex items-center justify-between rounded-lg bg-background/60 border border-border/30 px-4 py-3"
+                              className="flex items-center justify-between rounded-lg bg-white/[0.03] border border-white/5 px-4 py-3"
                             >
                               <div className="flex items-center gap-3 min-w-0">
-                                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                  <Package className="h-4 w-4 text-primary" />
+                                <div className="h-8 w-8 rounded-lg bg-teal-500/10 flex items-center justify-center flex-shrink-0">
+                                  <Package className="h-4 w-4 text-teal-400" />
                                 </div>
                                 <div className="min-w-0">
-                                  <p className="font-medium text-foreground text-sm truncate">
+                                  <p className="font-medium text-white text-sm truncate">
                                     {item.product?.name ?? "Produit inconnu"}
                                   </p>
                                   <div className="flex items-center gap-2 mt-0.5">
                                     {item.coreId && (
-                                      <span className="text-[10px] font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">
+                                      <span className="text-[10px] font-mono text-slate-500 bg-white/[0.05] px-1.5 py-0.5 rounded">
                                         Core: {item.coreId}
                                       </span>
                                     )}
@@ -463,7 +463,7 @@ export default function OrdersPage() {
                                   </div>
                                 </div>
                               </div>
-                              <span className="font-mono text-sm font-medium text-foreground flex-shrink-0 ml-3">
+                              <span className="font-mono text-sm font-medium text-white flex-shrink-0 ml-3">
                                 {formatCents(item.product?.price_cents ?? 0)}
                               </span>
                             </div>
@@ -472,8 +472,8 @@ export default function OrdersPage() {
 
                         {/* Subtotal / discount / total */}
                         {order.discount_code && (
-                          <div className="mt-3 pt-3 border-t border-border/30 space-y-1 text-right">
-                            <p className="text-xs text-muted-foreground">
+                          <div className="mt-3 pt-3 border-t border-white/5 space-y-1 text-right">
+                            <p className="text-xs text-slate-500">
                               Sous-total :{" "}
                               <span className="font-mono">
                                 {formatCents(items.reduce((s, i) => s + (i.product?.price_cents ?? 0), 0))}
@@ -483,7 +483,7 @@ export default function OrdersPage() {
                               Réduction {order.discount_code} :{" "}
                               <span className="font-mono">-{order.discount_percent}%</span>
                             </p>
-                            <p className="text-sm font-semibold text-foreground">
+                            <p className="text-sm font-semibold text-white">
                               Total :{" "}
                               <span className="font-mono">{formatCents(orderTotal)}</span>
                             </p>
@@ -494,12 +494,12 @@ export default function OrdersPage() {
                       {/* Stripe info */}
                       {order.stripe_session_id && (
                         <div>
-                          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                          <p className="text-[11px] font-mono text-slate-500 uppercase tracking-[0.2em] mb-1">
                             Stripe
                           </p>
                           <div className="flex items-center gap-2">
-                            <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
-                            <p className="font-mono text-[11px] text-muted-foreground truncate">
+                            <CreditCard className="h-3.5 w-3.5 text-slate-500" />
+                            <p className="font-mono text-[11px] text-slate-500 truncate">
                               {order.stripe_session_id}
                             </p>
                             <CopyButton text={order.stripe_session_id} />
@@ -509,7 +509,7 @@ export default function OrdersPage() {
 
                       {/* Refund action */}
                       {order.status === "paid" && order.stripe_payment_intent_id && (
-                        <div className="border-t border-border/30 pt-4">
+                        <div className="border-t border-white/5 pt-4">
                           {confirmRefundId === order.id ? (
                             <div className="flex items-center gap-3 rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3">
                               <p className="text-sm text-red-500 flex-1">
@@ -555,7 +555,7 @@ export default function OrdersPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[11px] font-mono text-slate-500">
             Page {page} sur {totalPages}
           </p>
           <div className="flex gap-2">

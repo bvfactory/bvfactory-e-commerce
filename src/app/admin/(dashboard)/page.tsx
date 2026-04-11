@@ -1,17 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Euro, ShoppingCart, KeyRound, Clock } from "lucide-react";
+import Link from "next/link";
+import { Euro, ShoppingCart, KeyRound, Clock, Package, ArrowRight } from "lucide-react";
 import { StatCard } from "@/components/admin/StatCard";
 import { StatusBadge } from "@/components/admin/StatusBadge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 interface RawOrderItem {
   product: {
@@ -40,6 +33,7 @@ interface Stats {
 }
 
 function formatCents(cents: number): string {
+  if (isNaN(cents)) return "—";
   return (cents / 100).toLocaleString("fr-FR", {
     style: "currency",
     currency: "EUR",
@@ -47,14 +41,15 @@ function formatCents(cents: number): string {
   });
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("fr-FR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "À l'instant";
+  if (mins < 60) return `il y a ${mins}min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `il y a ${hours}h`;
+  const days = Math.floor(hours / 24);
+  return `il y a ${days}j`;
 }
 
 function computeOrderTotal(order: RecentOrder): number {
@@ -83,7 +78,7 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-700 border-t-teal-400" />
       </div>
     );
   }
@@ -91,8 +86,8 @@ export default function AdminDashboardPage() {
   if (error || !stats) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3">
-          <p className="text-sm text-destructive">{error ?? "Une erreur est survenue"}</p>
+        <div className="rounded-xl glass-panel px-6 py-4">
+          <p className="text-sm text-red-400 font-mono">{error ?? "Une erreur est survenue"}</p>
         </div>
       </div>
     );
@@ -106,13 +101,17 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-8">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Tableau de bord</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h1 className="text-2xl font-bold text-white tracking-tight">
+          Tableau de bord
+        </h1>
+        <p className="text-[11px] font-mono text-slate-500 uppercase tracking-[0.2em] mt-1">
           Vue d&apos;ensemble de votre activité
         </p>
       </div>
 
+      {/* Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Chiffre d'affaires"
@@ -140,50 +139,75 @@ export default function AdminDashboardPage() {
         />
       </div>
 
+      {/* Recent orders */}
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-foreground">
-          Commandes récentes
-        </h2>
-        <div className="rounded-xl border border-border/50 overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead>Date</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Produits</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {stats.recentOrders.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
-                    Aucune commande pour le moment
-                  </TableCell>
-                </TableRow>
-              ) : (
-                stats.recentOrders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="whitespace-nowrap text-muted-foreground">
-                      {formatDate(order.created_at)}
-                    </TableCell>
-                    <TableCell className="font-medium">{order.customer_email}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={order.status} />
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {order.items.map((item) => item.product?.name ?? "Inconnu").join(", ")}
-                    </TableCell>
-                    <TableCell className="text-right font-mono font-medium">
-                      {formatCents(computeOrderTotal(order))}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-white tracking-tight">
+            Commandes récentes
+          </h2>
+          <Link
+            href="/admin/orders"
+            className="inline-flex items-center gap-1.5 text-[11px] font-mono text-teal-400 uppercase tracking-[0.15em] hover:text-teal-300 transition-colors"
+          >
+            Voir tout
+            <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
+
+        {stats.recentOrders.length === 0 ? (
+          <div className="glass-panel rounded-2xl p-12 text-center">
+            <ShoppingCart className="h-8 w-8 mx-auto mb-3 text-slate-600" />
+            <p className="text-sm text-slate-500 font-mono">Aucune commande pour le moment</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {stats.recentOrders.map((order) => {
+              const total = computeOrderTotal(order);
+              const productNames = order.items
+                .map((i) => i.product?.name ?? "Inconnu")
+                .join(", ");
+
+              return (
+                <div
+                  key={order.id}
+                  className="glass-panel rounded-xl p-4 flex items-center gap-4 hover:bg-white/[0.03] transition-colors duration-300"
+                >
+                  {/* Status */}
+                  <div className="flex-shrink-0 w-28">
+                    <StatusBadge status={order.status} />
+                  </div>
+
+                  {/* Customer + products */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate">
+                      {order.customer_email}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <Package className="h-3 w-3 text-slate-600 flex-shrink-0" />
+                      <p className="text-[11px] font-mono text-slate-500 truncate">
+                        {productNames}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Time */}
+                  <div className="flex-shrink-0 hidden sm:block">
+                    <p className="text-[11px] font-mono text-slate-600">
+                      {relativeTime(order.created_at)}
+                    </p>
+                  </div>
+
+                  {/* Total */}
+                  <div className="flex-shrink-0 w-24 text-right">
+                    <p className="text-sm font-mono font-semibold text-white">
+                      {formatCents(total)}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
