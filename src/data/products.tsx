@@ -1,4 +1,4 @@
-import { Flame, Clapperboard, Monitor, Globe, Tv, Thermometer, Layers, Film, Music, Lightbulb, Timer } from "lucide-react";
+import { Flame, Clapperboard, Monitor, Globe, Tv, Thermometer, Layers, Film, Music, Lightbulb, Timer, Cable, Cpu, Brain } from "lucide-react";
 
 export interface VersionHistory {
     version: string;
@@ -16,6 +16,13 @@ export interface CompatibleBrand {
     logo: string; // path relative to /public/brands/
 }
 
+export type ProductTier = "bridge" | "forge" | "mind";
+
+export interface ReplaceInfo {
+    device: string;
+    estimatedCost: string;
+}
+
 export interface ProductType {
     id: string;
     name: string;
@@ -25,6 +32,8 @@ export interface ProductType {
     price_cents: number;
     iconName: "Flame" | "Clapperboard" | "Monitor" | "Globe" | "Tv" | "Thermometer" | "Layers" | "Film" | "Music" | "Lightbulb" | "Timer";
     category: "lighting" | "routing" | "show-control" | "control" | "audio" | "video" | "uci";
+    tier: ProductTier;
+    replaces?: ReplaceInfo;
     compatibleBrands?: CompatibleBrand[];
     features: string[];
     specs: Record<string, string>;
@@ -41,6 +50,33 @@ export interface ProductType {
     faq: FaqItem[];
 }
 
+export const PRODUCT_TIERS = [
+    {
+        id: "bridge" as ProductTier,
+        label: "Bridge",
+        tagline: "Connect the physical world",
+        description: "Translators that let Q-SYS talk to third-party devices. One plugin, one integration, zero custom Lua.",
+        icon: Cable,
+        color: "blue",
+    },
+    {
+        id: "forge" as ProductTier,
+        label: "Forge",
+        tagline: "Create something new",
+        description: "Creative engines that generate content Q-SYS can't do natively — DMX, timecode, audio, dashboards. Replaces external hardware entirely.",
+        icon: Cpu,
+        color: "teal",
+    },
+    {
+        id: "mind" as ProductTier,
+        label: "Mind",
+        tagline: "Orchestrate everything",
+        description: "The brain of the ecosystem. Decides which scene to launch, when, and why. Sequences transitions, handles failover, reacts to events.",
+        icon: Brain,
+        color: "purple",
+    },
+] as const;
+
 export const PRODUCT_CATEGORIES = [
     { id: "all", label: "All Modules" },
     { id: "audio", label: "Audio" },
@@ -50,6 +86,16 @@ export const PRODUCT_CATEGORIES = [
     { id: "show-control", label: "Show Control" },
     { id: "control", label: "AV Control" },
     { id: "uci", label: "UCI / Dashboard" },
+] as const;
+
+export const ROADMAP_PLUGINS = [
+    { name: "ScreenBridge", tier: "bridge" as ProductTier, description: "Multi-brand display control (Samsung, LG, Sony, iiyama, NEC, Philips, BenQ, Panasonic, PJLink)" },
+    { name: "NetBridge", tier: "bridge" as ProductTier, description: "Swiss-army-knife network client: TCP, UDP, HTTP, OSC, WebSocket from a single plugin" },
+    { name: "MediaBridge", tier: "bridge" as ProductTier, description: "Control external media servers and video playout devices (BrightSign, CasparCG, EVP380)" },
+    { name: "SensorBridge", tier: "bridge" as ProductTier, description: "GPIO, serial sensors, presence detection for interactive installations" },
+    { name: "CameraBridge", tier: "bridge" as ProductTier, description: "PTZ camera control (VISCA/ONVIF) with preset recall" },
+    { name: "PowerBridge", tier: "bridge" as ProductTier, description: "Network PDU control (Gude, APC, Raritan) for power-on/off sequences" },
+    { name: "ViewForge", tier: "forge" as ProductTier, description: "Modern web dashboard served from Q-SYS Core — free, replaces native UCIs" },
 ] as const;
 
 export const MOCK_PRODUCTS: ProductType[] = [
@@ -63,6 +109,8 @@ export const MOCK_PRODUCTS: ProductType[] = [
         price_cents: 35000,
         iconName: "Flame",
         category: "lighting",
+        tier: "forge",
+        replaces: { device: "CueCore2", estimatedCost: "~1 200 €" },
         features: [
             "Record — Arm a track, select your input universe, hit record. Captures every DMX frame in real time at 44fps.",
             "Play — Load a file, press play. Output goes straight to Art-Net or sACN, unicast or broadcast. Loop, scrub, pause.",
@@ -138,6 +186,8 @@ export const MOCK_PRODUCTS: ProductType[] = [
         price_cents: 45000,
         iconName: "Clapperboard",
         category: "show-control",
+        tier: "mind",
+        replaces: { device: "Medialon Manager", estimatedCost: "~3 000–5 000 €" },
         features: [
             "5 Timecode Modes — Manual, Internal (100Hz), External input, Time of Day, and SMPTE LTC Reader. Chase cues with frame-accurate sync.",
             "20 Action Types — Q-SYS, OSC, Resolume, MadMapper, Millumin, GrandMA3, ChamSys, UDP, TCP, HTTP, MIDI, PJLink, ArtNet, WoL, RS-232, GPIO, LightForge, Script, Variables, GoTo.",
@@ -241,6 +291,8 @@ export const MOCK_PRODUCTS: ProductType[] = [
         price_cents: 0,
         iconName: "Monitor",
         category: "control",
+        tier: "bridge",
+        replaces: { device: "External display controller", estimatedCost: "~300–500 €" },
         compatibleBrands: [
             { name: "iiyama", logo: "/brands/iiyama.svg" },
         ],
@@ -317,6 +369,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
         price_cents: 5000,
         iconName: "Globe",
         category: "uci",
+        tier: "bridge",
         features: [
             "Zero Dependencies — HTML, CSS, and JS are embedded directly in the plugin. No external server, no app to install, no configuration files.",
             "Real-Time WebSocket — Bidirectional sync on a single port. Every fader move, button press, and text change updates live across all connected clients.",
@@ -395,6 +448,8 @@ export const MOCK_PRODUCTS: ProductType[] = [
         price_cents: 1000,
         iconName: "Tv",
         category: "video",
+        tier: "bridge",
+        replaces: { device: "AV Access control software", estimatedCost: "~500 €" },
         compatibleBrands: [
             { name: "AV Access", logo: "/brands/avaccess.svg" },
         ],
@@ -476,6 +531,8 @@ export const MOCK_PRODUCTS: ProductType[] = [
         price_cents: 3000,
         iconName: "Thermometer",
         category: "control",
+        tier: "bridge",
+        replaces: { device: "MELCloud web interface + custom scripts", estimatedCost: "~200–400 €" },
         compatibleBrands: [
             { name: "Mitsubishi Electric", logo: "/brands/mitsubishi.svg" },
         ],
@@ -557,6 +614,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
         price_cents: 1500,
         iconName: "Layers",
         category: "video",
+        tier: "bridge",
         compatibleBrands: [
             { name: "MadMapper", logo: "/brands/madmapper.svg" },
         ],
@@ -638,6 +696,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
         price_cents: 1500,
         iconName: "Film",
         category: "video",
+        tier: "bridge",
         compatibleBrands: [
             { name: "Resolume Arena", logo: "/brands/resolume.svg" },
         ],
@@ -719,6 +778,8 @@ export const MOCK_PRODUCTS: ProductType[] = [
         price_cents: 5000,
         iconName: "Music",
         category: "audio",
+        tier: "forge",
+        replaces: { device: "Dedicated multitrack player", estimatedCost: "~800–1 500 €" },
         features: [
             "64 Tracks — Per-track Play, Stop, Pause, Loop, Volume, Mute & Solo. Configurable audio outputs (1–64 channels per track), fully routable in Q-SYS.",
             "Scene System — Store & recall up to 64 snapshots with crossfade transitions. JSON show file save/load for portable scene management.",
@@ -804,6 +865,8 @@ export const MOCK_PRODUCTS: ProductType[] = [
         price_cents: 1000,
         iconName: "Lightbulb",
         category: "lighting",
+        tier: "bridge",
+        replaces: { device: "IoT lighting gateway", estimatedCost: "~200–400 €" },
         compatibleBrands: [
             { name: "Philips Hue", logo: "/brands/philips.svg" },
         ],
@@ -886,9 +949,11 @@ export const MOCK_PRODUCTS: ProductType[] = [
         price_cents: 25000,
         iconName: "Timer",
         category: "show-control",
+        tier: "forge",
+        replaces: { device: "Dedicated timecode server", estimatedCost: "~1 000–2 000 €" },
         features: [
             "Timecode Generator — Frame-accurate SMPTE timecode with full transport (play, pause, stop, loop, seek). Supports 23.976 to 30 fps standard rates plus 50–1000 fps on internal bus.",
-            "Multi-Protocol Output — Simultaneous Art-Net Timecode (UDP 6454), MTC via RTP-MIDI/AppleMIDI, and LTC audio via Q-SYS SMPTE LTC Encoder. Unicast or broadcast.",
+            "Multi-Protocol Output — Simultaneous Art-Net Timecode (UDP 6454), LTC audio via Q-SYS SMPTE LTC Encoder, and MTC via RTP-MIDI/AppleMIDI (beta — currently in active development, not guaranteed on all systems/networks). Unicast or broadcast.",
             "Cue Points — 16 configurable cue points positioned at HH:MM:SS:FF on the timecode timeline. Momentary trigger on traversal with 30-event history.",
             "Astronomical Clock — Real-time solar position calculations (NOAA/Jean Meeus). Sunrise, sunset, civil/nautical/astronomical dawn & dusk, solar noon, day length.",
             "Solar Triggers — 5 programmable astronomical events (sunrise, sunset, civil dawn/dusk, solar noon) with ±120 minute offsets. Configurable lat/lon, UTC, and DST.",
@@ -939,7 +1004,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
         faq: [
             {
                 question: "Can I output Art-Net Timecode, MTC, and LTC simultaneously?",
-                answer: "Yes. All three protocols run in parallel from the same timecode source. Art-Net goes via UDP 6454, MTC via RTP-MIDI (AppleMIDI), and LTC via a Q-SYS SMPTE LTC Encoder component."
+                answer: "Yes. Art-Net TC and LTC run in parallel from the same timecode source and are fully stable. MTC (RTP-MIDI/AppleMIDI) is currently in beta — we are actively working on it and cannot yet guarantee reliable operation on all systems and network configurations."
             },
             {
                 question: "Do I need a license to test in Q-SYS Designer emulation?",
@@ -960,10 +1025,38 @@ export const MOCK_PRODUCTS: ProductType[] = [
             {
                 question: "Can I trigger ShowMind cues from TimeForge events?",
                 answer: "Yes. Every trigger output (cue points, solar events, timer expirations, scheduler events) is exposed as a Q-SYS pin. Wire them directly to ShowMind or any other control system."
+            },
+            {
+                question: "Is MTC (MIDI Time Code) output stable?",
+                answer: "MTC via RTP-MIDI/AppleMIDI is currently in beta. We are working hard to deliver a fully reliable implementation, but at this stage we cannot guarantee proper operation on all systems and network configurations. Art-Net Timecode and LTC are fully stable."
             }
         ]
     }
 ];
+
+export const TIER_STYLES: Record<ProductTier, { bg: string; border: string; text: string; badgeBg: string; glow: string }> = {
+    bridge: {
+        bg: "from-blue-500/10 to-blue-600/5",
+        border: "border-blue-500/20",
+        text: "text-blue-400",
+        badgeBg: "bg-blue-500/10",
+        glow: "bg-blue-500/20",
+    },
+    forge: {
+        bg: "from-teal-500/10 to-emerald-600/5",
+        border: "border-teal-500/20",
+        text: "text-teal-400",
+        badgeBg: "bg-teal-500/10",
+        glow: "bg-teal-500/20",
+    },
+    mind: {
+        bg: "from-purple-500/10 to-violet-600/5",
+        border: "border-purple-500/20",
+        text: "text-purple-400",
+        badgeBg: "bg-purple-500/10",
+        glow: "bg-purple-500/20",
+    },
+};
 
 // Helper to get the correct icon component based on the string name
 export const getProductIcon = (iconName: string, className: string = "") => {

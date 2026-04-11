@@ -38,6 +38,7 @@ const DEFAULT_PRODUCT: Omit<ProductType, "id"> = {
   price_cents: 0,
   iconName: "Layers",
   category: "control",
+  tier: "bridge",
   features: [],
   specs: {},
   compatibility: { minQsysVersion: "9.0", supportedCores: ["Any Q-SYS Core"] },

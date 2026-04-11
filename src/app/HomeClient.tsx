@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import Link from "next/link";
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import { ArrowRight, ChevronDown, HelpCircle, Shield, Rocket, Wrench, Sparkles } from "lucide-react";
+import { ArrowRight, ChevronDown, HelpCircle, Shield, Cable, Cpu, Brain, Sunrise, Music, Flame, Tv, Eye } from "lucide-react";
 import { BVFactoryLogo } from "@/components/BVFactoryLogo";
 import { useState, useEffect } from "react";
 import { Footer } from "@/components/Footer";
 
-import { ProductType, getProductIcon } from "@/data/products";
+import { ProductType, PRODUCT_TIERS, TIER_STYLES, type ProductTier } from "@/data/products";
 import { VideoShowcase } from "@/components/VideoShowcase";
 import { TrustedBy, type TrustedClient } from "@/components/TrustedBy";
 
@@ -152,8 +152,8 @@ export default function HomeClient({ products, trustedClients = [] }: { products
             transition={{ delay: 0.4 }}
             className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-light leading-relaxed mb-12"
           >
-            Lighting, video, show control, and third-party device integration
-            — all running natively inside Q-SYS.
+            Bridge connects. Forge creates. Mind orchestrates.
+            An integrated plugin ecosystem — all running natively inside Q-SYS.
           </motion.p>
 
           {/* CTA buttons */}
@@ -187,7 +187,7 @@ export default function HomeClient({ products, trustedClients = [] }: { products
       {/* === TRUSTED BY === */}
       <TrustedBy clients={trustedClients} />
 
-      {/* === PLUGINS GRID === */}
+      {/* === ECOSYSTEM ARCHITECTURE === */}
       <section id="plugins" className="relative z-10 py-20 px-6">
         <div className="max-w-6xl mx-auto">
 
@@ -198,133 +198,251 @@ export default function HomeClient({ products, trustedClients = [] }: { products
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <p className="text-[11px] font-mono uppercase tracking-[0.3em] text-teal-500 mb-3">Module Library</p>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white">
-              Our Modules
+            <p className="text-[11px] font-mono uppercase tracking-[0.3em] text-teal-500 mb-3">Plugin Ecosystem</p>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-4">
+              Three Tiers, One Ecosystem
             </h2>
+            <p className="text-slate-400 max-w-2xl mx-auto leading-relaxed">
+              Bridge connects. Forge creates. Mind orchestrates. Every plugin runs natively inside Q-SYS — no external hardware, no external servers. They talk to each other through the BVF Bus.
+            </p>
           </motion.div>
 
-          {/* Product cards */}
-          <motion.div
-            variants={container}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: "-100px" }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {products.map((product) => (
-              <motion.div key={product.id} variants={item}>
-                <Link href={`/plugins/${product.id}`} className="block group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050d1a] rounded-2xl">
-                  <div className="premium-card relative rounded-2xl overflow-hidden glass-panel p-[1px]">
-                    {/* Gradient border on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-teal-500/0 via-blue-500/0 to-purple-500/0 group-hover:from-teal-500/30 group-hover:via-blue-500/20 group-hover:to-purple-500/30 transition-all duration-700 rounded-2xl" />
+          {/* Tier pyramid */}
+          <div className="space-y-6 mb-16">
+            {[...PRODUCT_TIERS].reverse().map((tier, i) => {
+              const tierStyle = TIER_STYLES[tier.id as ProductTier];
+              const tierProducts = products.filter(p => p.tier === tier.id);
+              const TierIcon = tier.id === "mind" ? Brain : tier.id === "forge" ? Cpu : Cable;
+              const widths = ["max-w-2xl", "max-w-4xl", "max-w-6xl"];
 
-                    <div className="relative bg-[#0a1628] rounded-2xl p-8 h-full flex flex-col">
-                      {/* Icon */}
-                      <div className="relative mb-6 w-fit">
-                        <div className="absolute inset-0 bg-teal-500/20 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                        <div className="relative inline-flex p-4 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/5 group-hover:border-teal-500/30 transition-colors duration-500">
-                          {getProductIcon(product.iconName, "w-8 h-8 text-teal-400 group-hover:text-teal-300 transition-colors")}
+              return (
+                <motion.div
+                  key={tier.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.15 }}
+                  className={`mx-auto ${widths[i]}`}
+                >
+                  <div className={`glass-panel rounded-2xl p-6 md:p-8 border ${tierStyle.border} relative overflow-hidden`}>
+                    <div className={`absolute inset-0 bg-gradient-to-br ${tierStyle.bg} opacity-50`} />
+                    <div className="relative z-10">
+                      {/* Tier label */}
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`inline-flex p-2.5 rounded-xl ${tierStyle.badgeBg} border ${tierStyle.border}`}>
+                          <TierIcon className={`w-5 h-5 ${tierStyle.text}`} />
+                        </div>
+                        <div>
+                          <h3 className={`text-lg font-bold uppercase tracking-wide ${tierStyle.text}`}>
+                            {tier.label}
+                          </h3>
+                          <p className="text-xs text-slate-400">{tier.tagline}</p>
                         </div>
                       </div>
 
-                      {/* Content */}
-                      <h3 className="text-xl font-bold text-white mb-2 tracking-tight group-hover:text-teal-50 transition-colors">
-                        {product.name}
-                      </h3>
-                      <p className="text-[11px] font-mono text-teal-500/80 uppercase tracking-widest mb-4">
-                        {product.tagline}
-                      </p>
-                      <p className="text-sm text-slate-400 leading-relaxed mb-8 flex-1">
-                        {product.description}
-                      </p>
-
-                      {/* Features preview */}
-                      <div className="mb-8 space-y-2">
-                        {product.features.slice(0, 3).map((feature, i) => (
-                          <div key={i} className="flex items-center gap-2 text-xs text-slate-500">
-                            <div className="w-1 h-1 rounded-full bg-teal-500/50" />
-                            <span className="truncate">{feature}</span>
-                          </div>
+                      {/* Products in this tier */}
+                      <div className="flex flex-wrap gap-3">
+                        {tierProducts.map((product) => (
+                          <Link
+                            key={product.id}
+                            href={`/plugins/${product.id}`}
+                            className={`group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/10 transition-all cursor-pointer`}
+                          >
+                            <span className="text-sm font-bold text-white group-hover:text-teal-300 transition-colors">
+                              {product.name}
+                            </span>
+                            {product.price_cents === 0 ? (
+                              <span className="text-[10px] font-mono text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded">FREE</span>
+                            ) : (
+                              <span className="text-[10px] font-mono text-slate-500">
+                                {isLoading ? "..." : formatPrice(product.price_cents)}
+                              </span>
+                            )}
+                            <ArrowRight className="w-3 h-3 text-slate-500 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                          </Link>
                         ))}
                       </div>
-
-                      {/* Footer */}
-                      <div className="flex items-center justify-between pt-6 border-t border-white/5">
-                        <div>
-                          <p className={`text-2xl font-bold font-mono ${product.price_cents === 0 ? 'text-teal-400' : 'text-white'}`}>
-                            {isLoading ? "..." : formatPrice(product.price_cents)}
-                          </p>
-                          <p className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">{product.price_cents === 0 ? "Free License" : "Lifetime License"}</p>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-teal-500 text-xs font-mono uppercase tracking-wider opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                          View <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-
-            {/* Coming Soon teaser card */}
-            <motion.div variants={item}>
-              <div className="relative rounded-2xl overflow-hidden p-[1px] h-full group">
-                {/* Animated gradient border */}
-                <div className="absolute inset-0 bg-gradient-to-br from-teal-500/20 via-purple-500/20 to-blue-500/20 rounded-2xl animate-pulse" />
-
-                <div className="relative bg-[#0a1628]/90 rounded-2xl p-8 h-full flex flex-col items-center justify-center text-center min-h-[380px] backdrop-blur-sm">
-                  {/* Decorative background glow */}
-                  <div className="absolute inset-0 overflow-hidden rounded-2xl">
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-teal-500/5 blur-3xl rounded-full" />
-                  </div>
-
-                  {/* Animated icons */}
-                  <div className="relative flex items-center gap-3 mb-6">
-                    <div className="inline-flex p-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/5">
-                      <Wrench className="w-5 h-5 text-slate-500" />
-                    </div>
-                    <div className="inline-flex p-4 rounded-2xl bg-gradient-to-br from-teal-900/50 to-slate-900 border border-teal-500/20">
-                      <Rocket className="w-7 h-7 text-teal-400" />
-                    </div>
-                    <div className="inline-flex p-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-white/5">
-                      <Sparkles className="w-5 h-5 text-slate-500" />
                     </div>
                   </div>
 
-                  {/* Text content */}
-                  <h3 className="text-lg font-bold text-white mb-2 tracking-tight">
-                    More Modules in the Works
-                  </h3>
-                  <p className="text-[11px] font-mono text-teal-500/80 uppercase tracking-widest mb-4">
-                    Coming Soon
-                  </p>
-                  <p className="text-sm text-slate-400 leading-relaxed max-w-[260px]">
-                    We&apos;re actively building new Q-SYS modules. Stay tuned — much more is on the way.
-                  </p>
+                  {/* Connector line between tiers */}
+                  {i < 2 && (
+                    <div className="flex justify-center py-2">
+                      <div className="w-[1px] h-6 bg-gradient-to-b from-white/10 to-white/5" />
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
 
-                  {/* Animated dots */}
-                  <div className="flex gap-1.5 mt-6">
-                    <span className="w-1.5 h-1.5 rounded-full bg-teal-500/40 animate-pulse" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-teal-500/40 animate-pulse [animation-delay:0.2s]" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-teal-500/40 animate-pulse [animation-delay:0.4s]" />
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+          {/* BVF Bus callout */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-8"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
+              <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+              <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">
+                Connected via the BVF Bus — auto-discovery, zero configuration
+              </span>
+            </div>
           </motion.div>
+
+          {/* CTA */}
+          <div className="text-center">
+            <Link href="/plugins">
+              <Button className="h-12 px-8 cta-gradient text-white font-bold tracking-widest uppercase text-sm border-0 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050d1a]">
+                <span className="flex items-center gap-2">
+                  Browse All Plugins
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </span>
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* === VIEW ALL CTA === */}
-      <section className="relative z-10 px-6 pb-8">
-        <div className="max-w-6xl mx-auto text-center">
-          <Link href="/plugins">
-            <Button variant="outline" className="h-12 px-8 bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white font-mono text-xs uppercase tracking-widest group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050d1a]">
-              View All Modules
-              <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </Link>
+      {/* === HOW IT WORKS — REAL-WORLD SCENARIO === */}
+      <section className="relative z-10 py-20 px-6">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <p className="text-[11px] font-mono uppercase tracking-[0.3em] text-teal-500 mb-3">Real-World Scenario</p>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-4">
+              Museum Lobby at Sunset
+            </h2>
+            <p className="text-slate-400 max-w-xl mx-auto">
+              See how plugins collaborate — no custom Lua, no external controller, no extra hardware.
+            </p>
+          </motion.div>
+
+          <div className="space-y-4">
+            {[
+              {
+                step: 1,
+                icon: Sunrise,
+                plugin: "TimeForge",
+                tier: "forge" as ProductTier,
+                title: "Sunset detected",
+                description: "The Astro Clock calculates today's sunset using NOAA algorithms. At sunset -15 min, it fires a trigger on the BVF Bus.",
+              },
+              {
+                step: 2,
+                icon: Brain,
+                plugin: "ShowMind",
+                tier: "mind" as ProductTier,
+                title: "Scene transition triggered",
+                description: "The rule engine catches the event and launches the \"Evening\" sequence — orchestrating all plugins in order with dependencies.",
+              },
+              {
+                step: 3,
+                icon: Music,
+                plugin: "SoundForge",
+                tier: "forge" as ProductTier,
+                title: "Audio crossfade",
+                description: "Crossfades to the evening ambient playlist. Smooth transition, no gap.",
+              },
+              {
+                step: 4,
+                icon: Flame,
+                plugin: "LightForge",
+                tier: "forge" as ProductTier,
+                title: "DMX scene recall",
+                description: "Fades sACN output to the \"Warm Evening\" scene over 8 seconds. Confirms completion on the BVF Bus.",
+              },
+              {
+                step: 5,
+                icon: Tv,
+                plugin: "HueBridge",
+                tier: "bridge" as ProductTier,
+                title: "Displays updated",
+                description: "Switches all lobby displays to the evening content loop and dims backlight to 40%.",
+              },
+              {
+                step: 6,
+                icon: Eye,
+                plugin: "WebBridge",
+                tier: "bridge" as ProductTier,
+                title: "Live monitoring",
+                description: "The technician sees the entire transition in real time on a web dashboard — every plugin's state, the current scene, any errors.",
+              },
+            ].map((step, i) => {
+              const tierStyle = TIER_STYLES[step.tier];
+              return (
+                <motion.div
+                  key={step.step}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="flex gap-4 items-start"
+                >
+                  {/* Step number + connector */}
+                  <div className="flex flex-col items-center flex-shrink-0">
+                    <div className={`w-10 h-10 rounded-full ${tierStyle.badgeBg} border ${tierStyle.border} flex items-center justify-center`}>
+                      <step.icon className={`w-5 h-5 ${tierStyle.text}`} />
+                    </div>
+                    {i < 5 && <div className="w-[1px] h-full min-h-[20px] bg-white/10 mt-1" />}
+                  </div>
+
+                  {/* Content */}
+                  <div className="glass-panel rounded-xl p-5 flex-1 mb-1">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className={`text-[10px] font-mono uppercase tracking-wider ${tierStyle.text} ${tierStyle.badgeBg} px-2 py-0.5 rounded ${tierStyle.border} border`}>
+                        {step.plugin}
+                      </span>
+                    </div>
+                    <h4 className="text-sm font-bold text-white mb-1">{step.title}</h4>
+                    <p className="text-sm text-slate-400 leading-relaxed">{step.description}</p>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* === BUNDLE PRICING === */}
+      <section className="relative z-10 py-16 px-6">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="glass-panel rounded-3xl p-10 md:p-14 relative overflow-hidden"
+          >
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-[1px] bg-gradient-to-r from-transparent via-teal-500/50 to-transparent" />
+
+            <div className="relative z-10 text-center">
+              <p className="text-[11px] font-mono uppercase tracking-[0.3em] text-teal-500 mb-3">Grow Your Ecosystem</p>
+              <h3 className="text-2xl md:text-3xl font-bold text-white mb-4 tracking-tight">
+                3+ plugins = <span className="text-teal-400">20% off</span>
+              </h3>
+              <p className="text-slate-400 leading-relaxed max-w-xl mx-auto mb-8">
+                Start with one plugin — add more as your needs grow. Purchase 3 or more and the discount applies automatically. All licenses are perpetual, per Core.
+              </p>
+              <div className="flex flex-wrap justify-center gap-4 text-sm">
+                {[
+                  "Perpetual License",
+                  "No Subscription",
+                  "Per Core (LockingId)",
+                  "Free Demo Mode",
+                ].map((item) => (
+                  <div key={item} className="flex items-center gap-2 text-slate-300">
+                    <div className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 

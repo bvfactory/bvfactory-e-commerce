@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ProductType, getProductIcon } from "@/data/products";
+import { ProductType, getProductIcon, TIER_STYLES } from "@/data/products";
 import { ProductWithPromo } from "@/lib/product-settings";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { Navbar } from "@/components/Navbar";
@@ -74,6 +74,9 @@ export default function ProductPageClient({ product, relatedProducts }: { produc
                     transition={{ delay: 0.15 }}
                     className="flex items-center gap-2 mb-4"
                 >
+                    <span className={`text-[10px] font-mono uppercase tracking-widest ${TIER_STYLES[product.tier].text} ${TIER_STYLES[product.tier].badgeBg} px-3 py-1 rounded-full ${TIER_STYLES[product.tier].border} border`}>
+                        {product.tier}
+                    </span>
                     <span className="text-[10px] font-mono uppercase tracking-widest text-teal-500/60 bg-teal-500/10 px-3 py-1 rounded-full border border-teal-500/20">
                         {product.category}
                     </span>
@@ -380,6 +383,17 @@ export default function ProductPageClient({ product, relatedProducts }: { produc
                                         </span>
                                     )}
                                 </div>
+
+                                {product.replaces && (
+                                    <div className="mb-6 px-4 py-3 rounded-xl bg-emerald-500/5 border border-emerald-500/15">
+                                        <p className="text-[11px] font-mono text-emerald-400/80 uppercase tracking-wider mb-0.5">
+                                            Replaces
+                                        </p>
+                                        <p className="text-sm text-slate-300">
+                                            {product.replaces.device} <span className="text-slate-500">({product.replaces.estimatedCost})</span>
+                                        </p>
+                                    </div>
+                                )}
 
                                 <Button
                                     onClick={() => setIsCheckoutOpen(true)}
