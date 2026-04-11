@@ -91,8 +91,8 @@ export async function POST(request: NextRequest) {
   if (!productId || typeof productId !== "string") {
     return NextResponse.json({ error: "productId requis" }, { status: 400 });
   }
-  if (!coreId || typeof coreId !== "string" || !coreId.match(/^[A-Z0-9-]{4,}$/i)) {
-    return NextResponse.json({ error: "Core ID invalide (min 4 caractères alphanumériques)" }, { status: 400 });
+  if (!coreId || typeof coreId !== "string" || coreId.trim().length < 2) {
+    return NextResponse.json({ error: "Core ID requis (min 2 caractères)" }, { status: 400 });
   }
 
   const supabase = createAdminClient();
