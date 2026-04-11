@@ -108,8 +108,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
   }
 
+  // Check if a license already exists for this product + core_id
+  const { data: existingLicense } = await supabase
+    .from("licenses")
+    .select("id, status, license_key")
+    .eq("product_id", productId)
+    .eq("core_id", coreId.toUpperCase().trim())
+    .maybeSingle();
+
+  if (existingLicense) {
+    if (existingLicense.status === "active") {
+      return NextResponse.json({
+        error: `Une licence active existe déjà pour ce produit + Core ID. Clé : ${existingLicense.license_key}`,
+      }, { status: 409 });
+    }
+    // Revoked/expired — delete the old one to allow regeneration
+    await supabase.from("licenses").delete().eq("id", existingLicense.id);
+  }
+
   // Generate the license key using the product's configured algorithm
-  const { licenseKey, salt, keyHash, algorithmVersion } = await generateLicenseKey(productId, coreId.toUpperCase());
+  const { licenseKey, salt, keyHash, algorithmVersion } = await generateLicenseKey(productId, coreId.toUpperCase().trim());
 
   // Create an admin order to link the license to
   const activationCode = generateActivationCode();
