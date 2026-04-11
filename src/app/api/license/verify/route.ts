@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendAdminNotification } from "@/lib/email";
 import { verifyLicenseKey } from "@/lib/license";
@@ -53,7 +52,7 @@ export async function POST(req: Request) {
             );
         }
 
-        const supabase = await createClient();
+        const supabase = createAdminClient();
 
         // Look up the license by key and verify it matches the claimed core+product
         const { data: license, error } = await supabase
@@ -91,9 +90,7 @@ export async function POST(req: Request) {
             if (activatedRows && activatedRows.length > 0) {
                 const activated = activatedRows[0];
 
-                // Use admin client to read order (RLS: service_role only)
-                const adminSupabase = createAdminClient();
-                const { data: order } = await adminSupabase
+                const { data: order } = await supabase
                     .from("orders")
                     .select("customer_email")
                     .eq("id", activated.order_id)
