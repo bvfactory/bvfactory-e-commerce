@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { validateAdminRequest } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { generateLicenseKey, generateActivationCode } from "@/lib/license";
 
 export async function GET(request: NextRequest) {
   const isAdmin = await validateAdminRequest(request);
@@ -75,4 +77,89 @@ export async function PATCH(request: NextRequest) {
   }
 
   return NextResponse.json({ license: data });
+}
+
+export async function POST(request: NextRequest) {
+  const isAdmin = await validateAdminRequest(request);
+  if (!isAdmin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const { productId, coreId, email } = body;
+
+  if (!productId || typeof productId !== "string") {
+    return NextResponse.json({ error: "productId requis" }, { status: 400 });
+  }
+  if (!coreId || typeof coreId !== "string" || !coreId.match(/^[A-Z0-9-]{4,}$/i)) {
+    return NextResponse.json({ error: "Core ID invalide (min 4 caractères alphanumériques)" }, { status: 400 });
+  }
+
+  const supabase = createAdminClient();
+
+  // Verify product exists
+  const { data: product } = await supabase
+    .from("product_settings")
+    .select("product_id, content")
+    .eq("product_id", productId)
+    .maybeSingle();
+
+  if (!product) {
+    return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
+  }
+
+  // Generate the license key using the product's configured algorithm
+  const { licenseKey, salt, keyHash, algorithmVersion } = await generateLicenseKey(productId, coreId.toUpperCase());
+
+  // Create an admin order to link the license to
+  const activationCode = generateActivationCode();
+  const productName = (product.content as Record<string, unknown>)?.name ?? productId;
+
+  const { data: order, error: orderError } = await supabase
+    .from("orders")
+    .insert({
+      customer_email: email || "admin@bvfactory.dev",
+      status: "paid",
+      items: [{ product: { id: productId, name: productName, price_cents: 0 }, coreId: coreId.toUpperCase(), licenseKey }],
+      activation_code: activationCode,
+      discount_code: "ADMIN-MANUAL",
+      discount_percent: 100,
+    })
+    .select()
+    .single();
+
+  if (orderError) {
+    console.error("Error creating admin order:", orderError);
+    return NextResponse.json({ error: "Erreur lors de la création de la commande" }, { status: 500 });
+  }
+
+  // Insert the license
+  const { data: license, error: licenseError } = await supabase
+    .from("licenses")
+    .insert({
+      order_id: order.id,
+      product_id: productId,
+      core_id: coreId.toUpperCase(),
+      license_key: licenseKey,
+      key_hash: keyHash,
+      salt,
+      algorithm_version: algorithmVersion,
+      status: "active",
+    })
+    .select()
+    .single();
+
+  if (licenseError) {
+    console.error("Error creating license:", licenseError);
+    return NextResponse.json({ error: "Erreur lors de la création de la licence" }, { status: 500 });
+  }
+
+  revalidatePath("/admin/licenses");
+
+  return NextResponse.json({
+    license,
+    licenseKey,
+    activationCode,
+    productName,
+  }, { status: 201 });
 }

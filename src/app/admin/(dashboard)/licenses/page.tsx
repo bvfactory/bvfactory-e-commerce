@@ -26,8 +26,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/admin/StatusBadge";
-import { Search } from "lucide-react";
+import { Search, Plus, Key, Copy, Check, Loader2 } from "lucide-react";
 
 interface License {
   id: string;
@@ -47,6 +48,17 @@ const STATUS_LABELS: Record<string, string> = {
   expired: "Expirée",
 };
 
+interface ProductOption {
+  product_id: string;
+  name: string;
+}
+
+interface GenerateResult {
+  licenseKey: string;
+  activationCode: string;
+  productName: string;
+}
+
 export default function LicensesPage() {
   const [licenses, setLicenses] = useState<License[]>([]);
   const [total, setTotal] = useState(0);
@@ -56,6 +68,17 @@ export default function LicensesPage() {
   const [loading, setLoading] = useState(true);
   const [revokeTarget, setRevokeTarget] = useState<License | null>(null);
   const [revoking, setRevoking] = useState(false);
+
+  // Generate license state
+  const [showGenerate, setShowGenerate] = useState(false);
+  const [products, setProducts] = useState<ProductOption[]>([]);
+  const [genProductId, setGenProductId] = useState("");
+  const [genCoreId, setGenCoreId] = useState("");
+  const [genEmail, setGenEmail] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [genResult, setGenResult] = useState<GenerateResult | null>(null);
+  const [genError, setGenError] = useState("");
+  const [copied, setCopied] = useState<string | null>(null);
 
   const limit = 25;
   const totalPages = Math.ceil(total / limit);
@@ -87,6 +110,63 @@ export default function LicensesPage() {
   useEffect(() => {
     setPage(1);
   }, [search, status]);
+
+  // Fetch products list for the generate form
+  useEffect(() => {
+    fetch("/api/admin/products/list")
+      .then((r) => r.json())
+      .then((data) => {
+        const opts = (data.products ?? []).map((p: { product_id: string; content: Record<string, unknown> | null }) => ({
+          product_id: p.product_id,
+          name: (p.content?.name as string) || p.product_id,
+        }));
+        setProducts(opts);
+        if (opts.length > 0 && !genProductId) setGenProductId(opts[0].product_id);
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleGenerate() {
+    if (!genProductId || !genCoreId.trim()) return;
+    setGenerating(true);
+    setGenError("");
+    setGenResult(null);
+    try {
+      const res = await fetch("/api/admin/licenses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: genProductId,
+          coreId: genCoreId.trim().toUpperCase(),
+          email: genEmail.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setGenError(data.error || "Erreur lors de la génération");
+        return;
+      }
+      setGenResult({
+        licenseKey: data.licenseKey,
+        activationCode: data.activationCode,
+        productName: data.productName,
+      });
+      setGenCoreId("");
+      setGenEmail("");
+      fetchLicenses();
+    } catch {
+      setGenError("Erreur réseau");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  function handleCopy(text: string, label: string) {
+    navigator.clipboard.writeText(text);
+    setCopied(label);
+    setTimeout(() => setCopied(null), 1500);
+  }
 
   async function handleRevoke() {
     if (!revokeTarget) return;
@@ -120,12 +200,130 @@ export default function LicensesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Licences</h1>
-        <p className="text-[11px] font-mono text-slate-500 uppercase tracking-[0.2em] mt-1">
-          Gérez les licences actives et révoquées
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Licences</h1>
+          <p className="text-[11px] font-mono text-slate-500 uppercase tracking-[0.2em] mt-1">
+            Gérez les licences actives et révoquées
+          </p>
+        </div>
+        <button
+          onClick={() => { setShowGenerate(!showGenerate); setGenResult(null); setGenError(""); }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-teal-500 to-blue-600 text-white font-mono text-xs uppercase tracking-widest border-0 hover:brightness-110 transition"
+        >
+          <Plus className="h-4 w-4" />
+          Générer une licence
+        </button>
       </div>
+
+      {/* Generate license form */}
+      {showGenerate && (
+        <div className="glass-panel rounded-2xl p-[1px]">
+          <div className="relative bg-[#0a1628] rounded-2xl p-6 space-y-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Key className="h-4 w-4 text-teal-400" />
+              <h3 className="font-semibold text-white tracking-tight">Générer une licence manuellement</h3>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.15em]">
+                  Produit
+                </Label>
+                <Select value={genProductId} onValueChange={(v) => setGenProductId(v ?? "")}>
+                  <SelectTrigger className="bg-[#0a1628] border-white/10 text-white font-mono text-xs">
+                    <SelectValue placeholder="Sélectionner un produit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products.map((p) => (
+                      <SelectItem key={p.product_id} value={p.product_id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.15em]">
+                  Core ID (Locking ID)
+                </Label>
+                <Input
+                  placeholder="Ex: AB12CD34EF56"
+                  value={genCoreId}
+                  onChange={(e) => setGenCoreId(e.target.value.toUpperCase())}
+                  className="bg-[#0a1628] border-white/10 text-white font-mono text-xs placeholder:text-slate-600 focus-visible:ring-teal-500 uppercase"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.15em]">
+                  Email (optionnel)
+                </Label>
+                <Input
+                  placeholder="client@example.com"
+                  value={genEmail}
+                  onChange={(e) => setGenEmail(e.target.value)}
+                  className="bg-[#0a1628] border-white/10 text-white font-mono text-xs placeholder:text-slate-600 focus-visible:ring-teal-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleGenerate}
+                disabled={generating || !genProductId || !genCoreId.trim()}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-500 hover:bg-teal-600 text-white font-mono text-xs uppercase tracking-widest transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Key className="h-3.5 w-3.5" />}
+                Générer
+              </button>
+              {genError && (
+                <p className="text-xs text-red-400 font-mono">{genError}</p>
+              )}
+            </div>
+
+            {/* Result */}
+            {genResult && (
+              <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/20 p-4 space-y-3">
+                <p className="text-xs font-mono text-emerald-400 uppercase tracking-wider font-semibold">
+                  Licence générée avec succès
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.15em] mb-1">Produit</p>
+                    <p className="text-sm text-white font-medium">{genResult.productName}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.15em] mb-1">Code d&apos;activation</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-white font-mono font-semibold">{genResult.activationCode}</p>
+                      <button
+                        onClick={() => handleCopy(genResult.activationCode, "activation")}
+                        className="text-slate-500 hover:text-white transition-colors"
+                      >
+                        {copied === "activation" ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <p className="text-[10px] font-mono text-slate-500 uppercase tracking-[0.15em] mb-1">Clé de licence</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-teal-400 font-mono font-semibold break-all">{genResult.licenseKey}</p>
+                      <button
+                        onClick={() => handleCopy(genResult.licenseKey, "license")}
+                        className="text-slate-500 hover:text-white transition-colors flex-shrink-0"
+                      >
+                        {copied === "license" ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative max-w-sm w-full">
