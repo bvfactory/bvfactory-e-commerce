@@ -189,7 +189,8 @@ async function handleFreeOrder(supabase: any, order: any, items: FreeOrderItem[]
     const itemsWithLicenses: FreeOrderItem[] = [];
 
     for (const item of items) {
-        const { licenseKey, salt, keyHash, algorithmVersion } = await generateLicenseKey(item.product.id, item.coreId);
+        const normalizedCoreId = item.coreId.toUpperCase();
+        const { licenseKey, salt, keyHash, algorithmVersion } = await generateLicenseKey(item.product.id, normalizedCoreId);
 
         itemsWithLicenses.push({ ...item });
 

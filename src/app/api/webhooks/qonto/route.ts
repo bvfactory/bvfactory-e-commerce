@@ -57,7 +57,7 @@ export async function POST(req: Request) {
             // Generate license using the secure system
             const { licenseKey, salt, keyHash, algorithmVersion } = await generateLicenseKey(
                 order.product_id || "UNKNOWN",
-                order.core_id || "UNKNOWN"
+                (order.core_id || "UNKNOWN").toUpperCase()
             );
 
             // Insert into licenses table

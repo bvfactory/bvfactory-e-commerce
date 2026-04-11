@@ -70,7 +70,7 @@ export async function POST(req: Request) {
             const itemsWithLicenses: WebhookCartItem[] = [];
 
             for (const item of (order.items || []) as WebhookCartItem[]) {
-                const coreId = item.coreId || "UNKNOWN";
+                const coreId = (item.coreId || "UNKNOWN").toUpperCase();
                 const productId = item.product?.id || "UNKNOWN";
 
                 const { licenseKey, salt, keyHash, algorithmVersion } = await generateLicenseKey(productId, coreId);
