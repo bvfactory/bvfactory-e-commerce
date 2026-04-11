@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { generateLicenseKey, generateActivationCode } from "@/lib/license";
+import { generateLicenseKey, generateActivationCode, insertOrReactivateLicense } from "@/lib/license";
 import { sendOrderConfirmation, sendAdminNotification } from "@/lib/email";
 import { getEffectivePrice } from "@/lib/product-settings";
 import Stripe from "stripe";
@@ -194,15 +194,14 @@ async function handleFreeOrder(supabase: any, order: any, items: FreeOrderItem[]
 
         itemsWithLicenses.push({ ...item });
 
-        await supabase.from("licenses").insert({
-            order_id: order.id,
-            product_id: item.product.id,
-            core_id: item.coreId.toUpperCase(),
-            license_key: licenseKey,
-            key_hash: keyHash,
-            salt: salt,
-            algorithm_version: algorithmVersion,
-            status: "active",
+        await insertOrReactivateLicense({
+            orderId: order.id,
+            productId: item.product.id,
+            coreId: normalizedCoreId,
+            licenseKey,
+            keyHash,
+            salt,
+            algorithmVersion,
         });
     }
 

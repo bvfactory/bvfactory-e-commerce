@@ -33,6 +33,55 @@ export async function generateLicenseKey(productId: string, coreId: string) {
 }
 
 /**
+ * Insert a license into the DB, handling deterministic algorithm conflicts.
+ *
+ * For deterministic algorithms (FNV-1a), the same product+coreId always
+ * produces the same license key. If a revoked/existing license with that
+ * key already exists, reassign it to the new order and reactivate it.
+ */
+export async function insertOrReactivateLicense(params: {
+    orderId: string;
+    productId: string;
+    coreId: string;
+    licenseKey: string;
+    keyHash: string;
+    salt: string;
+    algorithmVersion: string;
+}) {
+    const supabase = createAdminClient();
+
+    // Try inserting first (works for non-deterministic algorithms with unique keys)
+    const { error: insertError } = await supabase.from("licenses").insert({
+        order_id: params.orderId,
+        product_id: params.productId,
+        core_id: params.coreId,
+        license_key: params.licenseKey,
+        key_hash: params.keyHash,
+        salt: params.salt,
+        algorithm_version: params.algorithmVersion,
+        status: "active",
+    });
+
+    if (!insertError) return;
+
+    // Unique constraint violation — deterministic key already exists
+    if (insertError.code === "23505") {
+        await supabase
+            .from("licenses")
+            .update({
+                order_id: params.orderId,
+                status: "active",
+                activated_at: null,
+            })
+            .eq("license_key", params.licenseKey);
+        return;
+    }
+
+    // Unexpected error — rethrow
+    throw new Error(`License insert failed: ${insertError.message}`);
+}
+
+/**
  * Verify a license key server-side.
  * Uses the algorithm_version stored on the license record (not the current product config)
  * to ensure backward compatibility when algorithms change.

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { generateLicenseKey, generateActivationCode } from "@/lib/license";
+import { generateLicenseKey, generateActivationCode, insertOrReactivateLicense } from "@/lib/license";
 import { Resend } from "resend";
 import { sendAdminNotification } from "@/lib/email";
 
@@ -60,16 +60,16 @@ export async function POST(req: Request) {
                 (order.core_id || "UNKNOWN").toUpperCase()
             );
 
-            // Insert into licenses table
-            await supabase.from("licenses").insert({
-                order_id: order.id,
-                product_id: order.product_id || "UNKNOWN",
-                core_id: (order.core_id || "UNKNOWN").toUpperCase(),
-                license_key: licenseKey,
-                key_hash: keyHash,
-                salt: salt,
-                algorithm_version: algorithmVersion,
-                status: "active",
+            const coreId = (order.core_id || "UNKNOWN").toUpperCase();
+            const productId = order.product_id || "UNKNOWN";
+            await insertOrReactivateLicense({
+                orderId: order.id,
+                productId,
+                coreId,
+                licenseKey,
+                keyHash,
+                salt,
+                algorithmVersion,
             });
 
             const activationCode = generateActivationCode();

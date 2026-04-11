@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { generateLicenseKey, generateActivationCode } from "@/lib/license";
+import { generateLicenseKey, generateActivationCode, insertOrReactivateLicense } from "@/lib/license";
 import { sendOrderConfirmation, sendAdminNotification } from "@/lib/email";
 
 interface WebhookCartItem {
@@ -77,16 +77,14 @@ export async function POST(req: Request) {
 
                 itemsWithLicenses.push({ ...item });
 
-                // Insert into licenses table
-                await supabase.from("licenses").insert({
-                    order_id: order.id,
-                    product_id: productId,
-                    core_id: coreId.toUpperCase(),
-                    license_key: licenseKey,
-                    key_hash: keyHash,
-                    salt: salt,
-                    algorithm_version: algorithmVersion,
-                    status: "active",
+                await insertOrReactivateLicense({
+                    orderId: order.id,
+                    productId,
+                    coreId,
+                    licenseKey,
+                    keyHash,
+                    salt,
+                    algorithmVersion,
                 });
             }
 
