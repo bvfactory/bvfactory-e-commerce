@@ -22,7 +22,7 @@ Toutes ces variables doivent exister sur le projet Vercel **contactbvfactory** (
 - `STRIPE_SECRET_KEY` — Clé secrète Stripe
 - `STRIPE_WEBHOOK_SECRET` — Secret webhook Stripe
 - `LICENSE_MASTER_SECRET` — Secret pour la génération de licences (HMAC-SHA256)
-- `LIGHTFORGE_LICENSE_SECRET` — Secret pour l'algo LightForge FNV-1a (doit correspondre au plugin Q-SYS)
+- `LIGHTFORGE_LICENSE_SECRET` — Secret pour l'algo LightForge FNV-1a (seed: `DMXRecPlay2026#Bz`, doit correspondre au plugin Q-SYS)
 - `TIMEFORGE_LICENSE_SECRET` — Secret pour l'algo TimeForge FNV-1a (seed: `TFrgTimeForge2026!X`, doit correspondre au plugin Q-SYS)
 - `RESEND_API_KEY` — Clé API Resend
 - `ADMIN_PASSWORD` — Mot de passe admin
@@ -44,5 +44,5 @@ Le projet est aussi connecté via Git (push sur `main` = déploiement auto).
 ## Architecture clé
 
 - **Checkout** (`src/app/api/checkout/route.ts`) : commandes gratuites (100% discount) génèrent les licences immédiatement ; commandes payantes passent par Stripe.
-- **Licences** (`src/lib/license-algorithms.ts`) : 4 algorithmes disponibles (HMAC-SHA256, SHA-512 court, Numérique, LightForge FNV-1a). Assignés par produit via `product_settings.algorithm_id`.
+- **Licences** (`src/lib/license-algorithms.ts`) : 5 algorithmes disponibles (HMAC-SHA256, SHA-512 court, Numérique, LightForge FNV-1a, TimeForge FNV-1a). Assignés par produit via `product_settings.algorithm_id`. Les algos FNV-1a sont déterministes et les seeds doivent correspondre byte-for-byte aux plugins Q-SYS Lua (`PLUGINS QSYS/`).
 - **Emails** (`src/lib/email.ts`) : confirmation commande + notifications admin via Resend.
