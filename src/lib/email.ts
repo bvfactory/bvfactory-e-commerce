@@ -23,7 +23,8 @@ type AdminNotificationType =
     | "contact_received"
     | "license_activated"
     | "admin_login_failed"
-    | "discount_used";
+    | "discount_used"
+    | "order_refunded";
 
 interface AdminNotificationConfig {
     label: string;
@@ -37,6 +38,7 @@ const NOTIFICATION_CONFIG: Record<AdminNotificationType, AdminNotificationConfig
     license_activated: { label: "LICENCE ACTIVEE", color: "#7c3aed" },
     admin_login_failed: { label: "ALERTE SECURITE", color: "#dc2626" },
     discount_used: { label: "CODE PROMO UTILISE", color: "#ea580c" },
+    order_refunded: { label: "REMBOURSEMENT", color: "#0369a1" },
 };
 
 const ADMIN_EMAILS = ["contact@bvfactory.dev", "contact.bvfactory@gmail.com"];

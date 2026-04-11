@@ -21,6 +21,7 @@ CREATE TABLE orders (
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'failed', 'refunded')),
   items JSONB NOT NULL DEFAULT '[]'::jsonb,
   stripe_session_id TEXT,
+  stripe_payment_intent_id TEXT,
   activation_code TEXT UNIQUE,
   discount_code TEXT,
   discount_percent INTEGER,
@@ -121,12 +122,23 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Atomically decrement discount usage on refund (floor at 0)
+CREATE OR REPLACE FUNCTION decrement_discount_usage(d_code TEXT)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE discount_codes
+  SET current_uses = GREATEST(current_uses - 1, 0)
+  WHERE code = d_code;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- =============================================
 -- Indexes
 -- =============================================
 
 CREATE INDEX idx_orders_activation_code ON orders(activation_code);
 CREATE INDEX idx_orders_stripe_session_id ON orders(stripe_session_id);
+CREATE INDEX idx_orders_payment_intent_id ON orders(stripe_payment_intent_id);
 CREATE INDEX idx_orders_status ON orders(status);
 CREATE INDEX idx_discount_codes_code ON discount_codes(code);
 CREATE INDEX idx_licenses_order_id ON licenses(order_id);

@@ -98,6 +98,7 @@ export async function POST(req: Request) {
                     status: "paid",
                     items: itemsWithLicenses,
                     activation_code: activationCode,
+                    stripe_payment_intent_id: (session.payment_intent as string) ?? null,
                     updated_at: new Date().toISOString()
                 })
                 .eq("id", order.id);
@@ -139,6 +140,62 @@ export async function POST(req: Request) {
                 "Montant": `${(finalCents / 100).toFixed(2)} EUR`,
                 "Produits": itemsWithLicenses.map(i => `${i.product.name} (${i.coreId})`).join(", "),
                 ...(order.discount_code ? { "Code promo": `${order.discount_code} (-${order.discount_percent}%)` } : {}),
+            });
+
+            return NextResponse.json({ success: true });
+        }
+
+        // Process Stripe refund
+        if (event.type === "charge.refunded") {
+            const charge = event.data.object as Stripe.Charge;
+            const paymentIntentId = charge.payment_intent as string;
+
+            if (!paymentIntentId) {
+                return NextResponse.json({ message: "No payment_intent on charge" }, { status: 200 });
+            }
+
+            const supabase = createAdminClient();
+
+            const { data: order, error } = await supabase
+                .from("orders")
+                .select("id, status, customer_email, items, discount_code")
+                .eq("stripe_payment_intent_id", paymentIntentId)
+                .single();
+
+            if (error || !order) {
+                console.warn("charge.refunded: no order found for payment_intent", paymentIntentId);
+                return NextResponse.json({ message: "Order not found, ignored" }, { status: 200 });
+            }
+
+            // Idempotency: already refunded
+            if (order.status === "refunded") {
+                return NextResponse.json({ message: "Already refunded" }, { status: 200 });
+            }
+
+            // Update order status
+            await supabase
+                .from("orders")
+                .update({ status: "refunded", updated_at: new Date().toISOString() })
+                .eq("id", order.id);
+
+            // Revoke all licenses for this order
+            await supabase
+                .from("licenses")
+                .update({ status: "revoked" })
+                .eq("order_id", order.id);
+
+            // Decrement discount code usage if applicable
+            if (order.discount_code) {
+                await supabase.rpc("decrement_discount_usage", { d_code: order.discount_code });
+            }
+
+            // Notify admin
+            const refundedAmount = charge.amount_refunded;
+            sendAdminNotification("order_refunded", `${(refundedAmount / 100).toFixed(2)}EUR — ${order.customer_email}`, {
+                "Commande": order.id.substring(0, 8) + "...",
+                "Client": order.customer_email,
+                "Montant remboursé": `${(refundedAmount / 100).toFixed(2)} EUR`,
+                "Source": "Webhook Stripe",
             });
 
             return NextResponse.json({ success: true });

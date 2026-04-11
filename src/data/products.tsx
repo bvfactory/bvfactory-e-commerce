@@ -110,7 +110,7 @@ export const MOCK_PRODUCTS: ProductType[] = [
         iconName: "Flame",
         category: "lighting",
         tier: "forge",
-        replaces: { device: "CueCore2", estimatedCost: "~1 200 €" },
+        replaces: { device: "ENTTEC S-Play SP1 / CueCore3", estimatedCost: "~1 500–2 300 $" },
         features: [
             "Record — Arm a track, select your input universe, hit record. Captures every DMX frame in real time at 44fps.",
             "Play — Load a file, press play. Output goes straight to Art-Net or sACN, unicast or broadcast. Loop, scrub, pause.",

@@ -47,6 +47,7 @@ interface Order {
   status: string;
   items: RawOrderItem[];
   stripe_session_id: string | null;
+  stripe_payment_intent_id: string | null;
   activation_code: string | null;
   discount_code: string | null;
   discount_percent: number | null;
@@ -173,6 +174,8 @@ export default function OrdersPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refunding, setRefunding] = useState<string | null>(null);
+  const [confirmRefundId, setConfirmRefundId] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -211,6 +214,24 @@ export default function OrdersPage() {
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  const handleRefund = async (orderId: string) => {
+    setRefunding(orderId);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}/refund`, { method: "POST" });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(`Erreur : ${data.error}`);
+        return;
+      }
+      await fetchOrders();
+    } catch {
+      alert("Erreur réseau lors du remboursement");
+    } finally {
+      setRefunding(null);
+      setConfirmRefundId(null);
+    }
+  };
 
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
 
@@ -483,6 +504,43 @@ export default function OrdersPage() {
                             </p>
                             <CopyButton text={order.stripe_session_id} />
                           </div>
+                        </div>
+                      )}
+
+                      {/* Refund action */}
+                      {order.status === "paid" && order.stripe_payment_intent_id && (
+                        <div className="border-t border-border/30 pt-4">
+                          {confirmRefundId === order.id ? (
+                            <div className="flex items-center gap-3 rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3">
+                              <p className="text-sm text-red-500 flex-1">
+                                Confirmer le remboursement complet ? Les licences seront révoquées.
+                              </p>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                disabled={refunding === order.id}
+                                onClick={() => handleRefund(order.id)}
+                              >
+                                {refunding === order.id ? "..." : "Confirmer"}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setConfirmRefundId(null)}
+                              >
+                                Annuler
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-500 border-red-500/30 hover:bg-red-500/10"
+                              onClick={() => setConfirmRefundId(order.id)}
+                            >
+                              Rembourser
+                            </Button>
+                          )}
                         </div>
                       )}
                     </div>
