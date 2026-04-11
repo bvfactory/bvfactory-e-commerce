@@ -89,13 +89,16 @@ export const PRODUCT_CATEGORIES = [
 ] as const;
 
 export const ROADMAP_PLUGINS = [
+    { name: "LightBridge", tier: "bridge" as ProductTier, description: "Connected lighting control (Hue, LIFX, WLED…) natively from Q-SYS" },
     { name: "ScreenBridge", tier: "bridge" as ProductTier, description: "Multi-brand display control (Samsung, LG, Sony, iiyama, NEC, Philips, BenQ, Panasonic, PJLink)" },
     { name: "NetBridge", tier: "bridge" as ProductTier, description: "Swiss-army-knife network client: TCP, UDP, HTTP, OSC, WebSocket from a single plugin" },
     { name: "MediaBridge", tier: "bridge" as ProductTier, description: "Control external media servers and video playout devices (BrightSign, CasparCG, EVP380)" },
     { name: "SensorBridge", tier: "bridge" as ProductTier, description: "GPIO, serial sensors, presence detection for interactive installations" },
     { name: "CameraBridge", tier: "bridge" as ProductTier, description: "PTZ camera control (VISCA/ONVIF) with preset recall" },
     { name: "PowerBridge", tier: "bridge" as ProductTier, description: "Network PDU control (Gude, APC, Raritan) for power-on/off sequences" },
+    { name: "SoundForge", tier: "forge" as ProductTier, description: "Multitrack audio player with cue management and transport control inside Q-SYS" },
     { name: "ViewForge", tier: "forge" as ProductTier, description: "Modern web dashboard served from Q-SYS Core — free, replaces native UCIs" },
+    { name: "ShowMind", tier: "mind" as ProductTier, description: "Full show control orchestration — cue lists, rules engine, timeline editor. Replaces Medialon Manager" },
 ] as const;
 
 export const MOCK_PRODUCTS: ProductType[] = [

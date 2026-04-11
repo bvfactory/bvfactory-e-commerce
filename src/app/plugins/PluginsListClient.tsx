@@ -231,7 +231,8 @@ export default function PluginsListClient({ products }: { products: ProductWithP
                                 const tierProducts = products.filter(p => p.tier === tier.id);
                                 const TierIcon = TIER_ICONS[tier.id];
                                 const tierStyle = TIER_STYLES[tier.id];
-                                const roadmapForTier = ROADMAP_PLUGINS.filter(r => r.tier === tier.id);
+                                const activeIds = new Set(products.map(p => p.id));
+                                const roadmapForTier = ROADMAP_PLUGINS.filter(r => r.tier === tier.id && !activeIds.has(r.name.toLowerCase().replace(/\s+/g, "")));
 
                                 if (tierProducts.length === 0 && roadmapForTier.length === 0) return null;
 
