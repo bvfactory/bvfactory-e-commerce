@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { validateAdminRequest } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { MOCK_PRODUCTS } from "@/data/products";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await validateAdminRequest(request))) {
@@ -21,25 +22,28 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 
   const content = (data.content as Record<string, unknown>) ?? {};
+  const mock = MOCK_PRODUCTS.find(p => p.id === id);
   const product = {
     id,
-    name: content.name ?? "Nouveau produit",
-    tagline: content.tagline ?? "",
-    description: content.description ?? "",
-    longDescription: content.longDescription ?? "",
+    name: content.name ?? mock?.name ?? "Nouveau produit",
+    tagline: content.tagline ?? mock?.tagline ?? "",
+    description: content.description ?? mock?.description ?? "",
+    longDescription: content.longDescription ?? mock?.longDescription ?? "",
     price_cents: data.price_cents ?? 0,
-    iconName: content.iconName ?? "Layers",
-    category: content.category ?? "control",
-    features: content.features ?? [],
-    specs: content.specs ?? {},
-    compatibility: content.compatibility ?? { minQsysVersion: "9.0", supportedCores: ["Any Q-SYS Core"] },
-    versionHistory: content.versionHistory ?? [],
-    faq: content.faq ?? [],
-    pluginFileName: content.pluginFileName ?? undefined,
-    manualUrl: content.manualUrl ?? undefined,
-    videoUrl: content.videoUrl ?? undefined,
-    screenshots: content.screenshots ?? undefined,
-    compatibleBrands: content.compatibleBrands ?? undefined,
+    iconName: content.iconName ?? mock?.iconName ?? "Layers",
+    category: content.category ?? mock?.category ?? "control",
+    tier: content.tier ?? mock?.tier ?? "bridge",
+    replaces: content.replaces ?? mock?.replaces ?? undefined,
+    features: content.features ?? mock?.features ?? [],
+    specs: content.specs ?? mock?.specs ?? {},
+    compatibility: content.compatibility ?? mock?.compatibility ?? { minQsysVersion: "9.0", supportedCores: ["Any Q-SYS Core"] },
+    versionHistory: content.versionHistory ?? mock?.versionHistory ?? [],
+    faq: content.faq ?? mock?.faq ?? [],
+    pluginFileName: content.pluginFileName ?? mock?.pluginFileName ?? undefined,
+    manualUrl: content.manualUrl ?? mock?.manualUrl ?? undefined,
+    videoUrl: content.videoUrl ?? mock?.videoUrl ?? undefined,
+    screenshots: content.screenshots ?? mock?.screenshots ?? undefined,
+    compatibleBrands: content.compatibleBrands ?? mock?.compatibleBrands ?? undefined,
   };
 
   return NextResponse.json({

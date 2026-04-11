@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ProductType } from "@/data/products";
+import { ProductType, MOCK_PRODUCTS } from "@/data/products";
 
 export interface ProductSettings {
   product_id: string;
@@ -47,8 +47,11 @@ const DEFAULT_PRODUCT: Omit<ProductType, "id"> = {
 };
 
 function rowToProduct(row: Record<string, unknown>): ProductWithPromo {
+  const productId = row.product_id as string;
   const content = (row.content as Record<string, unknown>) ?? {};
-  const product = { ...DEFAULT_PRODUCT, id: row.product_id as string, ...content } as ProductType;
+  // Use MOCK_PRODUCTS as middle fallback layer (hardcoded defaults per product)
+  const mockProduct = MOCK_PRODUCTS.find(p => p.id === productId);
+  const product = { ...DEFAULT_PRODUCT, ...(mockProduct ?? {}), id: productId, ...content } as ProductType;
 
   const basePriceCents = (row.price_cents as number) ?? 0;
   const promoActive = (row.promo_active as boolean) ?? false;

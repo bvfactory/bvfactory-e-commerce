@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { ProductType, VersionHistory, FaqItem, getProductIcon } from "@/data/products";
+import { ProductType, VersionHistory, FaqItem, getProductIcon, PRODUCT_TIERS, type ProductTier } from "@/data/products";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import {
   HardDrive,
   ImagePlus,
   Key,
+  Layers,
   List,
   Loader2,
   Plus,
@@ -213,6 +214,9 @@ export default function ProductDetailPage() {
           </div>
           <h1 className="text-2xl font-bold text-foreground">{product.name}</h1>
           <Badge variant="outline" className="capitalize text-xs">
+            {product.tier}
+          </Badge>
+          <Badge variant="secondary" className="capitalize text-xs">
             {product.category}
           </Badge>
           <div className="flex items-center gap-2 ml-2">
@@ -258,6 +262,15 @@ export default function ProductDetailPage() {
 
       {/* Section 2: Informations générales */}
       <GeneralInfoSection
+        product={product}
+        settings={settings}
+        openSections={openSections}
+        toggleSection={toggleSection}
+        onRefetch={fetchProduct}
+      />
+
+      {/* Section 2b: Tier & Replaces */}
+      <TierSection
         product={product}
         settings={settings}
         openSections={openSections}
@@ -769,6 +782,152 @@ function GeneralInfoSection({
               placeholder={product.videoUrl ?? "https://..."}
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-3 pt-2">
+            <Button onClick={handleSave} disabled={saving} size="sm">
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Enregistrer
+            </Button>
+            {saved && (
+              <span className="text-sm text-emerald-500 flex items-center gap-1">
+                <Check className="w-4 h-4" />
+                Enregistré !
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section 2b: Tier & Replaces
+// ---------------------------------------------------------------------------
+
+function TierSection({
+  product,
+  settings,
+  openSections,
+  toggleSection,
+  onRefetch,
+}: {
+  product: ProductType;
+  settings: ProductSettings | null;
+  openSections: string[];
+  toggleSection: (id: string) => void;
+  onRefetch: () => Promise<void>;
+}) {
+  const content = (settings?.content ?? {}) as Record<string, unknown>;
+
+  const [tier, setTier] = useState<ProductTier>((content.tier as ProductTier) ?? product.tier ?? "bridge");
+  const [replacesDevice, setReplacesDevice] = useState(
+    (content.replaces as { device?: string; estimatedCost?: string })?.device ?? product.replaces?.device ?? ""
+  );
+  const [replacesCost, setReplacesCost] = useState(
+    (content.replaces as { device?: string; estimatedCost?: string })?.estimatedCost ?? product.replaces?.estimatedCost ?? ""
+  );
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const c = (settings?.content ?? {}) as Record<string, unknown>;
+    setTier((c.tier as ProductTier) ?? product.tier ?? "bridge");
+    const r = c.replaces as { device?: string; estimatedCost?: string } | undefined;
+    setReplacesDevice(r?.device ?? product.replaces?.device ?? "");
+    setReplacesCost(r?.estimatedCost ?? product.replaces?.estimatedCost ?? "");
+  }, [settings, product.tier, product.replaces]);
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const replaces = replacesDevice
+        ? { device: replacesDevice, estimatedCost: replacesCost || "" }
+        : null;
+      await fetch(`/api/admin/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: { tier, replaces },
+        }),
+      });
+      await onRefetch();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="border border-border/50 rounded-xl bg-card/50 overflow-hidden">
+      <button
+        onClick={() => toggleSection("tier")}
+        className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+      >
+        <h2 className="font-semibold text-foreground flex items-center gap-2">
+          <Layers className="w-4 h-4 text-primary" />
+          Tier & Positionnement
+        </h2>
+        <ChevronDown
+          className={cn(
+            "w-4 h-4 text-muted-foreground transition-transform",
+            openSections.includes("tier") && "rotate-180"
+          )}
+        />
+      </button>
+      {openSections.includes("tier") && (
+        <div className="p-5 pt-0 border-t border-border/50 space-y-4">
+          {/* Tier selector */}
+          <div className="space-y-2">
+            <Label>Tier</Label>
+            <div className="flex gap-2">
+              {PRODUCT_TIERS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTier(t.id)}
+                  className={cn(
+                    "flex-1 px-4 py-3 rounded-lg border text-sm font-medium transition-all text-left",
+                    tier === t.id
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/50"
+                  )}
+                >
+                  <span className="block font-bold uppercase text-xs tracking-wider">{t.label}</span>
+                  <span className="block text-[11px] mt-0.5 opacity-70">{t.tagline}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Replaces */}
+          <div className="space-y-2">
+            <Label htmlFor="replaces-device">Remplace (appareil/logiciel)</Label>
+            <Input
+              id="replaces-device"
+              type="text"
+              placeholder="ex: CueCore2, Medialon Manager..."
+              value={replacesDevice}
+              onChange={(e) => setReplacesDevice(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="replaces-cost">Coût estimé de l&apos;appareil remplacé</Label>
+            <Input
+              id="replaces-cost"
+              type="text"
+              placeholder="ex: ~1 200 €"
+              value={replacesCost}
+              onChange={(e) => setReplacesCost(e.target.value)}
             />
           </div>
 
