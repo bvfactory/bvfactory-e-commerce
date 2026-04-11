@@ -10,6 +10,7 @@ import { ArrowRight, Search, Package, Cable, Cpu, Brain, Rocket } from "lucide-r
 import { Input } from "@/components/ui/input";
 import { PRODUCT_TIERS, PRODUCT_CATEGORIES, TIER_STYLES, ROADMAP_PLUGINS, getProductIcon, type ProductTier } from "@/data/products";
 import { ProductWithPromo } from "@/lib/product-settings";
+import type { RoadmapPlugin } from "@/lib/roadmap";
 
 const TIER_ICONS: Record<ProductTier, typeof Cable> = {
     bridge: Cable,
@@ -17,7 +18,7 @@ const TIER_ICONS: Record<ProductTier, typeof Cable> = {
     mind: Brain,
 };
 
-export default function PluginsListClient({ products }: { products: ProductWithPromo[] }) {
+export default function PluginsListClient({ products, roadmap = [] }: { products: ProductWithPromo[]; roadmap?: RoadmapPlugin[] }) {
     const { formatPrice, isLoading } = useCurrency();
     const [search, setSearch] = useState("");
     const [activeCategory, setActiveCategory] = useState("all");
@@ -232,7 +233,8 @@ export default function PluginsListClient({ products }: { products: ProductWithP
                                 const TierIcon = TIER_ICONS[tier.id];
                                 const tierStyle = TIER_STYLES[tier.id];
                                 const activeIds = new Set(products.map(p => p.id));
-                                const roadmapForTier = ROADMAP_PLUGINS.filter(r => r.tier === tier.id && !activeIds.has(r.name.toLowerCase().replace(/\s+/g, "")));
+                                const roadmapSource = roadmap.length > 0 ? roadmap : ROADMAP_PLUGINS;
+                                const roadmapForTier = roadmapSource.filter(r => r.tier === tier.id && !activeIds.has(r.name.toLowerCase().replace(/\s+/g, "")));
 
                                 if (tierProducts.length === 0 && roadmapForTier.length === 0) return null;
 

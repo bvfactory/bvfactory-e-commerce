@@ -9,6 +9,7 @@ import {
   Tags,
   HardDrive,
   Users,
+  Rocket,
   LogOut,
   ChevronRight,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const navItems = [
   { href: "/admin/discounts", label: "Codes promo", icon: Tags },
   { href: "/admin/plugins", label: "Plugins", icon: HardDrive },
   { href: "/admin/clients", label: "Clients", icon: Users },
+  { href: "/admin/roadmap", label: "Teasing / Roadmap", icon: Rocket },
 ];
 
 export function AdminSidebar() {
