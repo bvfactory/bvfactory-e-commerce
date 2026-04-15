@@ -2,7 +2,8 @@
 
 import { useCart } from "@/contexts/CartContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
-import { ShoppingCart, X, Trash2, ShieldCheck, Mail, Loader2, ArrowRight, Tag, Check } from "lucide-react";
+import { getBundleDiscountPercent, BUNDLE_THRESHOLD, BUNDLE_PERCENT } from "@/lib/bundle-discount";
+import { ShoppingCart, X, Trash2, ShieldCheck, Mail, Loader2, ArrowRight, Tag, Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,9 +23,13 @@ export function CartDrawer() {
     const [appliedDiscount, setAppliedDiscount] = useState<{ percent: number; label: string } | null>(null);
     const [showDiscountInput, setShowDiscountInput] = useState(false);
 
-    const discountedTotalCents = appliedDiscount
-        ? Math.round(totalCents * (1 - appliedDiscount.percent / 100))
+    const bundlePercent = getBundleDiscountPercent(items.length);
+    const codePercent = appliedDiscount?.percent ?? 0;
+    const effectivePercent = Math.max(bundlePercent, codePercent);
+    const discountedTotalCents = effectivePercent > 0
+        ? Math.round(totalCents * (1 - effectivePercent / 100))
         : totalCents;
+    const itemsUntilBundle = Math.max(0, BUNDLE_THRESHOLD - items.length);
 
     const handleApplyDiscount = async () => {
         if (!discountCode.trim()) return;
@@ -202,6 +207,25 @@ export function CartDrawer() {
                             {items.length > 0 && (
                                 <div className="p-6 bg-[#06101f] border-t border-white/5">
 
+                                    {/* Bundle Discount Auto Banner */}
+                                    {bundlePercent > 0 && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -6 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="mb-3 flex items-center gap-2 bg-gradient-to-r from-teal-500/15 to-cyan-500/10 border border-teal-500/25 rounded-xl px-4 py-3"
+                                        >
+                                            <Sparkles className="w-4 h-4 text-teal-400 flex-shrink-0" />
+                                            <span className="text-teal-300 text-xs font-mono uppercase tracking-wider">
+                                                Bundle discount −{BUNDLE_PERCENT}% applied
+                                            </span>
+                                        </motion.div>
+                                    )}
+                                    {bundlePercent === 0 && itemsUntilBundle > 0 && items.length > 0 && (
+                                        <div className="mb-3 text-[10px] font-mono text-slate-500 uppercase tracking-widest text-center">
+                                            Add {itemsUntilBundle} more {itemsUntilBundle === 1 ? "plugin" : "plugins"} for −{BUNDLE_PERCENT}% off
+                                        </div>
+                                    )}
+
                                     {/* Discount Code Section */}
                                     <div className="mb-4">
                                         {appliedDiscount ? (
@@ -269,7 +293,7 @@ export function CartDrawer() {
                                     <div className="flex items-center justify-between mb-6">
                                         <span className="text-slate-400 font-mono text-[11px] tracking-widest uppercase">Total</span>
                                         <div className="text-right">
-                                            {appliedDiscount ? (
+                                            {effectivePercent > 0 ? (
                                                 <div className="flex items-center gap-3">
                                                     <span className="text-lg font-mono text-slate-500 line-through">{formatPrice(totalCents)}</span>
                                                     <span className="text-2xl font-bold font-mono text-teal-400">{formatPrice(discountedTotalCents)}</span>

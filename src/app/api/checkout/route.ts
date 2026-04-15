@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { generateLicenseKey, generateActivationCode, insertOrReactivateLicense } from "@/lib/license";
 import { sendOrderConfirmation, sendAdminNotification } from "@/lib/email";
 import { getEffectivePrice } from "@/lib/product-settings";
+import { getBundleDiscountPercent } from "@/lib/bundle-discount";
 import Stripe from "stripe";
 
 export async function POST(req: Request) {
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
         };
         const finalRate = EXCHANGE_RATES[finalCurrency.toUpperCase()] ?? 1;
 
-        let appliedDiscountPercent = 0;
+        let manualDiscountPercent = 0;
 
         if (discountCode) {
             // Read-only check for discount validity (no increment yet).
@@ -46,10 +47,21 @@ export async function POST(req: Request) {
                 const isValid = (!dData.expires_at || new Date(dData.expires_at) >= new Date())
                     && (dData.max_uses === null || dData.current_uses < dData.max_uses);
                 if (isValid) {
-                    appliedDiscountPercent = dData.percent_off;
+                    manualDiscountPercent = dData.percent_off;
                 }
             }
         }
+
+        // Automatic bundle discount: 3+ plugins = 20% off, no code needed
+        const bundleDiscountPercent = getBundleDiscountPercent(items.length);
+
+        // Customer always gets the best deal. Bundle wins ties so we don't
+        // consume a manual code when the automatic bundle alone would suffice.
+        const bundleWins = bundleDiscountPercent >= manualDiscountPercent && bundleDiscountPercent > 0;
+        const appliedDiscountPercent = bundleWins ? bundleDiscountPercent : manualDiscountPercent;
+        const storedDiscountCode = bundleWins
+            ? null
+            : (manualDiscountPercent > 0 ? discountCode.toUpperCase().trim() : null);
 
         // 1. Create pending order in Supabase
         const { data: order, error: orderError } = await supabase
@@ -58,7 +70,7 @@ export async function POST(req: Request) {
                 customer_email: email,
                 status: "pending",
                 items: items, // Store array of CartItems natively as JSONB
-                discount_code: appliedDiscountPercent > 0 ? discountCode.toUpperCase().trim() : null,
+                discount_code: storedDiscountCode,
                 discount_percent: appliedDiscountPercent > 0 ? appliedDiscountPercent : null
             })
             // Ideally, record `currency` and `amount` here for history if schema updated
@@ -86,25 +98,29 @@ export async function POST(req: Request) {
         const effectivelyFree = allFree || appliedDiscountPercent === 100;
 
         if (effectivelyFree) {
-            // For free orders, atomically validate and consume the discount
-            if (appliedDiscountPercent > 0 && discountCode) {
+            // For free orders using a manual code (not the bundle), atomically
+            // validate and consume the code. Bundle discount needs no DB hit.
+            if (storedDiscountCode) {
                 const { data: used } = await supabase.rpc('try_use_discount', {
-                    d_code: discountCode.toUpperCase().trim()
+                    d_code: storedDiscountCode
                 });
                 if (!used || used.length === 0) {
                     return NextResponse.json({ error: "Code de réduction invalide ou épuisé" }, { status: 400 });
                 }
-                sendAdminNotification("discount_used", `${discountCode.toUpperCase()} (commande gratuite)`, {
-                    "Code": discountCode.toUpperCase().trim(),
+                sendAdminNotification("discount_used", `${storedDiscountCode} (commande gratuite)`, {
+                    "Code": storedDiscountCode,
                     "Reduction": `${appliedDiscountPercent}%`,
                     "Client": email,
                 });
             }
             // Notify admin of free order
+            const discountLabel = bundleWins
+                ? `Bundle ${appliedDiscountPercent}%`
+                : (storedDiscountCode ? `${storedDiscountCode} (-${appliedDiscountPercent}%)` : null);
             sendAdminNotification("order_free", `${verifiedItems.map(i => i.product.name).join(", ")} pour ${email}`, {
                 "Client": email,
                 "Produits": verifiedItems.map(i => `${i.product.name} (${i.coreId})`).join(", "),
-                ...(appliedDiscountPercent > 0 ? { "Code promo": `${discountCode?.toUpperCase()} (-${appliedDiscountPercent}%)` } : {}),
+                ...(discountLabel ? { "Code promo": discountLabel } : {}),
             });
             return await handleFreeOrder(supabase, order, verifiedItems, email);
         }
@@ -148,10 +164,13 @@ export async function POST(req: Request) {
         };
 
         if (appliedDiscountPercent > 0) {
+            const couponName = bundleWins
+                ? `Bundle discount (${appliedDiscountPercent}% off)`
+                : `Discount: ${storedDiscountCode}`;
             const coupon = await stripe.coupons.create({
                 percent_off: appliedDiscountPercent,
                 duration: 'once',
-                name: `Discount: ${discountCode.toUpperCase()}`,
+                name: couponName,
             });
             sessionConfig.discounts = [{ coupon: coupon.id }];
         }
