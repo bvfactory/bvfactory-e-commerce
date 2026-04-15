@@ -3,7 +3,15 @@
 import { useRef, useEffect, useState } from "react";
 import { motion, useInView, useScroll, useTransform } from "framer-motion";
 
-export function VideoShowcase() {
+interface VideoShowcaseProps {
+  src?: string;
+  poster?: string;
+}
+
+export function VideoShowcase({
+  src = "/videos/showcase.mp4",
+  poster = "/videos/showcase-poster.jpg",
+}: VideoShowcaseProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const isInView = useInView(containerRef, { once: false, margin: "-10%" });
@@ -82,18 +90,19 @@ export function VideoShowcase() {
 
             {/* Video */}
             <video
+              key={src}
               ref={videoRef}
               muted
               loop
               playsInline
               preload="metadata"
-              poster="/videos/showcase-poster.jpg"
+              poster={poster}
               onLoadedData={() => setIsLoaded(true)}
               className={`w-full aspect-video object-cover transition-opacity duration-700 ${
                 isLoaded ? "opacity-100" : "opacity-0"
               }`}
             >
-              <source src="/videos/showcase.mp4" type="video/mp4" />
+              <source src={src} />
             </video>
 
             {/* Overlay effects */}

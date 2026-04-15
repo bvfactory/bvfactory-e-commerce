@@ -10,6 +10,7 @@ import {
   HardDrive,
   Users,
   Rocket,
+  Settings,
   LogOut,
   ChevronRight,
 } from "lucide-react";
@@ -23,6 +24,7 @@ const navItems = [
   { href: "/admin/plugins", label: "Plugins", icon: HardDrive },
   { href: "/admin/clients", label: "Clients", icon: Users },
   { href: "/admin/roadmap", label: "Teasing / Roadmap", icon: Rocket },
+  { href: "/admin/settings", label: "Paramètres", icon: Settings },
 ];
 
 export function AdminSidebar() {

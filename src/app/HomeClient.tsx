@@ -14,6 +14,7 @@ import { Footer } from "@/components/Footer";
 import { ProductType, PRODUCT_TIERS, TIER_STYLES, type ProductTier } from "@/data/products";
 import { VideoShowcase } from "@/components/VideoShowcase";
 import { TrustedBy, type TrustedClient } from "@/components/TrustedBy";
+import type { SiteSettings } from "@/lib/site-settings";
 
 const HOMEPAGE_FAQ = [
   {
@@ -38,7 +39,7 @@ const HOMEPAGE_FAQ = [
   },
 ];
 
-export default function HomeClient({ products, trustedClients = [] }: { products: ProductType[]; trustedClients?: TrustedClient[] }) {
+export default function HomeClient({ products, trustedClients = [], siteSettings }: { products: ProductType[]; trustedClients?: TrustedClient[]; siteSettings?: SiteSettings }) {
   const { formatPrice, isLoading } = useCurrency();
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -182,7 +183,12 @@ export default function HomeClient({ products, trustedClients = [] }: { products
       </section>
 
       {/* === VIDEO SHOWCASE === */}
-      <VideoShowcase />
+      {siteSettings?.homepageVideoEnabled && siteSettings.homepageVideoUrl && (
+        <VideoShowcase
+          src={siteSettings.homepageVideoUrl}
+          poster={siteSettings.homepageVideoPosterUrl ?? undefined}
+        />
+      )}
 
       {/* === TRUSTED BY === */}
       <TrustedBy clients={trustedClients} />
@@ -360,7 +366,7 @@ export default function HomeClient({ products, trustedClients = [] }: { products
               {
                 step: 5,
                 icon: Tv,
-                plugin: "HueBridge",
+                plugin: "ScreenBridge",
                 tier: "bridge" as ProductTier,
                 title: "Displays updated",
                 description: "Switches all lobby displays to the evening content loop and dims backlight to 40%.",
@@ -368,7 +374,7 @@ export default function HomeClient({ products, trustedClients = [] }: { products
               {
                 step: 6,
                 icon: Eye,
-                plugin: "WebBridge",
+                plugin: "ViewForge",
                 tier: "bridge" as ProductTier,
                 title: "Live monitoring",
                 description: "The technician sees the entire transition in real time on a web dashboard — every plugin's state, the current scene, any errors.",
