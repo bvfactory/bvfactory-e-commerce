@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { escapeHtml } from "@/lib/contact-email";
 
 interface InvoiceItem {
     productName: string;
@@ -62,8 +63,8 @@ function buildAdminNotificationHtml(
         .map(
             ([key, value]) => `
         <tr>
-            <td style="padding: 8px 12px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #888; border-bottom: 1px solid #e5e5e5; width: 140px; vertical-align: top;">${key}</td>
-            <td style="padding: 8px 12px; font-size: 13px; border-bottom: 1px solid #e5e5e5; word-break: break-word;">${value}</td>
+            <td style="padding: 8px 12px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #888; border-bottom: 1px solid #e5e5e5; width: 140px; vertical-align: top;">${escapeHtml(key)}</td>
+            <td style="padding: 8px 12px; font-size: 13px; border-bottom: 1px solid #e5e5e5; word-break: break-word;">${escapeHtml(value)}</td>
         </tr>`
         )
         .join("");

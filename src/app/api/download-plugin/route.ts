@@ -44,5 +44,12 @@ export async function GET(req: NextRequest) {
         );
     }
 
+    // Fire-and-forget analytics
+    void Promise.resolve(
+        createAdminClient()
+            .from("analytics_events")
+            .insert({ event_type: "plugin_download", product_id: productId })
+    ).catch(() => {});
+
     return NextResponse.redirect(signedUrl.signedUrl);
 }

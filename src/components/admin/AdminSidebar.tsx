@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -13,12 +14,23 @@ import {
   Settings,
   LogOut,
   ChevronRight,
+  Mail,
+  BarChart2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const navItems = [
+interface NavItem {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  badgeKey?: "messages";
+}
+
+const navItems: NavItem[] = [
   { href: "/admin", label: "Tableau de bord", icon: LayoutDashboard },
+  { href: "/admin/analytics", label: "Analytics", icon: BarChart2 },
   { href: "/admin/orders", label: "Commandes", icon: ShoppingCart },
+  { href: "/admin/messages", label: "Messages", icon: Mail, badgeKey: "messages" },
   { href: "/admin/licenses", label: "Licences", icon: KeyRound },
   { href: "/admin/discounts", label: "Codes promo", icon: Tags },
   { href: "/admin/plugins", label: "Plugins", icon: HardDrive },
@@ -30,6 +42,30 @@ const navItems = [
 export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+
+  const [unreadMessages, setUnreadMessages] = useState<number>(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchUnread = async () => {
+      try {
+        const res = await fetch("/api/admin/messages?status=nouveau&offset=0", {
+          credentials: "include",
+        });
+        if (!res.ok) return;
+        const { unreadCount } = await res.json();
+        if (!cancelled) setUnreadMessages(unreadCount ?? 0);
+      } catch {
+        // silent
+      }
+    };
+    fetchUnread();
+    const id = setInterval(fetchUnread, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
 
   const handleLogout = async () => {
     await fetch("/api/admin/auth", { method: "DELETE" });
@@ -63,11 +99,13 @@ export function AdminSidebar() {
         <p className="px-3 py-2 text-[9px] font-mono font-semibold text-slate-500 uppercase tracking-[0.2em]">
           Navigation
         </p>
-        {navItems.map(({ href, label, icon: Icon }) => {
+        {navItems.map((item) => {
+          const { href, label, icon: Icon, badgeKey } = item;
           const isActive =
             href === "/admin"
               ? pathname === "/admin"
               : pathname.startsWith(href);
+          const showBadge = badgeKey === "messages" && unreadMessages > 0;
           return (
             <Link
               key={href}
@@ -88,7 +126,12 @@ export function AdminSidebar() {
                 )}
               />
               <span className="flex-1">{label}</span>
-              {isActive && (
+              {showBadge && (
+                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-teal-500 text-[10px] font-mono font-bold text-[#050d1a]">
+                  {unreadMessages > 99 ? "99+" : unreadMessages}
+                </span>
+              )}
+              {isActive && !showBadge && (
                 <ChevronRight className="w-3 h-3 text-teal-500/50" />
               )}
             </Link>

@@ -12,6 +12,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { AddToCartModal } from "@/components/CheckoutModal";
 import Image from "next/image";
+import { useTrackPageView } from "@/hooks/useTrackPageView";
 
 export default function ProductPageClient({ product, relatedProducts }: { product: ProductWithPromo; relatedProducts: ProductWithPromo[] }) {
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -19,6 +20,7 @@ export default function ProductPageClient({ product, relatedProducts }: { produc
     const [showVideo, setShowVideo] = useState(false);
     const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
     const { formatPrice, isLoading } = useCurrency();
+    useTrackPageView(product.id);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const { scrollYProgress } = useScroll({

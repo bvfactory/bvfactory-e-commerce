@@ -27,6 +27,19 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Activation code not found" }, { status: 404 });
         }
 
+        // Fire-and-forget analytics — one event per item in the order
+        const activationItems = (order.items as Array<{ product: { id: string } }>) || [];
+        void Promise.resolve(
+            createAdminClient()
+                .from("analytics_events")
+                .insert(
+                    activationItems.map((item) => ({
+                        event_type: "license_activated",
+                        product_id: item.product.id,
+                    }))
+                )
+        ).catch(() => {});
+
         if (order.status !== "paid") {
             return NextResponse.json({ error: "Order has not been paid" }, { status: 403 });
         }

@@ -25,6 +25,8 @@ Toutes ces variables doivent exister sur le projet Vercel **contactbvfactory** (
 - `LIGHTFORGE_LICENSE_SECRET` — Secret pour l'algo LightForge FNV-1a (seed: `DMXRecPlay2026#Bz`, doit correspondre au plugin Q-SYS)
 - `TIMEFORGE_LICENSE_SECRET` — Secret pour l'algo TimeForge FNV-1a (seed: `TFrgTimeForge2026!X`, doit correspondre au plugin Q-SYS)
 - `RESEND_API_KEY` — Clé API Resend
+- `RESEND_WEBHOOK_SECRET` — Secret HMAC pour vérifier les webhooks entrants Resend (inbound emails)
+- `CONTACT_REPLY_DOMAIN` — Sous-domaine Resend Inbound pour les réponses threadées (défaut: `reply.bvfactory.dev`)
 - `ADMIN_PASSWORD` — Mot de passe admin
 - `ADMIN_SESSION_SECRET` — Secret session admin
 - `NEXT_PUBLIC_SITE_URL` — `https://bvfactory.dev`
@@ -46,3 +48,10 @@ Le projet est aussi connecté via Git (push sur `main` = déploiement auto).
 - **Checkout** (`src/app/api/checkout/route.ts`) : commandes gratuites (100% discount) génèrent les licences immédiatement ; commandes payantes passent par Stripe.
 - **Licences** (`src/lib/license-algorithms.ts`) : 5 algorithmes disponibles (HMAC-SHA256, SHA-512 court, Numérique, LightForge FNV-1a, TimeForge FNV-1a). Assignés par produit via `product_settings.algorithm_id`. Les algos FNV-1a sont déterministes et les seeds doivent correspondre byte-for-byte aux plugins Q-SYS Lua (`PLUGINS QSYS/`).
 - **Emails** (`src/lib/email.ts`) : confirmation commande + notifications admin via Resend.
+
+## Webmail admin (contact threads)
+
+- Les soumissions du formulaire `/contact` sont persistées dans `contact_threads` + `contact_messages` (Supabase).
+- L'admin lit et répond via `/admin/messages`. Les réponses partent depuis `contact@bvfactory.dev` avec `Reply-To: reply+<token>@reply.bvfactory.dev`.
+- Les replies des visiteurs arrivent via le webhook Resend Inbound sur `/api/webhooks/resend/inbound`, matchés au thread par le token.
+- DNS requis : records MX sur `reply.bvfactory.dev` pointant vers Resend Inbound (voir dashboard Resend pour les valeurs exactes).

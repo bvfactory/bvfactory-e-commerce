@@ -82,6 +82,18 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Erreur lors de la création de la commande" }, { status: 500 });
         }
 
+        // Fire-and-forget analytics
+        void Promise.resolve(
+            supabase
+                .from("analytics_events")
+                .insert(
+                    items.map((item: { product: { id: string } }) => ({
+                        event_type: "checkout_initiated",
+                        product_id: item.product.id,
+                    }))
+                )
+        ).catch(() => {});
+
         // 2. Server-side price verification — never trust client-sent prices
         const verifiedItems = await Promise.all(
             items.map(async (item: { product: { id: string; name: string; description: string; price_cents: number; iconName: string }; coreId: string }) => {
