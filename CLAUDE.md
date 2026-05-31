@@ -25,8 +25,8 @@ Toutes ces variables doivent exister sur le projet Vercel **contactbvfactory** (
 - `LIGHTFORGE_LICENSE_SECRET` — Secret pour l'algo LightForge FNV-1a (seed: `DMXRecPlay2026#Bz`, doit correspondre au plugin Q-SYS)
 - `TIMEFORGE_LICENSE_SECRET` — Secret pour l'algo TimeForge FNV-1a (seed: `TFrgTimeForge2026!X`, doit correspondre au plugin Q-SYS)
 - `RESEND_API_KEY` — Clé API Resend
-- `RESEND_WEBHOOK_SECRET` — Secret HMAC pour vérifier les webhooks entrants Resend (inbound emails)
-- `CONTACT_REPLY_DOMAIN` — Sous-domaine Resend Inbound pour les réponses threadées (défaut: `reply.bvfactory.dev`)
+- `RESEND_WEBHOOK_SECRET` — Signing secret (`whsec_…`) du webhook Resend `email.received` (vérifié via Svix, `resend.webhooks.verify`). À copier depuis Resend → Webhooks → l'endpoint inbound.
+- `CONTACT_REPLY_DOMAIN` — Domaine avec Resend Inbound activé, utilisé pour le threading Reply-To (`reply+<token>@<domaine>`). Défaut: `bvfactory.dev` (le domaine racine a `receiving: enabled` + MX inbound vérifié).
 - `ADMIN_PASSWORD` — Mot de passe admin
 - `ADMIN_SESSION_SECRET` — Secret session admin
 - `NEXT_PUBLIC_SITE_URL` — `https://bvfactory.dev`
@@ -52,6 +52,6 @@ Le projet est aussi connecté via Git (push sur `main` = déploiement auto).
 ## Webmail admin (contact threads)
 
 - Les soumissions du formulaire `/contact` sont persistées dans `contact_threads` + `contact_messages` (Supabase).
-- L'admin lit et répond via `/admin/messages`. Les réponses partent depuis `contact@bvfactory.dev` avec `Reply-To: reply+<token>@reply.bvfactory.dev`.
-- Les replies des visiteurs arrivent via le webhook Resend Inbound sur `/api/webhooks/resend/inbound`, matchés au thread par le token.
-- DNS requis : records MX sur `reply.bvfactory.dev` pointant vers Resend Inbound (voir dashboard Resend pour les valeurs exactes).
+- L'admin lit et répond via `/admin/messages`. Les réponses partent depuis `contact@bvfactory.dev` avec `Reply-To: reply+<token>@bvfactory.dev` (domaine racine, qui a Resend Inbound activé).
+- Les replies des visiteurs arrivent via le webhook Resend `email.received` sur `/api/webhooks/resend/inbound`, matchés au thread par le token. Le payload est metadata-only : le corps et les pièces jointes sont récupérés via `resend.emails.receiving.get()` / `…attachments.list()`.
+- Config requise (déjà en place) : `bvfactory.dev` avec `receiving: enabled` (MX `inbound-smtp.eu-west-1.amazonaws.com` vérifié) **+ un webhook Resend `email.received`** pointant vers l'endpoint (sinon Resend reçoit mais ne POSTe rien). Le `signing_secret` du webhook va dans `RESEND_WEBHOOK_SECRET`.

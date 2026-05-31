@@ -1,5 +1,5 @@
 // src/lib/contact-messages.ts
-import { randomBytes, createHmac, timingSafeEqual } from "crypto";
+import { randomBytes } from "crypto";
 
 /** 16 random bytes hex-encoded (32 chars). Used in Reply-To addresses. */
 export function generateReplyToken(): string {
@@ -55,40 +55,8 @@ export function buildQuoteBlock(fromName: string, fromEmail: string, createdAt: 
     return `\n\n${header}\n${quoted}`;
 }
 
-/**
- * Verify a Resend inbound webhook signature.
- * Resend signs the body with HMAC-SHA256 and sends the hex digest in the
- * `resend-signature` header (format: `t=<timestamp>,v1=<hex>`).
- *
- * We compute HMAC over `${timestamp}.${rawBody}` and compare using a
- * constant-time comparison to prevent timing attacks.
- */
-export function verifyWebhookSignature(
-    rawBody: string,
-    signatureHeader: string | null,
-    secret: string,
-): boolean {
-    if (!signatureHeader || !secret) return false;
-
-    const parts = Object.fromEntries(
-        signatureHeader.split(",").map((p) => p.split("=").map((s) => s.trim())),
-    );
-    const ts = parts.t;
-    const sig = parts.v1;
-    if (!ts || !sig) return false;
-
-    // Reject timestamps older than 5 minutes (replay protection).
-    const tsMs = Number(ts) * 1000;
-    if (!Number.isFinite(tsMs)) return false;
-    if (Math.abs(Date.now() - tsMs) > 5 * 60 * 1000) return false;
-
-    const expected = createHmac("sha256", secret).update(`${ts}.${rawBody}`).digest("hex");
-    try {
-        const sigBuf = Buffer.from(sig, "hex");
-        const expBuf = Buffer.from(expected, "hex");
-        if (sigBuf.length !== expBuf.length) return false;
-        return timingSafeEqual(sigBuf, expBuf);
-    } catch {
-        return false;
-    }
-}
+// NOTE: Resend webhook signatures are NOT a Stripe-style `resend-signature:
+// t=…,v1=<hex>` scheme. Resend signs via Svix (headers `svix-id` /
+// `svix-timestamp` / `svix-signature`, base64). Verification is delegated to
+// the Resend SDK (`resend.webhooks.verify(...)`) in the inbound route, so the
+// hand-rolled verifier that used to live here was removed.

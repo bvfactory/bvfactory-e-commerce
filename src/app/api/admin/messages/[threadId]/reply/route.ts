@@ -53,7 +53,10 @@ export async function POST(
         : "";
 
     const replyToken = generateReplyToken();
-    const replyDomain = process.env.CONTACT_REPLY_DOMAIN || "reply.bvfactory.dev";
+    // Defaults to the root domain because that is the domain with Resend
+    // inbound/receiving enabled (verified MX). The Reply-To becomes
+    // reply+<token>@bvfactory.dev, which the existing inbound pipeline accepts.
+    const replyDomain = process.env.CONTACT_REPLY_DOMAIN || "bvfactory.dev";
 
     // Insert outbound row BEFORE sending so we never have an orphan email
     // without a DB record. resend_email_id is filled in after send succeeds.

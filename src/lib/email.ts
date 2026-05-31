@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { after } from "next/server";
 import { escapeHtml } from "@/lib/contact-email";
 
 interface InvoiceItem {
@@ -113,19 +114,34 @@ export async function sendAdminNotification(
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) return;
 
-    const resend = new Resend(apiKey);
     const config = NOTIFICATION_CONFIG[type];
     const fullSubject = `[BVFactory] ${config.label} — ${subject}`;
+    const html = buildAdminNotificationHtml(type, subject, details);
 
+    const deliver = async () => {
+        try {
+            const resend = new Resend(apiKey);
+            await resend.emails.send({
+                from: "BVFactory Alertes <noreply@bvfactory.dev>",
+                to: ADMIN_EMAILS,
+                subject: fullSubject,
+                html,
+            });
+        } catch (error) {
+            console.error(`Failed to send admin notification (${type}):`, error);
+        }
+    };
+
+    // Callers fire this without awaiting. On Vercel, a floating promise can be
+    // killed when the serverless instance is frozen right after the response is
+    // sent — which is why notifications arrived only "sometimes". `after()`
+    // registers the send with the runtime (via waitUntil) so it is guaranteed
+    // to complete after the response, without adding latency to the request.
     try {
-        await resend.emails.send({
-            from: "BVFactory Alertes <noreply@bvfactory.dev>",
-            to: ADMIN_EMAILS,
-            subject: fullSubject,
-            html: buildAdminNotificationHtml(type, subject, details),
-        });
-    } catch (error) {
-        console.error(`Failed to send admin notification (${type}):`, error);
+        after(deliver);
+    } catch {
+        // Not inside a request scope (e.g. a script or cron) — send eagerly.
+        await deliver();
     }
 }
 
