@@ -287,7 +287,9 @@ export async function POST(request: Request) {
     const nowIso = new Date().toISOString();
     await supabase
         .from("contact_threads")
-        .update({ status: "nouveau", last_message_at: nowIso, updated_at: nowIso })
+        // deleted_at: null restores the thread from the trash if a visitor replies
+        // to a deleted conversation (mail-client behaviour).
+        .update({ status: "nouveau", last_message_at: nowIso, updated_at: nowIso, deleted_at: null })
         .eq("id", threadId);
 
     // Deferred internally via after() — guaranteed to send after the response.

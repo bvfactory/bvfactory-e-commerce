@@ -32,6 +32,9 @@ export async function POST(
     if (thread.status === "archivé") {
         return NextResponse.json({ error: "Thread archivé — désarchivez avant de répondre" }, { status: 400 });
     }
+    if (thread.deleted_at) {
+        return NextResponse.json({ error: "Thread en corbeille — restaurez avant de répondre" }, { status: 400 });
+    }
 
     // Last inbound message — quoted in the reply.
     const { data: lastInbound } = await supabase
