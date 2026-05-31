@@ -43,7 +43,10 @@ const NOTIFICATION_CONFIG: Record<AdminNotificationType, AdminNotificationConfig
     order_refunded: { label: "REMBOURSEMENT", color: "#0369a1" },
 };
 
-const ADMIN_EMAILS = ["contact@bvfactory.dev", "contact.bvfactory@gmail.com"];
+// NOTE: do NOT add any @bvfactory.dev address here. The root domain's MX
+// points at Resend inbound, so a notification sent to e.g. contact@bvfactory.dev
+// loops back into the inbound webhook. Notifications must target a real mailbox.
+const ADMIN_EMAILS = ["contact.bvfactory@gmail.com"];
 
 function buildAdminNotificationHtml(
     type: AdminNotificationType,

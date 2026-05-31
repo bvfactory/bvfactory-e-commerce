@@ -12,8 +12,14 @@ type UploadedAttachment = { filename: string; storage_path: string; size: number
 
 function parseFrom(from: string | undefined): { name: string; email: string } {
     if (!from) return { name: "", email: "" };
-    const match = from.match(/^\s*(?:"?([^"<]*?)"?\s*)?<?([^>\s]+@[^>\s]+)>?\s*$/);
-    return { name: (match?.[1] || "").trim(), email: (match?.[2] || from).trim() };
+    // "Display Name <email@host>" → split on the angle brackets.
+    const angle = from.match(/<([^>]+)>/);
+    if (angle) {
+        const name = from.slice(0, from.indexOf("<")).replace(/"/g, "").trim();
+        return { name, email: angle[1].trim() };
+    }
+    // Bare address (no display name, no brackets) → the whole string is the email.
+    return { name: "", email: from.trim() };
 }
 
 /** Find the first `reply+<token>@…` address among the recipients. */
@@ -162,18 +168,13 @@ export async function POST(request: Request) {
         }
     }
 
-    // The root domain's MX points at Resend inbound, so our own automated mail
-    // (admin notifications, order receipts, contact-form backups) addressed to
-    // contact@bvfactory.dev loops back here. Ignore those so they don't create
-    // bogus threads. Real visitors are never on our sending domain.
+    // The root domain's MX points at Resend inbound, so any mail WE send (admin
+    // notifications, order receipts, contact-form backups) loops back into this
+    // webhook. Ignore anything from our own domain — real visitors are never
+    // @bvfactory.dev. This is the loop circuit-breaker.
     const from = parseFrom(data.from);
-    const OWN_SENDERS = new Set([
-        "noreply@bvfactory.dev",
-        "licences@bvfactory.dev",
-        "contact@bvfactory.dev",
-    ]);
-    if (OWN_SENDERS.has(from.email.toLowerCase())) {
-        return NextResponse.json({ ok: true, ignored: "self-sender" });
+    if (from.email.toLowerCase().endsWith("@bvfactory.dev")) {
+        return NextResponse.json({ ok: true, ignored: "self-domain" });
     }
 
     // The webhook is metadata-only — fetch body, headers and reply-to from the
