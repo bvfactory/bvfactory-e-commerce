@@ -5,7 +5,7 @@ import { ThreadList, type ThreadRow } from "@/components/admin/messages/ThreadLi
 import { ThreadDetail } from "@/components/admin/messages/ThreadDetail";
 import { Mail } from "lucide-react";
 
-type Status = "all" | "nouveau" | "répondu" | "archivé";
+type Status = "all" | "nouveau" | "répondu" | "archivé" | "corbeille";
 
 const REFRESH_MS = 30_000;
 
@@ -14,7 +14,7 @@ export default function MessagesPage() {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState<Status>("all");
     const [search, setSearch] = useState("");
-    const [counts, setCounts] = useState({ all: 0, nouveau: 0, "répondu": 0, "archivé": 0 });
+    const [counts, setCounts] = useState({ all: 0, nouveau: 0, "répondu": 0, "archivé": 0, corbeille: 0 });
 
     const fetchThreads = useCallback(async () => {
         const params = new URLSearchParams();
@@ -27,17 +27,19 @@ export default function MessagesPage() {
     }, [statusFilter, search]);
 
     const fetchCounts = useCallback(async () => {
-        const [all, nouveau, repondu, archive] = await Promise.all([
+        const [all, nouveau, repondu, archive, corbeille] = await Promise.all([
             fetch("/api/admin/messages", { credentials: "include" }).then((r) => r.json()),
             fetch("/api/admin/messages?status=nouveau", { credentials: "include" }).then((r) => r.json()),
             fetch("/api/admin/messages?status=r%C3%A9pondu", { credentials: "include" }).then((r) => r.json()),
             fetch("/api/admin/messages?status=archiv%C3%A9", { credentials: "include" }).then((r) => r.json()),
+            fetch("/api/admin/messages?status=corbeille", { credentials: "include" }).then((r) => r.json()),
         ]);
         setCounts({
             all: all.total ?? 0,
             nouveau: nouveau.total ?? 0,
             "répondu": repondu.total ?? 0,
             "archivé": archive.total ?? 0,
+            corbeille: corbeille.total ?? 0,
         });
     }, []);
 
@@ -55,6 +57,13 @@ export default function MessagesPage() {
     }, [fetchThreads, fetchCounts]);
 
     const handleChange = () => { fetchThreads(); fetchCounts(); };
+
+    const handleEmptyTrash = async () => {
+        await fetch("/api/admin/messages/trash/empty", { method: "POST", credentials: "include" });
+        setSelectedId(null);
+        fetchThreads();
+        fetchCounts();
+    };
 
     return (
         <div className="space-y-4">
@@ -82,6 +91,7 @@ export default function MessagesPage() {
                             onSelect={setSelectedId}
                             onStatusChange={setStatusFilter}
                             onSearchChange={setSearch}
+                            onEmptyTrash={handleEmptyTrash}
                             counts={counts}
                         />
                     </div>
