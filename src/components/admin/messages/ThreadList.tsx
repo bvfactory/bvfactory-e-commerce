@@ -13,15 +13,18 @@ export interface ThreadRow {
     created_at: string;
 }
 
+type StatusFilter = "all" | "nouveau" | "répondu" | "archivé" | "corbeille";
+
 interface Props {
     threads: ThreadRow[];
     selectedId: string | null;
-    statusFilter: "all" | "nouveau" | "répondu" | "archivé";
+    statusFilter: StatusFilter;
     search: string;
     onSelect: (id: string) => void;
-    onStatusChange: (s: "all" | "nouveau" | "répondu" | "archivé") => void;
+    onStatusChange: (s: StatusFilter) => void;
     onSearchChange: (s: string) => void;
-    counts: { all: number; nouveau: number; "répondu": number; "archivé": number };
+    onEmptyTrash: () => void;
+    counts: { all: number; nouveau: number; "répondu": number; "archivé": number; corbeille: number };
 }
 
 function formatRelative(iso: string): string {
@@ -41,11 +44,12 @@ const STATUS_LABEL = {
     nouveau: "Nouveaux",
     "répondu": "Répondus",
     "archivé": "Archivés",
+    corbeille: "Corbeille",
 } as const;
 
 export function ThreadList({
     threads, selectedId, statusFilter, search,
-    onSelect, onStatusChange, onSearchChange, counts,
+    onSelect, onStatusChange, onSearchChange, onEmptyTrash, counts,
 }: Props) {
     return (
         <div className="flex flex-col h-full border-r border-white/5 bg-[#0a1628]/50">
@@ -60,7 +64,7 @@ export function ThreadList({
                     />
                 </div>
                 <div className="flex flex-wrap gap-1">
-                    {(["all", "nouveau", "répondu", "archivé"] as const).map((s) => (
+                    {(["all", "nouveau", "répondu", "archivé", "corbeille"] as const).map((s) => (
                         <button
                             key={s}
                             onClick={() => onStatusChange(s)}
@@ -74,6 +78,18 @@ export function ThreadList({
                         </button>
                     ))}
                 </div>
+                {statusFilter === "corbeille" && counts.corbeille > 0 && (
+                    <button
+                        onClick={() => {
+                            if (confirm(`Vider définitivement la corbeille (${counts.corbeille}) ? Action irréversible.`)) {
+                                onEmptyTrash();
+                            }
+                        }}
+                        className="w-full px-2.5 py-1.5 rounded text-[10px] font-mono uppercase tracking-[0.1em] border border-red-500/30 text-red-300 hover:bg-red-500/10 transition-colors"
+                    >
+                        Vider la corbeille ({counts.corbeille})
+                    </button>
+                )}
             </div>
 
             <div className="flex-1 overflow-y-auto">
