@@ -98,7 +98,7 @@ export function ThreadList({
                 )}
                 {threads.map((t) => {
                     const isActive = t.id === selectedId;
-                    const isUnread = t.status === "nouveau";
+                    const isUnread = t.status === "nouveau" && statusFilter !== "corbeille";
                     return (
                         <button
                             key={t.id}

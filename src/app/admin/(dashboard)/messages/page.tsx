@@ -89,7 +89,7 @@ export default function MessagesPage() {
                             statusFilter={statusFilter}
                             search={search}
                             onSelect={setSelectedId}
-                            onStatusChange={setStatusFilter}
+                            onStatusChange={(s) => { setStatusFilter(s); setSelectedId(null); }}
                             onSearchChange={setSearch}
                             onEmptyTrash={handleEmptyTrash}
                             counts={counts}
