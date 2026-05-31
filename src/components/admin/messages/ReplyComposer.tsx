@@ -2,16 +2,17 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Send, Archive, ArchiveRestore } from "lucide-react";
+import { Send, Archive, ArchiveRestore, Trash2 } from "lucide-react";
 
 interface Props {
     threadId: string;
     isArchived: boolean;
     onSent: () => void;
     onArchiveToggled: () => void;
+    onTrashed: () => void;
 }
 
-export function ReplyComposer({ threadId, isArchived, onSent, onArchiveToggled }: Props) {
+export function ReplyComposer({ threadId, isArchived, onSent, onArchiveToggled, onTrashed }: Props) {
     const [body, setBody] = useState("");
     const [sending, setSending] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -36,6 +37,24 @@ export function ReplyComposer({ threadId, isArchived, onSent, onArchiveToggled }
             onSent();
         } finally {
             setSending(false);
+        }
+    };
+
+    const trash = async () => {
+        setError(null);
+        try {
+            const res = await fetch(`/api/admin/messages/${threadId}/trash`, {
+                method: "POST",
+                credentials: "include",
+            });
+            if (!res.ok) {
+                const { error: msg } = await res.json().catch(() => ({ error: "Échec" }));
+                setError(msg || "Échec de la suppression");
+                return;
+            }
+            onTrashed();
+        } catch {
+            setError("Erreur réseau");
         }
     };
 
@@ -67,22 +86,32 @@ export function ReplyComposer({ threadId, isArchived, onSent, onArchiveToggled }
             />
             {error && <p className="text-xs text-red-400 mt-2 font-mono">{error}</p>}
             <div className="flex items-center justify-between mt-3">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={toggleArchive}
-                    className="text-slate-400 hover:text-white"
-                >
-                    {isArchived ? (
-                        <>
-                            <ArchiveRestore className="w-4 h-4 mr-1.5" /> Désarchiver
-                        </>
-                    ) : (
-                        <>
-                            <Archive className="w-4 h-4 mr-1.5" /> Archiver
-                        </>
-                    )}
-                </Button>
+                <div className="flex items-center gap-1">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={toggleArchive}
+                        className="text-slate-400 hover:text-white"
+                    >
+                        {isArchived ? (
+                            <>
+                                <ArchiveRestore className="w-4 h-4 mr-1.5" /> Désarchiver
+                            </>
+                        ) : (
+                            <>
+                                <Archive className="w-4 h-4 mr-1.5" /> Archiver
+                            </>
+                        )}
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={trash}
+                        className="text-slate-400 hover:text-red-300"
+                    >
+                        <Trash2 className="w-4 h-4 mr-1.5" /> Supprimer
+                    </Button>
+                </div>
                 <Button
                     onClick={send}
                     disabled={!body.trim() || sending || isArchived}
