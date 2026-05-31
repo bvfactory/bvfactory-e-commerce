@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateAdminRequest } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { purgeThread } from "@/lib/contact-trash";
 
 const SIGNED_URL_TTL_SECONDS = 60 * 60; // 1h
 
@@ -60,4 +61,39 @@ export async function GET(
     );
 
     return NextResponse.json({ thread, messages: decorated });
+}
+
+export async function DELETE(
+    request: NextRequest,
+    { params }: { params: Promise<{ threadId: string }> },
+) {
+    if (!(await validateAdminRequest(request))) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { threadId } = await params;
+    const supabase = createAdminClient();
+
+    const { data: thread, error } = await supabase
+        .from("contact_threads")
+        .select("id, deleted_at")
+        .eq("id", threadId)
+        .single();
+    if (error || !thread) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    // Permanent deletion is only allowed from the trash.
+    if (!thread.deleted_at) {
+        return NextResponse.json(
+            { error: "Le thread doit être dans la corbeille avant suppression définitive" },
+            { status: 409 },
+        );
+    }
+
+    try {
+        await purgeThread(supabase, threadId);
+    } catch {
+        return NextResponse.json({ error: "Échec de la suppression" }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true });
 }
