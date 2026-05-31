@@ -29,7 +29,9 @@ export async function GET(request: NextRequest) {
 
     // Trash view: purge items deleted more than 30 days ago before listing.
     if (isTrash) {
-        await purgeExpiredTrash(supabase, 30);
+        await purgeExpiredTrash(supabase, 30).catch((e) =>
+            console.error("[trash] lazy purge error", e),
+        );
     }
 
     let query = supabase

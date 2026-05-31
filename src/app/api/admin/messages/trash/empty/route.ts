@@ -12,7 +12,8 @@ export async function POST(request: NextRequest) {
     const { data: trashed } = await supabase
         .from("contact_threads")
         .select("id")
-        .not("deleted_at", "is", null);
+        .not("deleted_at", "is", null)
+        .limit(1000);
 
     let purged = 0;
     for (const t of trashed ?? []) {

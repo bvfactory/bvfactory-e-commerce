@@ -15,6 +15,20 @@ export async function POST(
     const supabase = createAdminClient();
 
     const now = new Date().toISOString();
+
+    const { data: current, error: fetchErr } = await supabase
+        .from("contact_threads")
+        .select("*")
+        .eq("id", threadId)
+        .single();
+    if (fetchErr || !current) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    // Re-trashing an already-trashed thread must not reset its purge clock.
+    if (!restore && current.deleted_at) {
+        return NextResponse.json({ thread: current });
+    }
+
     const { data, error } = await supabase
         .from("contact_threads")
         .update({ deleted_at: restore ? null : now, updated_at: now })
