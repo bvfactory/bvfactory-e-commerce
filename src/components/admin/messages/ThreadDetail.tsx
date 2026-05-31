@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { MessageBubble } from "./MessageBubble";
 import { ReplyComposer } from "./ReplyComposer";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, RotateCcw, Trash2 } from "lucide-react";
 
 interface ThreadDto {
     id: string;
@@ -12,6 +12,7 @@ interface ThreadDto {
     from_email: string;
     status: "nouveau" | "répondu" | "archivé";
     created_at: string;
+    deleted_at: string | null;
 }
 
 interface MessageDto {
@@ -61,6 +62,29 @@ export function ThreadDetail({ threadId, onBack, onChange }: Props) {
 
     useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [threadId]);
 
+    const restore = async () => {
+        const res = await fetch(`/api/admin/messages/${threadId}/trash?restore=true`, {
+            method: "POST",
+            credentials: "include",
+        });
+        if (res.ok) {
+            onBack();
+            onChange();
+        }
+    };
+
+    const deletePermanently = async () => {
+        if (!confirm("Supprimer définitivement cette conversation ? Action irréversible.")) return;
+        const res = await fetch(`/api/admin/messages/${threadId}`, {
+            method: "DELETE",
+            credentials: "include",
+        });
+        if (res.ok) {
+            onBack();
+            onChange();
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex-1 flex items-center justify-center">
@@ -107,12 +131,30 @@ export function ThreadDetail({ threadId, onBack, onChange }: Props) {
                 )}
             </div>
 
-            <ReplyComposer
-                threadId={thread.id}
-                isArchived={thread.status === "archivé"}
-                onSent={() => { load(); onChange(); }}
-                onArchiveToggled={() => { load(); onChange(); }}
-            />
+            {thread.deleted_at ? (
+                <div className="border-t border-white/10 bg-[#0a1628] p-4 flex items-center gap-2">
+                    <button
+                        onClick={restore}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded text-xs font-mono uppercase tracking-[0.1em] border border-teal-500/30 text-teal-300 hover:bg-teal-500/10 transition-colors"
+                    >
+                        <RotateCcw className="w-4 h-4" /> Restaurer
+                    </button>
+                    <button
+                        onClick={deletePermanently}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded text-xs font-mono uppercase tracking-[0.1em] border border-red-500/30 text-red-300 hover:bg-red-500/10 transition-colors"
+                    >
+                        <Trash2 className="w-4 h-4" /> Supprimer définitivement
+                    </button>
+                </div>
+            ) : (
+                <ReplyComposer
+                    threadId={thread.id}
+                    isArchived={thread.status === "archivé"}
+                    onSent={() => { load(); onChange(); }}
+                    onArchiveToggled={() => { load(); onChange(); }}
+                    onTrashed={() => { onBack(); onChange(); }}
+                />
+            )}
         </div>
     );
 }
