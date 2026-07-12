@@ -1,4 +1,4 @@
-import { Flame, Clapperboard, Monitor, Globe, Tv, Thermometer, Layers, Film, Music, Lightbulb, Timer, Zap, ArrowLeftRight, Cable, Cpu, Brain } from "lucide-react";
+import { Flame, Clapperboard, Monitor, Globe, Tv, Thermometer, Layers, Film, Music, Lightbulb, Timer, Zap, ArrowLeftRight, Route, Cable, Cpu, Brain } from "lucide-react";
 
 export interface VersionHistory {
     version: string;
@@ -30,7 +30,7 @@ export interface ProductType {
     description: string;
     longDescription: string;
     price_cents: number;
-    iconName: "Flame" | "Clapperboard" | "Monitor" | "Globe" | "Tv" | "Thermometer" | "Layers" | "Film" | "Music" | "Lightbulb" | "Timer" | "Zap" | "ArrowLeftRight";
+    iconName: "Flame" | "Clapperboard" | "Monitor" | "Globe" | "Tv" | "Thermometer" | "Layers" | "Film" | "Music" | "Lightbulb" | "Timer" | "Zap" | "ArrowLeftRight" | "Route";
     category: "lighting" | "routing" | "show-control" | "control" | "audio" | "video" | "uci";
     tier: ProductTier;
     replaces?: ReplaceInfo;
@@ -1198,6 +1198,95 @@ export const MOCK_PRODUCTS: ProductType[] = [
                 answer: "No. SelectForge runs with full functionality in emulation mode. A license is only required when deployed to a physical Q-SYS Core."
             }
         ]
+    },
+    {
+        id: "routebridge",
+        pluginFileName: "routebridge.qplugx",
+        name: "ROUTEBRIDGE",
+        tagline: "One plugin, every matrix — multi-brand video routing for Q-SYS.",
+        description: "Control AV Access and MuxLab video routing hardware from a single Q-SYS plugin. Pick your device model in Properties — AVoIP system or HDMI matrix — and route sources to displays natively from Q-SYS. One license per Core, unlimited instances.",
+        longDescription: "RouteBridge unifies BV Factory's video routing drivers into one multi-brand plugin. Select the device model in Properties and the plugin becomes the right driver: AV Access 4KIP200 AV-over-IP systems, AV Access 4KMX44-H2 4x4 HDMI matrix, MuxLab 500444 (HDMI 4x4 4K/60), or MuxLab 500412 (HDMI 4x4 HDBT PoC). One instance drives one device or one AVoIP system; multi-device sites simply add instances — a single license per Core covers them all.\n\nEach driver is the proven protocol code from its source plugin, byte-identical on the wire. The 4KIP200 family brings the full AVoIP feature set: matrix routing with visual feedback, UDP auto-discovery, display power via CEC or RS232, video walls with rotation and cropping, OSD text overlays, RS232 pass-through, and per-device management. The matrix families deliver instant one-click routing on a 4x4 grid with status polling and reconnection handled for you.\n\nControl names are preserved verbatim from the source plugins, so existing designs, user scripts, snapshots, and control pins migrate without rewiring. The Telnet engines are built for permanent installations: command queuing with timeout protection, automatic reconnection, and fault-isolated error handling. Every control is exposed as a Q-SYS pin for UCI, GPIO, Show Controller, and ShowMind integration.",
+        price_cents: 3000,
+        iconName: "Route",
+        category: "video",
+        tier: "bridge",
+        replaces: { device: "Vendor control software / separate plugins", estimatedCost: "~500 €" },
+        compatibleBrands: [
+            { name: "AV Access", logo: "/brands/avaccess.svg" },
+            { name: "MuxLab", logo: "/brands/muxlab.svg" },
+        ],
+        features: [
+            "4 Device Families — AV Access 4KIP200 (AV over IP), AV Access 4KMX44-H2 (4x4 matrix), MuxLab 500444 (HDMI 4x4 4K/60), MuxLab 500412 (HDMI 4x4 HDBT PoC). Pick the model in Properties.",
+            "Matrix Routing — Route any source to any display with instant visual feedback, from the plugin panel, a UCI, or control pins.",
+            "Auto-Discovery — 4KIP200 encoders and decoders are discovered via UDP broadcast and fill their slots automatically as units come online.",
+            "Display Control — Power displays on/off via CEC or RS232 with per-decoder presets, plus custom CEC commands (4KIP200 family).",
+            "Video Wall & OSD — Grid video walls with per-decoder position, rotation (0°/90°/180°/270°) and cropping, plus translucent OSD text overlays (4KIP200 family).",
+            "Drop-In Migration — Control names preserved verbatim from AVAccessBridge and MuxBridge: existing scripts, snapshots, and pins keep working.",
+            "One License, Unlimited Instances — A single Core license activates every instance and every device family on that Core.",
+            "Built for 24/7 — Telnet engines with command queuing, timeout protection, automatic reconnection, and fault-isolated error handling."
+        ],
+        specs: {
+            "Device Families": "4 (AV Access 4KIP200 / 4KMX44-H2, MuxLab 500444 / 500412)",
+            "Transports": "Telnet (24 / 23 / 4001) + UDP discovery (3335/3336)",
+            "Routing": "AVoIP matrix (up to 16 discovered devices) or 4x4 HDMI matrix",
+            "Display Control": "CEC + RS232 with per-decoder presets (4KIP200)",
+            "Video Wall": "Grid layout, rotation (0°/90°/180°/270°), cropping (4KIP200)",
+            "Extras": "OSD overlay, RS232 pass-through, per-device management (4KIP200)",
+            "Licensing": "1 license per Core — unlimited instances and families",
+            "Integration": "Q-SYS UserPin (UCI, GPIO, Show Controller, ShowMind)",
+            "License Type": "Node-locked (Core ID)"
+        },
+        compatibility: {
+            minQsysVersion: "9.0",
+            supportedCores: ["Any Q-SYS Core"],
+            os: "Q-SYS Designer 9.x+"
+        },
+        versionHistory: [
+            {
+                version: "v1.0.0",
+                date: "2026-07-12",
+                changes: [
+                    "Initial release — merge of AVAccessBridge and MuxBridge",
+                    "4 device families selectable in Properties",
+                    "AVoIP matrix routing, discovery, CEC/RS232, video walls, OSD (4KIP200)",
+                    "4x4 HDMI matrix routing for 4KMX44-H2, MuxLab 500444 and 500412",
+                    "Control names preserved — drop-in migration from source plugins",
+                    "One Core license activates unlimited instances"
+                ]
+            }
+        ],
+        manualUrl: "#",
+        videoUrl: undefined,
+        screenshots: [
+            "https://images.unsplash.com/photo-1617802690992-15d93263d3a9?auto=format&fit=crop&q=80&w=2070",
+            "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&q=80&w=2070"
+        ],
+        faq: [
+            {
+                question: "Which devices does RouteBridge support?",
+                answer: "Four families: AV Access 4KIP200 encoders/decoders (AV over IP, including 4KIP204E, 4KIP200M, HDIP100E/D), the AV Access 4KMX44-H2 4x4 HDMI matrix, the MuxLab 500444 (HDMI 4x4 4K/60), and the MuxLab 500412 (HDMI 4x4 HDBT PoC). You select the model in the plugin Properties."
+            },
+            {
+                question: "How many licenses do I need for a multi-device site?",
+                answer: "One per Q-SYS Core. A single RouteBridge license activates unlimited plugin instances on that Core, across all device families — an AVoIP system plus several matrices on the same Core costs one license."
+            },
+            {
+                question: "I already use AVAccessBridge or MuxBridge — is migration painful?",
+                answer: "No. RouteBridge preserves every control name verbatim from the source plugins. Replace the plugin block, select your model in Properties, and your existing scripts, snapshots, UCIs, and control pins keep working. See the included migration notes."
+            },
+            {
+                question: "What happens on a hardware Core without a license?",
+                answer: "RouteBridge stays connected: polling and status feedback remain live so you can see the device and your Core ID. Only device writes (routing, power, configuration) are blocked until a license is entered. In Q-SYS Designer emulation, everything is unlocked for free."
+            },
+            {
+                question: "Where do I enter the license key?",
+                answer: "In the plugin Properties (design-time), not in a runtime control. Enter the RB- key you receive after purchase, push the design to the Core, and the license strip shows LICENSED with your Core ID."
+            },
+            {
+                question: "Does the 4KIP200 family keep all AVAccessBridge features?",
+                answer: "Yes — the protocol code is ported verbatim: matrix routing with visual feedback, UDP auto-discovery, CEC/RS232 display control, video walls with rotation and cropping, OSD overlays, RS232 pass-through, and per-device management (HDCP, resolution, reboot, factory reset)."
+            }
+        ]
     }
 ];
 
@@ -1254,6 +1343,8 @@ export const getProductIcon = (iconName: string, className: string = "") => {
             return <Zap className={className} />;
         case "ArrowLeftRight":
             return <ArrowLeftRight className={className} />;
+        case "Route":
+            return <Route className={className} />;
         default:
             return <Lightbulb className={className} />;
     }
