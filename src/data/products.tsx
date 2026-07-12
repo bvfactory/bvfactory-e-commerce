@@ -1,4 +1,4 @@
-import { Flame, Clapperboard, Monitor, Globe, Tv, Thermometer, Layers, Film, Music, Lightbulb, Timer, Cable, Cpu, Brain } from "lucide-react";
+import { Flame, Clapperboard, Monitor, Globe, Tv, Thermometer, Layers, Film, Music, Lightbulb, Timer, Zap, Cable, Cpu, Brain } from "lucide-react";
 
 export interface VersionHistory {
     version: string;
@@ -30,7 +30,7 @@ export interface ProductType {
     description: string;
     longDescription: string;
     price_cents: number;
-    iconName: "Flame" | "Clapperboard" | "Monitor" | "Globe" | "Tv" | "Thermometer" | "Layers" | "Film" | "Music" | "Lightbulb" | "Timer";
+    iconName: "Flame" | "Clapperboard" | "Monitor" | "Globe" | "Tv" | "Thermometer" | "Layers" | "Film" | "Music" | "Lightbulb" | "Timer" | "Zap";
     category: "lighting" | "routing" | "show-control" | "control" | "audio" | "video" | "uci";
     tier: ProductTier;
     replaces?: ReplaceInfo;
@@ -1032,6 +1032,88 @@ export const MOCK_PRODUCTS: ProductType[] = [
                 answer: "MTC via RTP-MIDI/AppleMIDI is currently in beta. We are working hard to deliver a fully reliable implementation, but at this stage we cannot guarantee proper operation on all systems and network configurations. Art-Net Timecode and LTC are fully stable."
             }
         ]
+    },
+    {
+        id: "pulseforge",
+        pluginFileName: "pulseforge.qplugx",
+        name: "PULSEFORGE",
+        tagline: "Forge pulses — random trigger sequencer for Q-SYS.",
+        description: "Fire up to 32 outputs in sequence or at random — with adjustable interval, timing jitter, simultaneous bursts, and pulse width. The randomness engine your ambient scenes and immersive effects are missing.",
+        longDescription: "PulseForge is a random trigger sequencer for Q-SYS. Configure 2 to 32 outputs, set an interval, press Start — and PulseForge fires them one after another, or at random, forever or for a fixed duration. Every output is a momentary pulse pin ready to drive Show Controller cues, GPIO, audio players, lighting scenes, or any other Q-SYS logic.\n\nThe engine is built around controlled randomness. Random Order sets the probability that the next fire is drawn at random instead of following the sequence — with immediate-repeat protection, so the same output never fires twice in a row. Random Time adds symmetric jitter around the base interval, breaking mechanical regularity. Max Simultaneous lets a single tick fire a burst of several outputs at once. All four knobs are live: changes apply on the very next fire, no restart needed.\n\nThat makes PulseForge the ideal randomness engine for themed entertainment: scare zones triggering random sound effects, museum ambiences that never loop the same way, retail installations with organic-feeling animations, or endurance testing of downstream systems. Pair it with SoundForge to fire random audio tracks or LightForge to launch DMX scenes — every transport and settings control is exposed as a Q-SYS pin, ShowMind-ready.",
+        price_cents: 3000,
+        iconName: "Zap",
+        category: "show-control",
+        tier: "forge",
+        replaces: { device: "Custom Lua random-cue scripting", estimatedCost: "hours of development" },
+        features: [
+            "32 Outputs — Configure 2 to 32 momentary pulse outputs, each with LED feedback. Every output drives Trigger, Toggle, or Momentary inputs downstream.",
+            "Sequential or Random — Random Order (0–100%) sets the probability of random selection vs. sequential order, with immediate-repeat protection built in.",
+            "Timing Jitter — Random Time (0–100%) adds symmetric variation around the base interval (0.05–10 s). Organic rhythms instead of mechanical loops.",
+            "Simultaneous Bursts — Max Simultaneous fires 1 to N outputs on the same tick, at the same moment. Perfect for layered effects.",
+            "Adjustable Pulse Width — 20 to 2000 ms per pulse, with guaranteed no-overlap: a pulse always releases before the next fire.",
+            "Timed Runs — Set a duration in seconds or MM:SS for auto-stop with live remaining-time display, or leave it empty to run forever.",
+            "Live Settings — All knobs are read on every fire. Adjust interval, randomness, and bursts during the show without stopping the sequence.",
+            "Full Pin Integration — Start, Stop, Running, and every setting exposed as Q-SYS pins for UCI, GPIO, Show Controller, and ShowMind."
+        ],
+        specs: {
+            "Outputs": "2–32 (configurable via properties)",
+            "Interval": "0.05–10 s between fires",
+            "Random Order": "0–100% probability, no immediate repeat",
+            "Random Time": "0–100% symmetric jitter around interval",
+            "Max Simultaneous": "1–N outputs per burst",
+            "Pulse Width": "20–2000 ms, overlap-free",
+            "Duration": "Seconds or MM:SS, empty = infinite",
+            "Engine": "2 timers, GC-safe globals, deterministic release",
+            "Integration": "Q-SYS UserPin (UCI, GPIO, Show Controller, ShowMind)",
+            "License Type": "Node-locked (Core ID)"
+        },
+        compatibility: {
+            minQsysVersion: "9.0",
+            supportedCores: ["Any Q-SYS Core"],
+            os: "Q-SYS Designer 9.x+"
+        },
+        versionHistory: [
+            {
+                version: "v1.0.0",
+                date: "2026-07-12",
+                changes: [
+                    "Initial release",
+                    "2–32 momentary pulse outputs with LED feedback",
+                    "Sequential / random firing with immediate-repeat protection",
+                    "Timing jitter, simultaneous bursts, adjustable pulse width",
+                    "Timed or infinite runs with remaining-time display",
+                    "Full Q-SYS pin integration"
+                ]
+            }
+        ],
+        manualUrl: "#",
+        videoUrl: undefined,
+        screenshots: [
+            "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&q=80&w=2070",
+            "https://images.unsplash.com/photo-1504509546545-e000b4a62425?auto=format&fit=crop&q=80&w=2070"
+        ],
+        faq: [
+            {
+                question: "What can I trigger with PulseForge?",
+                answer: "Anything in Q-SYS. Each output is a momentary pulse pin that drives Trigger, Toggle, or Momentary inputs — Show Controller cues, GPIO outputs, audio player transports, snapshot recalls, SoundForge tracks, LightForge scenes, or any custom logic."
+            },
+            {
+                question: "How does random mode avoid repeating the same output?",
+                answer: "When a random fire is drawn, the previously fired output is excluded from the pool (as long as there is room to spare). The same output never fires twice in a row, which keeps random ambiences feeling natural."
+            },
+            {
+                question: "Can I change the interval or randomness while it's running?",
+                answer: "Yes. All settings — Interval, Random Order, Random Time, Max Simultaneous, and Pulse Width — are re-read on every fire. Changes take effect on the next tick without stopping the sequence."
+            },
+            {
+                question: "Can two pulses overlap on the same output?",
+                answer: "No. PulseForge guarantees that every pulse is released before the next fire. At Max Simultaneous = 1, exactly one output is ever high at a time — the pulse width is automatically capped by the next fire."
+            },
+            {
+                question: "Do I need a license to test in Q-SYS Designer emulation?",
+                answer: "No. PulseForge runs with full functionality in emulation mode. A license is only required when deployed to a physical Q-SYS Core."
+            }
+        ]
     }
 ];
 
@@ -1084,6 +1166,8 @@ export const getProductIcon = (iconName: string, className: string = "") => {
             return <Lightbulb className={className} />;
         case "Timer":
             return <Timer className={className} />;
+        case "Zap":
+            return <Zap className={className} />;
         default:
             return <Lightbulb className={className} />;
     }

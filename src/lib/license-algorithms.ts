@@ -443,6 +443,109 @@ export class TimeForgeFnv1aAlgorithm implements LicenseAlgorithm {
     }
 }
 
+// ─── Algorithm: PulseForge FNV-1a (deterministic, Q-SYS compatible) ─────────
+
+export class PulseForgeFnv1aAlgorithm implements LicenseAlgorithm {
+    readonly name = "pulseforge-fnv1a-v1";
+    readonly label = "PulseForge FNV-1a";
+    readonly description =
+        "Algorithme déterministe compatible Q-SYS PulseForge. Clé PLF-XXXX-XXXX-XXXX.";
+
+    /**
+     * Separate secret from LICENSE_MASTER_SECRET because the Q-SYS plugin
+     * uses this exact salt (PLF_LicSalt) for offline validation — it must
+     * match byte-for-byte.
+     */
+    private getSecret(): string {
+        const secret = process.env.PULSEFORGE_LICENSE_SECRET;
+        if (!secret) {
+            throw new Error(
+                "PULSEFORGE_LICENSE_SECRET environment variable is required."
+            );
+        }
+        return secret;
+    }
+
+    private mul32(a: number, b: number): number {
+        const aLo = a % 65536;
+        const aHi = (a - aLo) / 65536;
+        const bLo = b % 65536;
+        const bHi = (b - bLo) / 65536;
+        const mid = (aHi * bLo + aLo * bHi) % 65536;
+        return (mid * 65536 + aLo * bLo) % 4294967296;
+    }
+
+    /**
+     * Single-round FNV-1a, matching PLF_Fnv1a in PulseForge.qplug exactly
+     * (Lua 5.3 native bitwise: h = (h ~ byte); h = (h * 16777619) & 0xFFFFFFFF).
+     * Unlike LightForge/TimeForge there is no length marker and no second
+     * avalanche round — the input string IS the whole message.
+     */
+    private fnv1a(data: string): number {
+        let h = 2166136261;
+        for (let i = 0; i < data.length; i++) {
+            h = (h ^ data.charCodeAt(i)) >>> 0;
+            h = this.mul32(h, 16777619);
+        }
+        return h >>> 0;
+    }
+
+    private hex8(n: number): string {
+        return (n >>> 0).toString(16).toUpperCase().padStart(8, "0");
+    }
+
+    /**
+     * 3-stage cascade (PLF_ComputeKey): each group depends on the previous
+     * hash, so no single group leaks enough to reconstruct the key.
+     */
+    private computeKey(coreId: string, secret: string): string {
+        const h1 = this.fnv1a(`${secret}|${coreId}|${secret}`);
+        const h2 = this.fnv1a(`s2:${secret}${this.hex8(h1)}`);
+        const h3 = this.fnv1a(`s3:${secret}${this.hex8(h2)}`);
+        const p = (n: number) =>
+            (n % 65536).toString(16).toUpperCase().padStart(4, "0");
+        return `PLF-${p(h1)}-${p(h2)}-${p(h3)}`;
+    }
+
+    generate(productId: string, coreId: string): LicenseResult {
+        // coreId is NOT uppercased — the Lua plugin passes System.LockingId
+        // as-is, and the key must match byte-for-byte.
+        const secret = this.getSecret();
+        const licenseKey = this.computeKey(coreId, secret);
+
+        const productSecret = deriveProductSecret(productId);
+        const keyHash = createHmac("sha256", productSecret)
+            .update(`verify:${licenseKey}`)
+            .digest("hex");
+
+        return {
+            licenseKey,
+            salt: "", // deterministic algorithm — no salt needed
+            keyHash,
+            algorithmVersion: this.name,
+        };
+    }
+
+    verify(
+        licenseKey: string,
+        productId: string,
+        storedKeyHash: string
+    ): boolean {
+        const productSecret = deriveProductSecret(productId);
+
+        const computedHash = createHmac("sha256", productSecret)
+            .update(`verify:${licenseKey}`)
+            .digest("hex");
+
+        if (computedHash.length !== storedKeyHash.length) return false;
+
+        const a = Buffer.from(computedHash, "hex");
+        const b = Buffer.from(storedKeyHash, "hex");
+
+        return timingSafeEqual(a, b);
+    }
+}
+
 // ─── Registry (by algorithm name) ───────────────────────────────────────────
 
 const algorithmsByName = new Map<string, LicenseAlgorithm>();
@@ -457,6 +560,7 @@ register(new Sha512ShortAlgorithm());
 register(new NumericKeyAlgorithm());
 register(new LightForgeFnv1aAlgorithm());
 register(new TimeForgeFnv1aAlgorithm());
+register(new PulseForgeFnv1aAlgorithm());
 
 /** Default algorithm used when a product has no specific assignment. */
 export const DEFAULT_ALGORITHM_NAME = "hmac-sha256-v1";
