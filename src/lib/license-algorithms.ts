@@ -443,24 +443,49 @@ export class TimeForgeFnv1aAlgorithm implements LicenseAlgorithm {
     }
 }
 
-// ─── Algorithm: PulseForge FNV-1a (deterministic, Q-SYS compatible) ─────────
+// ─── Algorithm: BV Factory "Forge" FNV-1a (deterministic, Q-SYS compatible) ──
 
-export class PulseForgeFnv1aAlgorithm implements LicenseAlgorithm {
-    readonly name = "pulseforge-fnv1a-v1";
-    readonly label = "PulseForge FNV-1a";
-    readonly description =
-        "Algorithme déterministe compatible Q-SYS PulseForge. Clé PLF-XXXX-XXXX-XXXX.";
+/**
+ * BV Factory standard license module, shared by PulseForge, SelectForge and
+ * future Forge plugins. Single-round FNV-1a with a 3-stage cascade — this is
+ * NOT the same scheme as LightForge/TimeForge (two-round licHash with length
+ * marker and avalanche fold).
+ *
+ * Matches the Lua 5.3 native bitwise reference implementation embedded in the
+ * plugins (fnv1a/computeKey): only the key prefix and the salt vary.
+ */
+export class ForgeFnv1aAlgorithm implements LicenseAlgorithm {
+    readonly name: string;
+    readonly label: string;
+    readonly description: string;
+
+    private readonly keyPrefix: string;
+    private readonly envVarName: string;
+
+    constructor(opts: {
+        name: string;
+        label: string;
+        keyPrefix: string;
+        envVarName: string;
+        pluginName: string;
+    }) {
+        this.name = opts.name;
+        this.label = opts.label;
+        this.keyPrefix = opts.keyPrefix;
+        this.envVarName = opts.envVarName;
+        this.description = `Algorithme déterministe compatible Q-SYS ${opts.pluginName}. Clé ${opts.keyPrefix}-XXXX-XXXX-XXXX.`;
+    }
 
     /**
      * Separate secret from LICENSE_MASTER_SECRET because the Q-SYS plugin
-     * uses this exact salt (PLF_LicSalt) for offline validation — it must
+     * uses this exact salt (LIC_SALT) for offline validation — it must
      * match byte-for-byte.
      */
     private getSecret(): string {
-        const secret = process.env.PULSEFORGE_LICENSE_SECRET;
+        const secret = process.env[this.envVarName];
         if (!secret) {
             throw new Error(
-                "PULSEFORGE_LICENSE_SECRET environment variable is required."
+                `${this.envVarName} environment variable is required.`
             );
         }
         return secret;
@@ -476,7 +501,7 @@ export class PulseForgeFnv1aAlgorithm implements LicenseAlgorithm {
     }
 
     /**
-     * Single-round FNV-1a, matching PLF_Fnv1a in PulseForge.qplug exactly
+     * Single-round FNV-1a, matching the plugins' fnv1a exactly
      * (Lua 5.3 native bitwise: h = (h ~ byte); h = (h * 16777619) & 0xFFFFFFFF).
      * Unlike LightForge/TimeForge there is no length marker and no second
      * avalanche round — the input string IS the whole message.
@@ -495,7 +520,7 @@ export class PulseForgeFnv1aAlgorithm implements LicenseAlgorithm {
     }
 
     /**
-     * 3-stage cascade (PLF_ComputeKey): each group depends on the previous
+     * 3-stage cascade (computeKey): each group depends on the previous
      * hash, so no single group leaks enough to reconstruct the key.
      */
     private computeKey(coreId: string, secret: string): string {
@@ -504,7 +529,7 @@ export class PulseForgeFnv1aAlgorithm implements LicenseAlgorithm {
         const h3 = this.fnv1a(`s3:${secret}${this.hex8(h2)}`);
         const p = (n: number) =>
             (n % 65536).toString(16).toUpperCase().padStart(4, "0");
-        return `PLF-${p(h1)}-${p(h2)}-${p(h3)}`;
+        return `${this.keyPrefix}-${p(h1)}-${p(h2)}-${p(h3)}`;
     }
 
     generate(productId: string, coreId: string): LicenseResult {
@@ -560,7 +585,24 @@ register(new Sha512ShortAlgorithm());
 register(new NumericKeyAlgorithm());
 register(new LightForgeFnv1aAlgorithm());
 register(new TimeForgeFnv1aAlgorithm());
-register(new PulseForgeFnv1aAlgorithm());
+register(
+    new ForgeFnv1aAlgorithm({
+        name: "pulseforge-fnv1a-v1",
+        label: "PulseForge FNV-1a",
+        keyPrefix: "PLF",
+        envVarName: "PULSEFORGE_LICENSE_SECRET",
+        pluginName: "PulseForge",
+    })
+);
+register(
+    new ForgeFnv1aAlgorithm({
+        name: "selectforge-fnv1a-v1",
+        label: "SelectForge FNV-1a",
+        keyPrefix: "SLF",
+        envVarName: "SELECTFORGE_LICENSE_SECRET",
+        pluginName: "SelectForge",
+    })
+);
 
 /** Default algorithm used when a product has no specific assignment. */
 export const DEFAULT_ALGORITHM_NAME = "hmac-sha256-v1";

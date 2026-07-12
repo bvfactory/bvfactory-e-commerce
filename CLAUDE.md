@@ -25,6 +25,7 @@ Toutes ces variables doivent exister sur le projet Vercel **contactbvfactory** (
 - `LIGHTFORGE_LICENSE_SECRET` — Secret pour l'algo LightForge FNV-1a (seed: `DMXRecPlay2026#Bz`, doit correspondre au plugin Q-SYS)
 - `TIMEFORGE_LICENSE_SECRET` — Secret pour l'algo TimeForge FNV-1a (seed: `TFrgTimeForge2026!X`, doit correspondre au plugin Q-SYS)
 - `PULSEFORGE_LICENSE_SECRET` — Secret pour l'algo PulseForge FNV-1a (seed: `BVF-PulseForge-2026`, doit correspondre à `PLF_LicSalt` dans le plugin Q-SYS)
+- `SELECTFORGE_LICENSE_SECRET` — Secret pour l'algo SelectForge FNV-1a (seed: `BVF-SelectForge-2026`, doit correspondre à `LIC_SALT` dans le plugin Q-SYS)
 - `RESEND_API_KEY` — Clé API Resend
 - `RESEND_WEBHOOK_SECRET` — Signing secret (`whsec_…`) du webhook Resend `email.received` (vérifié via Svix, `resend.webhooks.verify`). À copier depuis Resend → Webhooks → l'endpoint inbound.
 - `CONTACT_REPLY_DOMAIN` — Domaine avec Resend Inbound activé, utilisé pour le threading Reply-To (`reply+<token>@<domaine>`). Défaut: `bvfactory.dev` (le domaine racine a `receiving: enabled` + MX inbound vérifié).
@@ -47,7 +48,7 @@ Le projet est aussi connecté via Git (push sur `main` = déploiement auto).
 ## Architecture clé
 
 - **Checkout** (`src/app/api/checkout/route.ts`) : commandes gratuites (100% discount) génèrent les licences immédiatement ; commandes payantes passent par Stripe.
-- **Licences** (`src/lib/license-algorithms.ts`) : 6 algorithmes disponibles (HMAC-SHA256, SHA-512 court, Numérique, LightForge FNV-1a, TimeForge FNV-1a, PulseForge FNV-1a). Assignés par produit via `product_settings.algorithm_id`. Les algos FNV-1a sont déterministes et les seeds doivent correspondre byte-for-byte aux plugins Q-SYS Lua (`~/Documents/DEV/PLUGINS QSYS/`). Attention : PulseForge utilise un FNV-1a simple passe (bitwise natif Lua 5.3), différent du FNV-1a deux passes + avalanche de LightForge/TimeForge.
+- **Licences** (`src/lib/license-algorithms.ts`) : 7 algorithmes disponibles (HMAC-SHA256, SHA-512 court, Numérique, LightForge FNV-1a, TimeForge FNV-1a, PulseForge FNV-1a, SelectForge FNV-1a). Assignés par produit via `product_settings.algorithm_id`. Les algos FNV-1a sont déterministes et les seeds doivent correspondre byte-for-byte aux plugins Q-SYS Lua (`~/Documents/DEV/PLUGINS QSYS/`). Attention : PulseForge/SelectForge utilisent le « module standard BV Factory » (classe générique `ForgeFnv1aAlgorithm` : FNV-1a simple passe, bitwise natif Lua 5.3, seuls préfixe et sel varient), différent du FNV-1a deux passes + avalanche de LightForge/TimeForge. Pour un futur plugin Forge : ajouter une instance `ForgeFnv1aAlgorithm` dans le registre + la variable d'env du sel.
 - **Produits** : le site n'affiche que les produits présents dans `product_settings` (Supabase) ; `MOCK_PRODUCTS` (`src/data/products.tsx`) ne sert que de fallback de contenu. Pour publier un produit, il faut insérer sa ligne en base (le seed route `/api/admin/products/seed` insère TOUS les mocks manquants — à éviter si certains ne doivent pas être publiés).
 - **Emails** (`src/lib/email.ts`) : confirmation commande + notifications admin via Resend.
 

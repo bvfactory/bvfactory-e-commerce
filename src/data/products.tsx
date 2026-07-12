@@ -1,4 +1,4 @@
-import { Flame, Clapperboard, Monitor, Globe, Tv, Thermometer, Layers, Film, Music, Lightbulb, Timer, Zap, Cable, Cpu, Brain } from "lucide-react";
+import { Flame, Clapperboard, Monitor, Globe, Tv, Thermometer, Layers, Film, Music, Lightbulb, Timer, Zap, ArrowLeftRight, Cable, Cpu, Brain } from "lucide-react";
 
 export interface VersionHistory {
     version: string;
@@ -30,7 +30,7 @@ export interface ProductType {
     description: string;
     longDescription: string;
     price_cents: number;
-    iconName: "Flame" | "Clapperboard" | "Monitor" | "Globe" | "Tv" | "Thermometer" | "Layers" | "Film" | "Music" | "Lightbulb" | "Timer" | "Zap";
+    iconName: "Flame" | "Clapperboard" | "Monitor" | "Globe" | "Tv" | "Thermometer" | "Layers" | "Film" | "Music" | "Lightbulb" | "Timer" | "Zap" | "ArrowLeftRight";
     category: "lighting" | "routing" | "show-control" | "control" | "audio" | "video" | "uci";
     tier: ProductTier;
     replaces?: ReplaceInfo;
@@ -1114,6 +1114,90 @@ export const MOCK_PRODUCTS: ProductType[] = [
                 answer: "No. PulseForge runs with full functionality in emulation mode. A license is only required when deployed to a physical Q-SYS Core."
             }
         ]
+    },
+    {
+        id: "selectforge",
+        pluginFileName: "selectforge.qplugx",
+        name: "SELECTFORGE",
+        tagline: "Select, play, return — interlocked selectors with auto-return.",
+        description: "An interlocked selector bank with per-slot countdown and automatic return to the previous selection. Trigger a punctual scenario — fanfare, announcement, special cue — and let the base scenario reclaim control by itself.",
+        longDescription: "SelectForge is an advanced interlocked selector for Q-SYS: up to 128 selectors, one active at a time, each with its own label and an optional countdown duration. Activate a timed selector and SelectForge runs the countdown, then automatically returns to the previously active selection. That one behavior removes an entire class of show-control scripting: interrupt scenes, temporary overrides, punctual announcements — they all come back home on their own.\n\nEvery activation path funnels through the same engine, whether it comes from the panel buttons, a UCI, or the ActiveIndex pin. Re-selecting the active selector re-arms its countdown from full duration and re-emits the output — with a forced pulse through zero so downstream logic always sees the transition, even when the value doesn't change. Deselection is deliberate: clicking the active selector never turns it off; only Clear All or driving ActiveIndex to 0 clears the state.\n\nThe panel gives operators full visibility: active and previous selection by index and name, per-slot remaining time, and a state column (ACTIVE / PREVIOUS / RETURNING). Labels are editable live and every control is exposed as a Q-SYS pin — wire it to ShowMind, GPIO, Show Controller, or any UCI. Battle-tested in the field on permanent installations.",
+        price_cents: 3000,
+        iconName: "ArrowLeftRight",
+        category: "show-control",
+        tier: "forge",
+        replaces: { device: "Custom interlock + auto-return scripting", estimatedCost: "hours of development" },
+        features: [
+            "128 Selectors — Configure 1 to 128 interlocked selectors, one active at a time, each with an editable label and its own countdown duration.",
+            "Auto-Return — Give a selector a duration and it returns to the previous selection at expiry. Punctual scenarios hand control back by themselves.",
+            "Per-Slot Countdown — 0 to 3600 s per selector, with live remaining-time display. Duration 0 means permanent selection, no countdown.",
+            "Re-Select to Re-Arm — Activating the current selector restarts its countdown from full duration and re-emits the output pulse.",
+            "Guaranteed Transitions — Re-emission dips ActiveIndex through 0 so downstream Q-SYS logic always sees a change, even on re-selection.",
+            "Full State Feedback — Active and previous index/name outputs, per-slot state column (ACTIVE / PREVIOUS / RETURNING), and global status.",
+            "External Control — Drive everything from the ActiveIndex pin: 1–N selects with countdown, 0 clears all. Plus a ClearAll trigger pin.",
+            "Full Pin Integration — Buttons, labels, durations, and outputs exposed as Q-SYS pins for UCI, GPIO, Show Controller, and ShowMind."
+        ],
+        specs: {
+            "Selectors": "1–128 (configurable via properties)",
+            "Countdown": "0–3600 s per selector, 1 s resolution",
+            "Auto-Return": "To previous selection at countdown expiry",
+            "Master I/O": "ActiveIndex pin (Both) — 1–N select, 0 clear",
+            "Feedback": "Active/previous index & name, per-slot remaining and state",
+            "Engine": "Single 1 s timer, event-guarded control writes",
+            "Integration": "Q-SYS UserPin (UCI, GPIO, Show Controller, ShowMind)",
+            "License Type": "Node-locked (Core ID)"
+        },
+        compatibility: {
+            minQsysVersion: "9.0",
+            supportedCores: ["Any Q-SYS Core"],
+            os: "Q-SYS Designer 9.x+"
+        },
+        versionHistory: [
+            {
+                version: "v1.2.0",
+                date: "2026-07-12",
+                changes: [
+                    "Initial public release",
+                    "1–128 interlocked selectors with editable labels",
+                    "Per-slot countdown (0–3600 s) with auto-return to previous selection",
+                    "Re-select re-arms the countdown and re-emits the output",
+                    "ActiveIndex master pin and ClearAll trigger",
+                    "Full Q-SYS pin integration"
+                ]
+            }
+        ],
+        manualUrl: "#",
+        videoUrl: undefined,
+        screenshots: [
+            "https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&q=80&w=2070",
+            "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=2070"
+        ],
+        faq: [
+            {
+                question: "What happens when a countdown expires?",
+                answer: "SelectForge automatically re-activates the previously active selector — without re-triggering that selector's own countdown. If nothing was active before, it simply clears to the Ready state. The selector that just expired becomes the new 'previous'."
+            },
+            {
+                question: "Can I interrupt a countdown manually?",
+                answer: "Yes. Activating any other selector stops the running countdown and starts the new selection normally. Clear All (button or pin) or driving ActiveIndex to 0 stops the countdown and clears everything."
+            },
+            {
+                question: "What if I click the selector that is already active?",
+                answer: "It never turns off. Re-selecting the active selector re-arms its countdown from full duration and re-emits the output pulse — ideal for restarting a timed scenario. The only ways to deselect are Clear All or ActiveIndex = 0."
+            },
+            {
+                question: "How do downstream systems see a re-selection if the value doesn't change?",
+                answer: "Q-SYS only notifies pins on a value change, so SelectForge forces a transition: on re-selection, ActiveIndex dips through 0 and back to the selector index. Downstream logic always receives the pulse."
+            },
+            {
+                question: "Can I control SelectForge from an external system or UCI?",
+                answer: "Yes. The ActiveIndex pin accepts 1–N to select (with countdown, exactly like a button press) and 0 to clear. Labels, durations, buttons, and all feedback are exposed as Q-SYS pins for UCI, GPIO, Show Controller, and ShowMind."
+            },
+            {
+                question: "Do I need a license to test in Q-SYS Designer emulation?",
+                answer: "No. SelectForge runs with full functionality in emulation mode. A license is only required when deployed to a physical Q-SYS Core."
+            }
+        ]
     }
 ];
 
@@ -1168,6 +1252,8 @@ export const getProductIcon = (iconName: string, className: string = "") => {
             return <Timer className={className} />;
         case "Zap":
             return <Zap className={className} />;
+        case "ArrowLeftRight":
+            return <ArrowLeftRight className={className} />;
         default:
             return <Lightbulb className={className} />;
     }
