@@ -412,10 +412,12 @@ export default function ProductPageClient({ product, relatedProducts }: { produc
                                     </a>
                                 )}
 
-                                {product.manualUrl && (
-                                    <Button variant="outline" className="w-full h-12 bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white font-mono text-xs uppercase tracking-widest">
-                                        <Download className="w-4 h-4 mr-2" /> Download Manual
-                                    </Button>
+                                {product.manualUrl && product.manualUrl !== "#" && (
+                                    <a href={product.manualUrl} target="_blank" rel="noopener noreferrer" className="block">
+                                        <Button variant="outline" className="w-full h-12 bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white font-mono text-xs uppercase tracking-widest cursor-pointer">
+                                            <Download className="w-4 h-4 mr-2" /> Download Manual
+                                        </Button>
+                                    </a>
                                 )}
 
                                 {product.price_cents > 0 && (
