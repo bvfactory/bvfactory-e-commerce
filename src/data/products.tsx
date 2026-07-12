@@ -1287,6 +1287,96 @@ export const MOCK_PRODUCTS: ProductType[] = [
                 answer: "Yes — the protocol code is ported verbatim: matrix routing with visual feedback, UDP auto-discovery, CEC/RS232 display control, video walls with rotation and cropping, OSD overlays, RS232 pass-through, and per-device management (HDCP, resolution, reboot, factory reset)."
             }
         ]
+    },
+    {
+        id: "screenbridge",
+        pluginFileName: "screenbridge.qplugx",
+        name: "SCREENBRIDGE",
+        tagline: "Professional display control for Q-SYS — multi-brand, one plugin.",
+        description: "Drive Iiyama professional displays (SICP) and NovaStar LED processors natively from Q-SYS: power with Wake-on-LAN, inputs, volume, picture settings, temperature monitoring. Pick the model, enter the IP, done. Try it free for 10 minutes on any Core.",
+        longDescription: "ScreenBridge puts professional display control inside your Q-SYS design. Select the display model in Properties and the plugin becomes the right driver — no external control processor, no custom scripting.\n\nFor Iiyama ProLite displays (LHxx60, LHxx64, LHxx75 series over SICP/TCP), ScreenBridge covers the full operating surface: power on/off with multi-packet Wake-on-LAN, input selection, volume and audio-out with mute, brightness/contrast/sharpness, screen mute, freeze, and live temperature readback. For NovaStar VX400 LED processors, it handles brightness and input source switching (HDMI1, HDMI2, DVI, SDI) over TCP.\n\nThe engine is built for permanent installations: continuous status polling keeps Q-SYS in sync with the real device state, continuous controls are debounced so faders never flood the device, and connections recover automatically. Every control is exposed as a Q-SYS pin for UCI, GPIO, Show Controller, and ShowMind integration.\n\nScreenBridge is also built to grow: LG, Sony, and PJLink Class 1/2 drivers are already in the codebase on standby, and will be enabled in future releases. And you can evaluate it risk-free — without a license, the plugin runs fully featured for 10 minutes on a physical Core (unlimited in Designer emulation).",
+        price_cents: 3000,
+        iconName: "Monitor",
+        category: "control",
+        tier: "bridge",
+        replaces: { device: "External display control processor", estimatedCost: "~300–500 €" },
+        compatibleBrands: [
+            { name: "iiyama", logo: "/brands/iiyama.svg" },
+            { name: "NovaStar", logo: "/brands/novastar.svg" },
+        ],
+        features: [
+            "Multi-Brand Drivers — Iiyama LHxx60/LHxx64/LHxx75 (SICP over TCP) and NovaStar VX400 (TCP). Select the model in Properties; one instance per device.",
+            "Power & Wake-on-LAN — Power off via SICP, power on via multi-packet WOL bursts that reliably wake displays from standby.",
+            "Full Picture Control — Input selection, volume, audio output, mute, brightness, contrast, sharpness, screen mute, and freeze (Iiyama).",
+            "LED Processor Control — Brightness and input source switching (HDMI1/HDMI2/DVI/SDI) on NovaStar VX400.",
+            "Temperature Monitoring — Live display temperature readback for supervision and preventive maintenance (Iiyama).",
+            "10-Minute Free Demo — Without a license the plugin runs fully featured for 10 minutes on a real Core, with a live countdown. Unlimited in emulation.",
+            "Built for 24/7 — Continuous status polling, debounced continuous controls, automatic reconnection, fault-isolated error handling.",
+            "Full Pin Integration — Every control exposed as a Q-SYS pin for UCI, GPIO, Show Controller, and ShowMind."
+        ],
+        specs: {
+            "Supported Displays": "Iiyama LHxx60 / LHxx64 / LHxx75 (SICP), NovaStar VX400",
+            "Protocols": "SICP over TCP + Wake-on-LAN (Iiyama), TCP (NovaStar)",
+            "Iiyama Control": "Power, input, volume, audio out, mute, brightness/contrast/sharpness, screen mute, freeze, temperature",
+            "NovaStar Control": "Brightness, input source (HDMI1/HDMI2/DVI/SDI)",
+            "Monitor ID": "1–255 (per-display addressing)",
+            "Polling": "Continuous status round-robin (10 s)",
+            "Demo Mode": "10 minutes full-featured without license (physical Core)",
+            "Roadmap Drivers": "LG, Sony (Simple IP + REST), PJLink Class 1 & 2 (standby)",
+            "Integration": "Q-SYS UserPin (UCI, GPIO, Show Controller, ShowMind)",
+            "License Type": "Node-locked (Core ID)"
+        },
+        compatibility: {
+            minQsysVersion: "9.0",
+            supportedCores: ["Any Q-SYS Core"],
+            os: "Q-SYS Designer 9.x+"
+        },
+        versionHistory: [
+            {
+                version: "v1.0.0",
+                date: "2026-07-12",
+                changes: [
+                    "Initial release",
+                    "Iiyama LHxx60/LHxx64/LHxx75 driver (SICP over TCP) with Wake-on-LAN",
+                    "NovaStar VX400 driver (brightness, input switching)",
+                    "Full picture control, temperature monitoring",
+                    "10-minute free demo mode on physical Cores",
+                    "LG, Sony, and PJLink drivers on standby for future releases"
+                ]
+            }
+        ],
+        manualUrl: "#",
+        videoUrl: undefined,
+        screenshots: [
+            "https://images.unsplash.com/photo-1593062096033-9a26b09da705?auto=format&fit=crop&q=80&w=2070",
+            "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&q=80&w=2070"
+        ],
+        faq: [
+            {
+                question: "Which displays are supported?",
+                answer: "Iiyama ProLite LHxx60, LHxx64, and LHxx75 series over SICP/TCP, and the NovaStar VX400 LED processor over TCP. LG, Sony (Simple IP + REST), and PJLink Class 1/2 drivers are already built into the plugin on standby and will be enabled in future releases."
+            },
+            {
+                question: "Can I try ScreenBridge before buying?",
+                answer: "Yes, twice over: in Q-SYS Designer emulation everything is unlocked for free, and on a physical Core the plugin runs fully featured for 10 minutes without a license, with a live countdown. After the demo it freezes until a valid key is entered."
+            },
+            {
+                question: "How does power-on work if the display is in standby?",
+                answer: "ScreenBridge sends multi-packet Wake-on-LAN bursts to the display's MAC address, then confirms the power state via SICP once the display is back on the network. Power off goes through the SICP protocol directly."
+            },
+            {
+                question: "How many displays can I control from one Core?",
+                answer: "One ScreenBridge instance drives one device. Add as many instances as you need in your design — each with its own IP, model, and Monitor ID (1–255). Each instance is independently fault-isolated."
+            },
+            {
+                question: "Where do I enter the license key?",
+                answer: "In the plugin Properties (design-time). Enter the SBRG- key you receive after purchase, push the design to the Core, and the license panel shows LICENSED with your Core ID."
+            },
+            {
+                question: "Won't the faders flood my display with commands?",
+                answer: "No. Continuous controls (brightness, contrast, sharpness, volume) are debounced: intermediate fader values are coalesced and a single consolidated command is sent to the device. Status polling keeps Q-SYS in sync with reality."
+            }
+        ]
     }
 ];
 

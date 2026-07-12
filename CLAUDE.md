@@ -27,6 +27,7 @@ Toutes ces variables doivent exister sur le projet Vercel **contactbvfactory** (
 - `PULSEFORGE_LICENSE_SECRET` — Secret pour l'algo PulseForge FNV-1a (seed: `BVF-PulseForge-2026`, doit correspondre à `PLF_LicSalt` dans le plugin Q-SYS)
 - `SELECTFORGE_LICENSE_SECRET` — Secret pour l'algo SelectForge FNV-1a (seed: `BVF-SelectForge-2026`, doit correspondre à `LIC_SALT` dans le plugin Q-SYS)
 - `ROUTEBRIDGE_LICENSE_SECRET` — Secret pour l'algo RouteBridge FNV-1a (seed: `BVF-RouteBridge-2026`, doit correspondre au sel obfusqué `_Kd()` dans le plugin Q-SYS)
+- `SCREENBRIDGE_LICENSE_SECRET` — Les 3 seeds ScreenBridge séparés par des virgules (`SBrgScreenBridge2026!1,…!2,…!3`), doivent correspondre aux tables `LICENSE.SEALED_SEED_N` (XOR-chain) du plugin Q-SYS
 - `RESEND_API_KEY` — Clé API Resend
 - `RESEND_WEBHOOK_SECRET` — Signing secret (`whsec_…`) du webhook Resend `email.received` (vérifié via Svix, `resend.webhooks.verify`). À copier depuis Resend → Webhooks → l'endpoint inbound.
 - `CONTACT_REPLY_DOMAIN` — Domaine avec Resend Inbound activé, utilisé pour le threading Reply-To (`reply+<token>@<domaine>`). Défaut: `bvfactory.dev` (le domaine racine a `receiving: enabled` + MX inbound vérifié).
@@ -49,10 +50,11 @@ Le projet est aussi connecté via Git (push sur `main` = déploiement auto).
 ## Architecture clé
 
 - **Checkout** (`src/app/api/checkout/route.ts`) : commandes gratuites (100% discount) génèrent les licences immédiatement ; commandes payantes passent par Stripe.
-- **Licences** (`src/lib/license-algorithms.ts`) : 8 algorithmes enregistrés (HMAC-SHA256, SHA-512 court, Numérique, + 5 FNV-1a déterministes par plugin). Assignés par produit via `product_settings.algorithm_id`. Les seeds FNV-1a doivent correspondre byte-for-byte aux plugins Q-SYS Lua (`~/Documents/DEV/PLUGINS QSYS/`). Deux familles génériques :
+- **Licences** (`src/lib/license-algorithms.ts`) : 9 algorithmes enregistrés (HMAC-SHA256, SHA-512 court, Numérique, + 6 FNV-1a déterministes par plugin). Assignés par produit via `product_settings.algorithm_id`. Les seeds FNV-1a doivent correspondre byte-for-byte aux plugins Q-SYS Lua (`~/Documents/DEV/PLUGINS QSYS/`). Trois familles :
   - `TwoRoundFnv1aAlgorithm` (deux passes + marqueur de longueur + avalanche) : LightForge (`DMXR-`), TimeForge (`TFGE-`), RouteBridge (`RB-`).
   - `ForgeFnv1aAlgorithm` (simple passe, bitwise natif Lua 5.3) : PulseForge (`PLF-`), SelectForge (`SLF-`).
-  Pour un nouveau plugin : identifier la famille dans le .qplug (licHash avec marqueur de longueur = deux passes ; fnv1a simple boucle = simple passe), ajouter une instance au registre + la variable d'env du sel, et vérifier les clés en croisé avec le Lua.
+  - `ScreenBridgeFnv1aAlgorithm` (FNV-1a 32 bits replié sur 48 bits, cascade à 3 seeds distincts, seeds scellés XOR-chain dans le Lua) : ScreenBridge (`SBRG-`).
+  Pour un nouveau plugin : identifier la famille dans le .qplug (licHash avec marqueur de longueur = deux passes ; fnv1a simple boucle = simple passe ; fnv1a_keyed avec repli 48 bits = variante ScreenBridge), ajouter une instance au registre + la variable d'env du/des seed(s), et vérifier les clés en croisé avec le Lua.
 - **Produits** : le site n'affiche que les produits présents dans `product_settings` (Supabase) ; `MOCK_PRODUCTS` (`src/data/products.tsx`) ne sert que de fallback de contenu. Pour publier un produit, il faut insérer sa ligne en base (le seed route `/api/admin/products/seed` insère TOUS les mocks manquants — à éviter si certains ne doivent pas être publiés).
 - **Emails** (`src/lib/email.ts`) : confirmation commande + notifications admin via Resend.
 

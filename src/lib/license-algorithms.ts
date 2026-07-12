@@ -475,6 +475,118 @@ export class ForgeFnv1aAlgorithm implements LicenseAlgorithm {
     }
 }
 
+// ─── Algorithm: ScreenBridge keyed FNV-1a 48-bit (deterministic, Q-SYS) ─────
+
+/**
+ * ScreenBridge variant of the BV Factory license engine (LICENSE.* in
+ * ScreenBridge.qplug): keyed FNV-1a 32-bit over `input|seed`, folded into a
+ * 48-bit space, then a 3-stage cascade with three distinct seeds. Key format
+ * SBRG-XXXX-XXXX-XXXX (12 hex chars of the final 48-bit hash).
+ *
+ * SCREENBRIDGE_LICENSE_SECRET holds the three seeds comma-separated, matching
+ * the sealed seed tables in the plugin byte-for-byte.
+ */
+export class ScreenBridgeFnv1aAlgorithm implements LicenseAlgorithm {
+    readonly name = "screenbridge-fnv1a-v1";
+    readonly label = "ScreenBridge FNV-1a";
+    readonly description =
+        "Algorithme déterministe compatible Q-SYS ScreenBridge (3 seeds, 48 bits). Clé SBRG-XXXX-XXXX-XXXX.";
+
+    private getSeeds(): [string, string, string] {
+        const secret = process.env.SCREENBRIDGE_LICENSE_SECRET;
+        if (!secret) {
+            throw new Error(
+                "SCREENBRIDGE_LICENSE_SECRET environment variable is required."
+            );
+        }
+        const seeds = secret.split(",");
+        if (seeds.length !== 3) {
+            throw new Error(
+                "SCREENBRIDGE_LICENSE_SECRET must contain 3 comma-separated seeds."
+            );
+        }
+        return seeds as [string, string, string];
+    }
+
+    private mul32(a: number, b: number): number {
+        const aLo = a % 65536;
+        const aHi = (a - aLo) / 65536;
+        const bLo = b % 65536;
+        const bHi = (b - bLo) / 65536;
+        const mid = (aHi * bLo + aLo * bHi) % 65536;
+        return (mid * 65536 + aLo * bLo) % 4294967296;
+    }
+
+    /**
+     * LICENSE.fnv1a_keyed: FNV-1a 32-bit over `input|key`, then fold into a
+     * 48-bit space (rotate-13 mix + high-16 XOR). Returns a number < 2^48
+     * (exact in JS doubles).
+     */
+    private fnv1aKeyed(input: string, key: string): number {
+        const combined = `${input}|${key}`;
+        let hash = 0x811c9dc5;
+        for (let i = 0; i < combined.length; i++) {
+            hash = (hash ^ combined.charCodeAt(i)) >>> 0;
+            hash = this.mul32(hash, 0x01000193);
+        }
+        const rot = ((hash << 13) | (hash >>> 19)) >>> 0;
+        const mix = (hash ^ rot) >>> 0;
+        const hi = (((hash >>> 16) & 0xffff) ^ ((mix >>> 8) & 0xffff)) >>> 0;
+        return hi * 4294967296 + mix; // (hi << 32) | mix, 48-bit
+    }
+
+    private hex12(n: number): string {
+        return n.toString(16).toUpperCase().padStart(12, "0");
+    }
+
+    /** LICENSE.cascade + LICENSE.format_key */
+    private computeKey(coreId: string): string {
+        const [s1, s2, s3] = this.getSeeds();
+        const h1 = this.fnv1aKeyed(coreId, s1);
+        const h2 = this.fnv1aKeyed(this.hex12(h1), s2);
+        const h3 = this.fnv1aKeyed(this.hex12(h2), s3);
+        const body = this.hex12(h3);
+        return `SBRG-${body.slice(0, 4)}-${body.slice(4, 8)}-${body.slice(8, 12)}`;
+    }
+
+    generate(productId: string, coreId: string): LicenseResult {
+        // coreId is NOT uppercased — the Lua plugin passes System.LockingId
+        // as-is, and the key must match byte-for-byte.
+        const licenseKey = this.computeKey(coreId);
+
+        const productSecret = deriveProductSecret(productId);
+        const keyHash = createHmac("sha256", productSecret)
+            .update(`verify:${licenseKey}`)
+            .digest("hex");
+
+        return {
+            licenseKey,
+            salt: "", // deterministic algorithm — no salt needed
+            keyHash,
+            algorithmVersion: this.name,
+        };
+    }
+
+    verify(
+        licenseKey: string,
+        productId: string,
+        storedKeyHash: string
+    ): boolean {
+        const productSecret = deriveProductSecret(productId);
+
+        const computedHash = createHmac("sha256", productSecret)
+            .update(`verify:${licenseKey}`)
+            .digest("hex");
+
+        if (computedHash.length !== storedKeyHash.length) return false;
+
+        const a = Buffer.from(computedHash, "hex");
+        const b = Buffer.from(storedKeyHash, "hex");
+
+        return timingSafeEqual(a, b);
+    }
+}
+
 // ─── Registry (by algorithm name) ───────────────────────────────────────────
 
 const algorithmsByName = new Map<string, LicenseAlgorithm>();
@@ -532,6 +644,7 @@ register(
         pluginName: "SelectForge",
     })
 );
+register(new ScreenBridgeFnv1aAlgorithm());
 
 /** Default algorithm used when a product has no specific assignment. */
 export const DEFAULT_ALGORITHM_NAME = "hmac-sha256-v1";
